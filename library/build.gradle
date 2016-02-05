@@ -1,0 +1,60 @@
+
+apply plugin: 'android-library'
+apply plugin: 'maven-publish'
+
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+    sourceSets.main.jni.srcDirs = []
+
+    productFlavors {
+		nettest {
+		}
+		mainnet {
+		}
+    }
+}
+
+
+dependencies {
+    compile 'com.android.support:support-v4:21.0.+'
+}
+
+task buildAirbitzMainnet(type:Exec) {
+    workingDir '..'
+    commandLine './mkabc'
+}
+
+task copyAirbitzMainnet(type:Exec) {
+    workingDir '..'
+    commandLine './cpabc'
+}
+
+task buildAirbitzTestnet(type:Exec) {
+    workingDir '..'
+    environment 'ENABLE_TESTNET': 1
+    commandLine './mkabc'
+}
+
+task copyAirbitzTestnet(type:Exec) {
+    workingDir '..'
+    environment 'ENABLE_TESTNET': 1
+    commandLine './cpabc'
+}
+
+publishing {
+    publications {
+		mainnetLibrary(MavenPublication) {
+            groupId 'co.airbitz'
+            artifactId 'airbitz-core-android'
+            version '0.0.2'
+			artifact("$buildDir/outputs/aar/library-mainnet-release.aar")
+        }
+		testnetLibrary(MavenPublication) {
+            groupId 'co.airbitz'
+            artifactId 'airbitz-core-android-testnet'
+            version '0.0.2'
+			artifact("$buildDir/outputs/aar/library-nettest-release.aar")
+        }
+    }
+}

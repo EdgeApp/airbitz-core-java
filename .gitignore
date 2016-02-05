@@ -1,0 +1,57 @@
+local.properties
+gen
+bin
+.idea
+*.swp
+*.pyc
+*.db
+*.so
+TODO
+*.log
+.classpath
+.settings
+.project
+*.keystore
+usercontext.properties
+library/src/main/java/com/airbitz/api/tABC_*.java
+library/src/main/java/com/airbitz/api/SWIGTYPE*.java
+library/src/main/java/com/airbitz/api/core*.java
+library/src/main/jni/ABC-const.h
+library/src/main/jni/ABC.h
+library/src/main/jni/ABC_wrap.c
+
+.gradle
+/local.properties
+/.idea/workspace.xml
+.DS_Store
+
+# built application files
+*.apk
+*.ap_
+
+# files for the dex VM
+*.dex
+
+# Java class files
+*.class
+
+# generated files
+bin/
+gen/
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Eclipse project files
+.classpath
+.project
+
+# Android Studio
+.idea/
+.gradle
+/*/local.properties
+/*/out
+/*/*/build
+/*/*/production
+*.iml
+*.iws

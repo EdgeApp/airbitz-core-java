@@ -1,0 +1,17 @@
+#!/bin/bash
+
+BASE=$(pwd)
+
+# Build the core:
+cd $BASE/../airbitz-core/deps
+touch recipes/abc/abc.recipe
+
+if [[ -z ENABLE_TESTNET ]]; then
+    make abc.build-android-arm abc.build-android-x86 ENABLE_TESTNET=1
+else
+    make abc.build-android-arm abc.build-android-x86
+fi
+
+# Now build the JNI wrapper:
+cd $BASE
+./cpabc "$@"
