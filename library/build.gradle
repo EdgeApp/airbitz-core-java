@@ -20,6 +20,24 @@ dependencies {
     compile 'com.android.support:support-v4:21.0.+'
 }
 
+android.libraryVariants.all { variant -> 
+  task("generate${variant.name.capitalize()}Javadoc", type: Javadoc) {
+    source = variant.javaCompile.source 
+    classpath = files(variant.javaCompile.classpath.files, project.android.getBootClasspath()) 
+    options { 
+      links "http://docs.oracle.com/javase/7/docs/api/" 
+      linksOffline "http://d.android.com/reference","${android.sdkDirectory}/docs/reference" 
+    } 
+    exclude '**/BuildConfig.java' 
+    exclude '**/R.java' 
+    exclude '**/SWIG*' 
+    exclude '**/tABC_*' 
+    exclude '**/core.java' 
+    exclude '**/coreJNI.java' 
+    exclude '**/coreConstants.java' 
+  }
+}
+
 task buildAirbitzMainnet(type:Exec) {
     workingDir '..'
     commandLine './mkabc'
@@ -47,13 +65,13 @@ publishing {
 		mainnetLibrary(MavenPublication) {
             groupId 'co.airbitz'
             artifactId 'airbitz-core-android'
-            version '0.0.2'
+            version '0.0.3'
 			artifact("$buildDir/outputs/aar/library-mainnet-release.aar")
         }
 		testnetLibrary(MavenPublication) {
             groupId 'co.airbitz'
             artifactId 'airbitz-core-android-testnet'
-            version '0.0.2'
+            version '0.0.3'
 			artifact("$buildDir/outputs/aar/library-nettest-release.aar")
         }
     }

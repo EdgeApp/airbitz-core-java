@@ -33,8 +33,8 @@ cp $BUILD_PATH/abc/android-x86/libabc.so $WALLET_PATH/jni/x86/libabc.so
 
 # Generate the wrapper code:
 cd $WALLET_PATH
-swig -java -package co.airbitz.api \
-    -outdir java/co/airbitz/api -o jni/ABC_wrap.c jni/ABC.i
+swig -java -package co.airbitz.core \
+    -outdir java/co/airbitz/core -o jni/ABC_wrap.c jni/ABC.i
 
 # Build the wrapper library:
 cd $WALLET_PATH/jni/
