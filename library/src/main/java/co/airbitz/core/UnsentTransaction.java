@@ -83,7 +83,7 @@ public class UnsentTransaction {
         String categoryText = "Transfer:Wallet:";
         Wallet destWallet = null;
         if (mSpendTarget._pSpend != null) {
-            destWallet = mAccount.getWalletFromUUID(mSpendTarget._pSpend.getSzDestUUID());
+            destWallet = mAccount.getWallet(mSpendTarget._pSpend.getSzDestUUID());
         }
 
         Transaction tx = mWallet.getTransaction(mTxId);

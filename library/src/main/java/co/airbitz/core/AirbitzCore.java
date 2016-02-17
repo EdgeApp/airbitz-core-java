@@ -53,7 +53,6 @@ public class AirbitzCore {
     private static Context mContext;
     private List<Account> mAccounts;
     private boolean mConnectivity = true;
-    public native boolean RegisterAsyncCallback ();
 
     static {
         System.loadLibrary("abc");
@@ -90,9 +89,6 @@ public class AirbitzCore {
             return;
         }
         tABC_Error error = new tABC_Error();
-        if (RegisterAsyncCallback()) {
-            AirbitzCore.debugLevel(1, "Registered for core callbacks");
-        }
         File filesDir = context.getFilesDir();
         String certPath = Utils.setupCerts(context, filesDir);
         core.ABC_Initialize(filesDir.getPath(), certPath, airbitzApiKey, hiddenbitzKey, seed, seedLength, error);
@@ -106,18 +102,6 @@ public class AirbitzCore {
         }).start();
 
         Currencies.instance().initCurrencies();
-    }
-
-    public void callbackAsyncBitcoinInfo(long asyncBitCoinInfo_ptr) {
-        for (Account a : mAccounts) {
-            a.callbackAsyncBitcoinInfo(asyncBitCoinInfo_ptr);
-        }
-    }
-
-    public void callbackSweep(long something) {
-        for (Account a : mAccounts) {
-            // a.callbackSweep(cc, txid, satoshi);
-        }
     }
 
     boolean generalInfoUpdate() {

@@ -41,8 +41,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Transaction {
-    public static final String TXID = "co.airbitz.Transaction.TXID";
-
     private static String TAG = Transaction.class.getSimpleName();
     private static int CONFIRMED_CONFIRMATION_COUNT = 3;
 

@@ -31,14 +31,12 @@
 package co.airbitz.core;
 
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import java.math.BigDecimal;
@@ -57,26 +55,6 @@ import java.util.concurrent.TimeUnit;
 public class Account {
     private static String TAG = Account.class.getSimpleName();
 
-    public static final String WALLET_LOADING_START_ACTION = "co.airbitz.notifications.wallets_data_loading_start";
-    public static final String WALLET_LOADING_STATUS_ACTION = "co.airbitz.notifications.wallets_data_loaded";
-    public static final String WALLETS_ALL_LOADED_ACTION = "co.airbitz.notifications.all_wallets_data_loaded";
-    public static final String WALLETS_LOADING_BITCOIN_ACTION = "co.airbitz.notifications.bitcoin_data_loading_start";
-    public static final String WALLETS_LOADED_BITCOIN_ACTION = "co.airbitz.notifications.bitcoin_data_loaded";
-    public static final String WALLETS_RELOADED_ACTION = "co.airbitz.notifications.wallet_data_reloaded";
-
-    public static final String WALLET_UUID = "co.airbitz.wallet_uuid";
-    public static final String WALLET_TXID = "co.airbitz.txid";
-    public static final String WALLETS_LOADED_TOTAL = "co.airbitz.wallets_loaded_total";
-    public static final String WALLETS_TOTAL = "co.airbitz.wallets_total";
-    public static final String AMOUNT_SWEPT = "co.airbitz.amount_swept";
-
-    public static final String EXCHANGE_RATE_UPDATED_ACTION = "co.airbitz.notifications.exchange_rate_update";
-    public static final String DATASYNC_UPDATE_ACTION = "co.airbitz.notifications.data_sync_update";
-    public static final String BLOCKHEIGHT_CHANGE_ACTION = "co.airbitz.notifications.block_height_change";
-    public static final String INCOMING_BITCOIN_ACTION = "co.airbitz.notifications.incoming_bitcoin";
-    public static final String WALLET_SWEEP_ACTION = "co.airbitz.notifications.wallet_sweep_action";
-    public static final String REMOTE_PASSWORD_CHANGE_ACTION = "co.airbitz.notifications.remote_password_change";
-
     public static int OTP_RESET_DELAY_SECS = 60 * 60 * 24 * 7;
 
     private static int ABC_EXCHANGE_RATE_REFRESH_INTERVAL_SECONDS = 60;
@@ -86,25 +64,57 @@ public class Account {
     public static int ABC_DENOMINATION_BTC = 0;
     public static int ABC_DENOMINATION_MBTC = 1;
     public static int ABC_DENOMINATION_UBTC = 2;
+
     public static double SATOSHI_PER_BTC = 1E8;
     public static double SATOSHI_PER_mBTC = 1E5;
     public static double SATOSHI_PER_uBTC = 1E2;
-
-    public static final String OTP_ERROR_ACTION = "co.airbitz.notifications.otp_error_action";
-    public static final String OTP_RESET_ACTION = "co.airbitz.notifications.otp_reset_action";
-    public static final String OTP_SECRET = "co.airbitz.otp_secret";
 
     private String mUsername;
     private String mPassword;
     private AirbitzCore mApi;
     private Categories mCategories;
+    private AccountSettings mSettings;
+
     private boolean mTwoFactorOn = false;
+
+    public native boolean registerAsyncCallback();
+
+    public interface Callbacks {
+        public void userRemotePasswordChange();
+        public void userLoggedOut();
+        public void userAccountChanged();
+        public void userWalletsLoading();
+        public void userWalletStatusChange(int loaded, int total);
+        public void userWalletsLoaded();
+        public void userWalletsChanged();
+        public void userOTPRequired(String secret);
+        public void userOtpResetPending();
+        public void userExchangeRateChanged();
+        public void userBlockHeightChanged();
+        public void userBalanceUpdate();
+        public void userIncomingBitcoin(Wallet wallet, Transaction transaction);
+        public void userSweep(Wallet wallet, Transaction transaction);
+
+        public void userBitcoinLoading();
+        public void userBitcoinLoaded();
+    }
+    private Callbacks mCallbacks;
 
     Account(AirbitzCore api, String username, String password) {
         mApi = api;
         mUsername = username;
         mPassword = password;
         mCategories = new Categories(this);
+
+        if (registerAsyncCallback()) {
+            AirbitzCore.debugLevel(1, "Registered for core callbacks");
+        }
+        // Build initial settings file
+        settings();
+    }
+
+    public void setCallbacks(Callbacks callbacks) {
+        mCallbacks = callbacks;
     }
 
     public String getUsername() {
@@ -131,32 +141,21 @@ public class Account {
         return new DataStore(this, storeId);
     }
 
-    private AccountSettings mCoreSettings;
-
-    public void setupAccountSettings() {
-        newCoreSettings();
-    }
-
-    public AccountSettings newCoreSettings() {
-        mCoreSettings = null;
-        return coreSettings();
-    }
-
-    public AccountSettings coreSettings() {
-        if (mCoreSettings != null) {
-            return mCoreSettings;
+    public AccountSettings settings() {
+        if (mSettings != null) {
+            return mSettings;
         }
         try {
-            mCoreSettings = new AccountSettings(this).load();
-            return mCoreSettings;
+            mSettings = new AccountSettings(this).load();
+            return mSettings;
         } catch (AirbitzException e) {
-            AirbitzCore.debugLevel(1, "coreSettings error:");
+            AirbitzCore.debugLevel(1, "settings error:");
             return null;
         }
     }
 
     public String getUserCurrencyAcronym() {
-        AccountSettings settings = coreSettings();
+        AccountSettings settings = settings();
         if (settings == null) {
             return Currencies.instance().currencyCodeLookup(840);
         } else {
@@ -165,7 +164,7 @@ public class Account {
     }
 
     public String getUserCurrencySymbol() {
-        AccountSettings settings = coreSettings();
+        AccountSettings settings = settings();
         if (settings == null) {
             return Currencies.instance().currencySymbolLookup(840);
         } else {
@@ -174,7 +173,7 @@ public class Account {
     }
 
     public String GetUserPIN() {
-        AccountSettings settings = coreSettings();
+        AccountSettings settings = settings();
         if (settings != null) {
             return settings.settings().getSzPIN();
         }
@@ -190,7 +189,7 @@ public class Account {
     }
 
     public String getDefaultBTCDenomination() {
-        AccountSettings settings = coreSettings();
+        AccountSettings settings = settings();
         if(settings == null) {
             return "";
         }
@@ -204,7 +203,7 @@ public class Account {
     }
 
     public String getUserBTCSymbol() {
-        AccountSettings settings = coreSettings();
+        AccountSettings settings = settings();
         if (settings == null) {
             return "";
         }
@@ -218,7 +217,7 @@ public class Account {
     }
 
     public boolean incrementPinCount() {
-        AccountSettings settings = coreSettings();
+        AccountSettings settings = settings();
         if (settings == null) {
             return false;
         }
@@ -244,8 +243,8 @@ public class Account {
 
     public void logout() {
         stopAllAsyncUpdates();
-        mCoreSettings = null;
-        mCoreWallets = null;
+        mSettings = null;
+        mCachedWallets = null;
         mDataFetched = false;
 
         // Wait for data sync to exit gracefully
@@ -269,7 +268,7 @@ public class Account {
 
     private Map<String, Thread> mWatcherTasks = new ConcurrentHashMap<String, Thread>();
     public void startWatchers() {
-        List<String> wallets = loadWalletUUIDs();
+        List<String> wallets = getWalletIds();
         for (final String uuid : wallets) {
             startWatcher(uuid);
         }
@@ -306,7 +305,7 @@ public class Account {
     }
 
     public void connectWatchers() {
-        List<String> wallets = loadWalletUUIDs();
+        List<String> wallets = getWalletIds();
         for (final String uuid : wallets) {
             connectWatcher(uuid);
         }
@@ -396,13 +395,13 @@ public class Account {
 
     public void deleteWatcherCache() {
         tABC_Error error = new tABC_Error();
-        List<String> uuids = loadWalletUUIDs();
+        List<String> uuids = getWalletIds();
         for (String uuid : uuids) {
             core.ABC_WatcherDeleteCache(uuid, error);
         }
     }
 
-    public List<String> loadWalletUUIDs() {
+    public List<String> getWalletIds() {
         tABC_Error Error = new tABC_Error();
         List<String> uuids = new ArrayList<String>();
 
@@ -433,34 +432,26 @@ public class Account {
         return uuids;
     }
 
-    private List<Wallet> getWallets() {
-        List<Wallet> wallets = new ArrayList<Wallet>();
-        List<String> uuids = loadWalletUUIDs();
-        for (String uuid : uuids) {
-            wallets.add(getWalletFromCore(uuid));
-        }
-        return wallets;
+    private List<Wallet> mCachedWallets = null;
+    public List<Wallet> getWallets() {
+        return mCachedWallets;
     }
 
-    private List<Wallet> mCoreWallets = null;
-    public List<Wallet> getCoreWallets(boolean withTransactions) {
-        return mCoreWallets;
-    }
-
-    public List<Wallet> getCoreActiveWallets() {
-        List<Wallet> wallets = getCoreWallets(false);
-        if(wallets == null) {
+    public List<Wallet> getActiveWallets() {
+        List<Wallet> wallets = getWallets();
+        if (wallets == null) {
             return null;
         }
         List<Wallet> out = new ArrayList<Wallet>();
-        for(Wallet w: wallets) {
-            if(!w.isArchived())
+        for (Wallet w: wallets) {
+            if (!w.isArchived()) {
                 out.add(w);
+            }
         }
         return out;
     }
 
-    public Wallet getWalletFromCore(String uuid) {
+    private Wallet getWalletFromCore(String uuid) {
         tABC_CC result;
         tABC_Error error = new tABC_Error();
 
@@ -559,11 +550,11 @@ public class Account {
         }
     }
 
-    public Wallet getWalletFromUUID(String uuid) {
+    public Wallet getWallet(String uuid) {
         if (uuid == null) {
             return null;
         }
-        List<Wallet> wallets = getCoreWallets(false);
+        List<Wallet> wallets = getWallets();
         if (wallets == null) {
             return null;
         }
@@ -610,14 +601,20 @@ public class Account {
 
         @Override
         protected List<Wallet> doInBackground(Void... params) {
-            return getWallets();
+            List<Wallet> wallets = new ArrayList<Wallet>();
+            List<String> uuids = getWalletIds();
+            for (String uuid : uuids) {
+                wallets.add(getWalletFromCore(uuid));
+            }
+            return wallets;
         }
 
         @Override
         protected void onPostExecute(List<Wallet> walletList) {
-            mCoreWallets = walletList;
-            LocalBroadcastManager.getInstance(mApi.getContext())
-                .sendBroadcast(new Intent(WALLETS_RELOADED_ACTION));
+            mCachedWallets = walletList;
+            if (mCallbacks != null) {
+                mCallbacks.userWalletsChanged();
+            }
             mReloadWalletTask = null;
         }
     }
@@ -630,7 +627,7 @@ public class Account {
     }
 
     public tABC_CC pinSetupBlocking() {
-        AccountSettings settings = coreSettings();
+        AccountSettings settings = settings();
         if (settings != null) {
             String username = mUsername;
             String pin = settings.settings().getSzPIN();
@@ -670,36 +667,44 @@ public class Account {
         tABC_CC result = core.ABC_PinLoginDelete(username, pError);
     }
 
-    private Intent mIncomingIntent;
+    private String mIncomingWallet;
+    private String mIncomingTxId;
 
     final Runnable mNotifyBitcoinLoaded = new Runnable() {
         public void run() {
-            LocalBroadcastManager.getInstance(mApi.getContext()).sendBroadcast(
-                new Intent(WALLETS_LOADED_BITCOIN_ACTION));
+            if (mCallbacks != null) {
+                mCallbacks.userBitcoinLoaded();
+            }
         }
     };
 
     final Runnable IncomingBitcoinUpdater = new Runnable() {
         public void run() {
-            LocalBroadcastManager.getInstance(mApi.getContext()).sendBroadcast(mIncomingIntent);
+            Wallet wallet = getWallet(mIncomingWallet);
+            Transaction tx = wallet.getTransaction(mIncomingTxId);
+            if (mCallbacks != null) {
+                mCallbacks.userIncomingBitcoin(wallet, tx);
+            }
         }
     };
 
     final Runnable BlockHeightUpdater = new Runnable() {
         public void run() {
-            mCoreSettings = null;
-            LocalBroadcastManager.getInstance(mApi.getContext()).sendBroadcast(
-                new Intent(BLOCKHEIGHT_CHANGE_ACTION));
+            mSettings = null;
+            if (mCallbacks != null) {
+                mCallbacks.userBlockHeightChanged();
+            }
         }
     };
 
     final Runnable DataSyncUpdater = new Runnable() {
         public void run() {
-            mCoreSettings = null;
+            mSettings = null;
             startWatchers();
             reloadWallets();
-            LocalBroadcastManager.getInstance(mApi.getContext()).sendBroadcast(
-                new Intent(DATASYNC_UPDATE_ACTION));
+            if (mCallbacks != null) {
+                mCallbacks.userAccountChanged();
+            }
         }
     };
 
@@ -729,13 +734,13 @@ public class Account {
         ht.start();
         mWatcherHandler = new Handler(ht.getLooper());
 
-        final List<String> uuids = loadWalletUUIDs();
+        final List<String> uuids = getWalletIds();
         final int walletCount = uuids.size();
         mCoreHandler.post(new Runnable() {
             public void run() {
-                // Started loading...
-                LocalBroadcastManager.getInstance(mApi.getContext()).sendBroadcast(
-                    new Intent(WALLET_LOADING_START_ACTION));
+                if (mCallbacks != null) {
+                    mCallbacks.userWalletsLoading();
+                }
             }
         });
         for (final String uuid : uuids) {
@@ -746,20 +751,17 @@ public class Account {
 
                     startWatcher(uuid);
                     mMainHandler.sendEmptyMessage(RELOAD);
-
-                    Intent intent = new Intent(WALLET_LOADING_STATUS_ACTION);
-                    intent.putExtra(WALLET_UUID, uuid);
-                    intent.putExtra(WALLETS_LOADED_TOTAL, mWatcherTasks.size());
-                    intent.putExtra(WALLETS_TOTAL, walletCount);
-                    LocalBroadcastManager.getInstance(mApi.getContext()).sendBroadcast(intent);
+                    if (mCallbacks != null) {
+                        mCallbacks.userWalletStatusChange(mWatcherTasks.size(), walletCount);
+                    }
                 }
             });
         }
         mCoreHandler.post(new Runnable() {
             public void run() {
-                LocalBroadcastManager.getInstance(mApi.getContext()).sendBroadcast(
-                    new Intent(WALLETS_ALL_LOADED_ACTION));
-
+                if (mCallbacks != null) {
+                    mCallbacks.userWalletsLoaded();
+                }
                 startBitcoinUpdates();
                 startExchangeRateUpdates();
                 startFileSyncUpdates();
@@ -787,8 +789,7 @@ public class Account {
         mWatcherHandler.sendEmptyMessage(LAST);
         mMainHandler.removeCallbacksAndMessages(null);
         mMainHandler.sendEmptyMessage(LAST);
-        while (mDataHandler.hasMessages(LAST)
-                || mCoreHandler.hasMessages(LAST)
+        while (mCoreHandler.hasMessages(LAST)
                 || mWatcherHandler.hasMessages(LAST)
                 || mExchangeHandler.hasMessages(LAST)
                 || mMainHandler.hasMessages(LAST)) {
@@ -955,8 +956,9 @@ public class Account {
     }
 
     public void startBitcoinUpdates() {
-        LocalBroadcastManager.getInstance(mApi.getContext()).sendBroadcast(
-            new Intent(WALLETS_LOADING_BITCOIN_ACTION));
+        if (mCallbacks != null) {
+            mCallbacks.userBitcoinLoading();
+        }
         mMainHandler.removeCallbacks(mNotifyBitcoinLoaded);
         mMainHandler.postDelayed(mNotifyBitcoinLoaded, TX_LOADED_DELAY);
     }
@@ -972,11 +974,11 @@ public class Account {
             return;
         }
 
-        List<Wallet> wallets = getCoreWallets(false);
+        List<Wallet> wallets = getWallets();
         if (isLoggedIn()
-                && null != coreSettings()
+                && null != settings()
                 && null != wallets) {
-            requestExchangeRateUpdate(coreSettings().settings().getCurrencyNum());
+            requestExchangeRateUpdate(settings().getCurrencyNum());
             for (Wallet wallet : wallets) {
                 if (wallet.getCurrencyNum() != -1) {
                     requestExchangeRateUpdate(wallet.getCurrencyNum());
@@ -984,8 +986,9 @@ public class Account {
             }
             mMainHandler.post(new Runnable() {
                 public void run() {
-                    LocalBroadcastManager.getInstance(mApi.getContext()).sendBroadcast(
-                        new Intent(EXCHANGE_RATE_UPDATED_ACTION));
+                    if (mCallbacks != null) {
+                        mCallbacks.userExchangeRateChanged();
+                    }
                 }
             });
         }
@@ -1034,10 +1037,8 @@ public class Account {
                 if (error.getCode() == tABC_CC.ABC_CC_InvalidOTP) {
                     mMainHandler.post(new Runnable() {
                         public void run() {
-                            if (isLoggedIn()) {
-                                Intent intent = new Intent(OTP_ERROR_ACTION);
-                                intent.putExtra(OTP_SECRET, getTwoFactorSecret());
-                                LocalBroadcastManager.getInstance(mApi.getContext()).sendBroadcast(intent);
+                            if (isLoggedIn() && mCallbacks != null) {
+                                mCallbacks.userOTPRequired(getTwoFactorSecret());
                             }
                         }
                     });
@@ -1045,13 +1046,14 @@ public class Account {
                     // Data changed remotel
                     receiveDataSyncUpdate();
                 } else if (Jni.getBytesAtPtr(pchange.getCPtr(pchange), 1)[0] != 0) {
-                    LocalBroadcastManager manager = LocalBroadcastManager.getInstance(mApi.getContext());
-                    manager.sendBroadcast(new Intent(REMOTE_PASSWORD_CHANGE_ACTION));
+                    if (mCallbacks != null) {
+                        mCallbacks.userRemotePasswordChange();
+                    }
                 }
             }
         });
 
-        List<String> uuids = loadWalletUUIDs();
+        List<String> uuids = getWalletIds();
         for (String uuid : uuids) {
             requestWalletDataSync(uuid);
         }
@@ -1071,8 +1073,8 @@ public class Account {
                             mDataFetched = true;
                             connectWatchers();
                         }
-                        if (isPending) {
-                            LocalBroadcastManager.getInstance(mApi.getContext()).sendBroadcast(new Intent(OTP_RESET_ACTION));
+                        if (isPending && mCallbacks != null) {
+                            mCallbacks.userOtpResetPending();
                         }
                     }
                 });
@@ -1104,16 +1106,14 @@ public class Account {
         });
     }
 
-    void callbackAsyncBitcoinInfo(long asyncBitCoinInfo_ptr) {
-        LocalBroadcastManager manager = LocalBroadcastManager.getInstance(mApi.getContext());
+    private void callbackAsyncBitcoinInfo(long asyncBitCoinInfo_ptr) {
         tABC_AsyncBitCoinInfo info = new tABC_AsyncBitCoinInfo(asyncBitCoinInfo_ptr, false);
         tABC_AsyncEventType type = info.getEventType();
 
         AirbitzCore.debugLevel(1, "asyncBitCoinInfo callback type = "+type.toString());
         if (type==tABC_AsyncEventType.ABC_AsyncEventType_IncomingBitCoin) {
-            mIncomingIntent = new Intent(INCOMING_BITCOIN_ACTION);
-            mIncomingIntent.putExtra(WALLET_UUID, info.getSzWalletUUID());
-            mIncomingIntent.putExtra(WALLET_TXID, info.getSzTxID());
+            mIncomingWallet = info.getSzWalletUUID();
+            mIncomingTxId = info.getSzTxID();
 
             // Notify app of new tx
             mMainHandler.removeCallbacks(IncomingBitcoinUpdater);
@@ -1124,24 +1124,22 @@ public class Account {
             mMainHandler.postDelayed(mNotifyBitcoinLoaded, TX_LOADED_DELAY);
         } else if (type==tABC_AsyncEventType.ABC_AsyncEventType_BlockHeightChange) {
             mMainHandler.post(BlockHeightUpdater);
+        /*
+        } else if (type == tABC_AsyncEventType.ABC_AsyncEventType_IncomingSweep) {
+            String txid = info.getSzTxID();
+            long amount = get64BitLongAtPtr(SWIGTYPE_p_int64_t.getCPtr(info.getSweepSatoshi()));
+            if (mCallbacks != null) {
+                mCallbacks.userSweep(wallet, tx);
+            }
+        */
         }
-    }
-
-    void callbackSweep(tABC_CC cc, SWIGTYPE_p_p_char txid, SWIGTYPE_p_int64_t satoshi) {
-        LocalBroadcastManager manager = LocalBroadcastManager.getInstance(mApi.getContext());
-        // String txid = info.getSzTxID();
-        long amount = Jni.get64BitLongAtPtr(SWIGTYPE_p_int64_t.getCPtr(satoshi));
-        Intent intent = new Intent(WALLET_SWEEP_ACTION);
-        // intent.putExtra(WALLET_TXID, txid);
-        intent.putExtra(AMOUNT_SWEPT, amount);
-        manager.sendBroadcast(intent);
     }
 
     private String[] mBTCDenominations = {"BTC", "mBTC", "bits"};
     private String[] mBTCSymbols = {"Ƀ ", "mɃ ", "ƀ "};
 
     public String formatDefaultCurrency(double in) {
-        AccountSettings settings = coreSettings();
+        AccountSettings settings = settings();
         if (settings != null) {
             String pre = mBTCSymbols[settings.getBitcoinDenomination().getDenominationType()];
             String out = String.format("%.3f", in);
@@ -1180,7 +1178,7 @@ public class Account {
 
     public int userDecimalPlaces() {
         int decimalPlaces = 8; // for ABC_DENOMINATION_BTC
-        AccountSettings settings = coreSettings();
+        AccountSettings settings = settings();
         if (settings == null) {
             return 2;
         }
@@ -1249,7 +1247,7 @@ public class Account {
     public int SettingsCurrencyIndex() {
         int index = -1;
         int currencyNum;
-        AccountSettings settings = coreSettings();
+        AccountSettings settings = settings();
         if(settings == null && mCurrencyIndex != 0) {
             currencyNum = mCurrencyIndex;
         }
@@ -1309,7 +1307,7 @@ public class Account {
     }
 
     public String BTCtoFiatConversion(int currencyNum) {
-        AccountSettings settings = coreSettings();
+        AccountSettings settings = settings();
         if(settings != null) {
             BitcoinDenomination denomination =
                 settings.getBitcoinDenomination();
@@ -1349,7 +1347,7 @@ public class Account {
     }
 
     public String FormatDefaultCurrency(long satoshi, boolean btc, boolean withSymbol) {
-        AccountSettings settings = coreSettings();
+        AccountSettings settings = settings();
         if (settings != null) {
             int currencyNumber = settings.settings().getCurrencyNum();
             return FormatCurrency(satoshi, currencyNumber, btc, withSymbol);
@@ -1455,38 +1453,6 @@ public class Account {
         }
     }
 
-    OnPasswordCheckListener mOnPasswordCheckListener = null;
-    public void SetOnPasswordCheckListener(OnPasswordCheckListener listener, String password) {
-        mOnPasswordCheckListener = listener;
-        mMainHandler.post(new PasswordOKAsync(password));
-    }
-
-    public interface OnPasswordCheckListener {
-        void onPasswordCheck(boolean passwordOkay);
-    }
-
-    private class PasswordOKAsync implements Runnable {
-        private final String mPassword;
-
-        PasswordOKAsync(final String password) {
-            this.mPassword = password;
-        }
-
-        public void run() {
-            boolean check = false;
-            if (mPassword == null || mPassword.isEmpty()) {
-                check = !passwordExists();
-            } else {
-                check = passwordOk(mPassword);
-            }
-
-            if (mOnPasswordCheckListener != null) {
-                mOnPasswordCheckListener.onPasswordCheck(check);
-                mOnPasswordCheckListener = null;
-            }
-        }
-    }
-
     public boolean passwordOk(String password) {
         boolean check = false;
         if (password == null || password.isEmpty()) {
@@ -1521,7 +1487,7 @@ public class Account {
     }
 
     public void SetupDefaultCurrency() {
-        AccountSettings settings = coreSettings();
+        AccountSettings settings = settings();
         if (settings == null) {
             return;
         }
