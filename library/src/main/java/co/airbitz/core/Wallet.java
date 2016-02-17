@@ -35,6 +35,18 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+import co.airbitz.internal.Jni;
+import co.airbitz.internal.SWIGTYPE_p_int64_t;
+import co.airbitz.internal.SWIGTYPE_p_int;
+import co.airbitz.internal.SWIGTYPE_p_long;
+import co.airbitz.internal.SWIGTYPE_p_p_char;
+import co.airbitz.internal.SWIGTYPE_p_p_p_sABC_TxInfo;
+import co.airbitz.internal.SWIGTYPE_p_p_sABC_TxInfo;
+import co.airbitz.internal.SWIGTYPE_p_unsigned_int;
+import co.airbitz.internal.core;
+import co.airbitz.internal.tABC_CC;
+import co.airbitz.internal.tABC_Error;
+
 public class Wallet {
     private Account mAccount;
     private String mName;
@@ -81,10 +93,10 @@ public class Wallet {
         SWIGTYPE_p_p_p_sABC_TxInfo paTxInfo = core.longp_to_pppTxInfo(lp);
 
         SWIGTYPE_p_int64_t startTime = core.new_int64_tp();
-        Jni.set64BitLongAtPtr(SWIGTYPE_p_int64_t.getCPtr(startTime), start); // 0 means all transactions
+        Jni.set64BitLongAtPtr(Jni.getCPtr(startTime), start); // 0 means all transactions
 
         SWIGTYPE_p_int64_t endTime = core.new_int64_tp();
-        Jni.set64BitLongAtPtr(SWIGTYPE_p_int64_t.getCPtr(endTime), end); // 0 means all transactions
+        Jni.set64BitLongAtPtr(Jni.getCPtr(endTime), end); // 0 means all transactions
 
         tABC_CC result = core.ABC_GetTransactions(
                 mAccount.getUsername(), mAccount.getPassword(),
@@ -108,7 +120,7 @@ public class Wallet {
                 at.setBalance(bal);
             }
 
-            core.ABC_FreeTransactions(new SWIGTYPE_p_p_sABC_TxInfo(ptrToInfo, false), count);
+            core.ABC_FreeTransactions(new Jni.ppTxInfo(ptrToInfo), count);
             mTransactions = listTransactions;
         } else {
             AirbitzCore.debugLevel(1, "Error: CoreBridge.loadAllTransactions: "+ error.getSzDescription());
@@ -196,10 +208,10 @@ public class Wallet {
         SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
 
         SWIGTYPE_p_int64_t startTime = core.new_int64_tp();
-        Jni.set64BitLongAtPtr(SWIGTYPE_p_int64_t.getCPtr(startTime), start); //0 means all transactions
+        Jni.set64BitLongAtPtr(Jni.getCPtr(startTime), start); //0 means all transactions
 
         SWIGTYPE_p_int64_t endTime = core.new_int64_tp();
-        Jni.set64BitLongAtPtr(SWIGTYPE_p_int64_t.getCPtr(endTime), end); //0 means all transactions
+        Jni.set64BitLongAtPtr(Jni.getCPtr(endTime), end); //0 means all transactions
 
         tABC_CC result = core.ABC_CsvExport(
                 mAccount.getUsername(), mAccount.getPassword(),
@@ -239,7 +251,7 @@ public class Wallet {
 
         int result = Jni.coreSweepKey(
                 mAccount.getUsername(), mAccount.getPassword(),
-                getUUID(), wif, SWIGTYPE_p_p_char.getCPtr(ppChar), tABC_Error.getCPtr(error));
+                getUUID(), wif, Jni.getCPtr(ppChar), Jni.getCPtr(error));
         if (result != 0) {
             return "";
         } else {

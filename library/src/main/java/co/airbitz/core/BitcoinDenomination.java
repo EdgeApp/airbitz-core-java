@@ -1,6 +1,8 @@
 package co.airbitz.core;
 
-import co.airbitz.core.SWIGTYPE_p_int64_t;
+import co.airbitz.internal.SWIGTYPE_p_int64_t;
+import co.airbitz.internal.core;
+import co.airbitz.internal.tABC_BitcoinDenomination;
 
 public class BitcoinDenomination {
 

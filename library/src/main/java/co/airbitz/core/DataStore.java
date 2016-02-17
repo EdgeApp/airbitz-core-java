@@ -40,6 +40,13 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.List;
 
+import co.airbitz.internal.Jni;
+import co.airbitz.internal.SWIGTYPE_p_long;
+import co.airbitz.internal.SWIGTYPE_p_p_char;
+import co.airbitz.internal.core;
+import co.airbitz.internal.tABC_CC;
+import co.airbitz.internal.tABC_Error;
+
 public class DataStore  {
     private static String TAG = DataStore.class.getSimpleName();
 

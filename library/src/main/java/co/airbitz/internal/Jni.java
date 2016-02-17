@@ -29,9 +29,21 @@
  * either expressed or implied, of the Airbitz Project.
  */
 
-package co.airbitz.core;
+package co.airbitz.internal;
 
-class Jni  {
+import co.airbitz.internal.SWIGTYPE_p_bool;
+import co.airbitz.internal.SWIGTYPE_p_double;
+import co.airbitz.internal.SWIGTYPE_p_int64_t;
+import co.airbitz.internal.SWIGTYPE_p_int;
+import co.airbitz.internal.SWIGTYPE_p_long;
+import co.airbitz.internal.SWIGTYPE_p_p_char;
+import co.airbitz.internal.SWIGTYPE_p_p_sABC_TxInfo;
+import co.airbitz.internal.SWIGTYPE_p_p_sABC_TxOutput;
+import co.airbitz.internal.SWIGTYPE_p_uint64_t;
+import co.airbitz.internal.tABC_Error;
+import co.airbitz.internal.tABC_TxDetails;
+
+public class Jni  {
     static {
         System.loadLibrary("abc");
         System.loadLibrary("airbitz");
@@ -50,18 +62,70 @@ class Jni  {
     public static native int coreWatcherLoop(String juuid, long jerrorp);
     public static native long ParseAmount(String jarg1, int decimalplaces);
 
-    static class pLong extends SWIGTYPE_p_long {
+    public static class pLong extends SWIGTYPE_p_long {
         public pLong(long ptr) {
             super(ptr, false);
         }
     }
 
-    static class ppTxInfo extends SWIGTYPE_p_p_sABC_TxInfo {
+    public static class ppTxInfo extends SWIGTYPE_p_p_sABC_TxInfo {
         public ppTxInfo(long ptr) {
             super(ptr, false);
         }
         public long getPtr(SWIGTYPE_p_p_sABC_TxInfo p, long i) {
             return getCPtr(p) + i;
         }
+    }
+
+    public static tABC_AccountSettings newAccountSettings(long cPtr) {
+        return new tABC_AccountSettings(cPtr, false);
+    }
+
+    public static SWIGTYPE_p_bool newBool(long cPtr) {
+        return new SWIGTYPE_p_bool(cPtr, false);
+    }
+
+    public static tABC_AsyncBitCoinInfo newAsyncBitcoinInfo(long cPtr) {
+        return new tABC_AsyncBitCoinInfo(cPtr, false);
+    }
+
+    public static long getCPtr(tABC_Error obj) {
+        return tABC_Error.getCPtr(obj);
+    }
+
+    public static long getCPtr(SWIGTYPE_p_int64_t obj) {
+        return SWIGTYPE_p_int64_t.getCPtr(obj);
+    }
+
+    public static long getCPtr(SWIGTYPE_p_long obj) {
+        return SWIGTYPE_p_long.getCPtr(obj);
+    }
+
+    public static long getCPtr(SWIGTYPE_p_p_char obj) {
+        return SWIGTYPE_p_p_char.getCPtr(obj);
+    }
+
+    public static long getCPtr(SWIGTYPE_p_double obj) {
+        return SWIGTYPE_p_double.getCPtr(obj);
+    }
+
+    public static long getCPtr(SWIGTYPE_p_int obj) {
+        return SWIGTYPE_p_int.getCPtr(obj);
+    }
+
+    public static long getCPtr(SWIGTYPE_p_bool obj) {
+        return SWIGTYPE_p_bool.getCPtr(obj);
+    }
+
+    public static long getCPtr(tABC_TxDetails obj) {
+        return tABC_TxDetails.getCPtr(obj);
+    }
+
+    public static long getCPtr(SWIGTYPE_p_p_sABC_TxOutput obj) {
+        return SWIGTYPE_p_p_sABC_TxOutput.getCPtr(obj);
+    }
+
+    public static long getCPtr(SWIGTYPE_p_uint64_t obj) {
+        return SWIGTYPE_p_uint64_t.getCPtr(obj);
     }
 }

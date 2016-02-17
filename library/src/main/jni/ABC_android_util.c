@@ -28,7 +28,7 @@ void ABC_BitCoin_Event_Callback(const tABC_AsyncBitCoinInfo *pInfo)
     bitcoinCallback(pInfo);
 }
 
-Java_co_airbitz_core_Jni_coreSweepKey(
+Java_co_airbitz_internal_Jni_coreSweepKey(
         JNIEnv *jenv, jclass jcls, jstring jusername, jstring jpassword,
         jstring juuid, jstring jwif, jlong ppchar, jlong jerrorp) {
     jint jresult = 0 ;
@@ -89,7 +89,7 @@ Java_co_airbitz_core_Jni_coreSweepKey(
 
 
 JNIEXPORT jint JNICALL
-Java_co_airbitz_core_Jni_coreWatcherLoop(
+Java_co_airbitz_internal_Jni_coreWatcherLoop(
         JNIEnv *jenv, jclass jcls, jstring juuid, jlong jerrorp) {
     jint jresult = 0 ;
     char *uuid = (char *) 0 ;
@@ -163,7 +163,7 @@ Java_co_airbitz_core_Account_registerAsyncCallback(JNIEnv *env, jobject obj)
  * Return String from ptr to string
  */
 JNIEXPORT jstring JNICALL
-Java_co_airbitz_core_Jni_getStringAtPtr(JNIEnv *env, jobject obj, jlong ptr)
+Java_co_airbitz_internal_Jni_getStringAtPtr(JNIEnv *env, jobject obj, jlong ptr)
 {
     char *buf = *(char **) &ptr; //*(unsigned int **)&jarg4;
     jstring jresult = (*env)->NewStringUTF(env, buf);
@@ -174,7 +174,7 @@ Java_co_airbitz_core_Jni_getStringAtPtr(JNIEnv *env, jobject obj, jlong ptr)
  * Return byte array from ptr
  */
 JNIEXPORT jbyteArray JNICALL
-Java_co_airbitz_core_Jni_getBytesAtPtr(
+Java_co_airbitz_internal_Jni_getBytesAtPtr(
         JNIEnv *env, jobject obj, jlong ptr, jint len)
 {
     jbyteArray result = (*env)->NewByteArray(env, len);
@@ -186,7 +186,7 @@ Java_co_airbitz_core_Jni_getBytesAtPtr(
  * Return list of all numbers of currencies at index
  */
 JNIEXPORT jintArray JNICALL
-Java_co_airbitz_core_Jni_getCoreCurrencyNumbers(JNIEnv *env, jclass cls)
+Java_co_airbitz_internal_Jni_getCoreCurrencyNumbers(JNIEnv *env, jclass cls)
 {
     jintArray result;
 
@@ -219,7 +219,7 @@ Java_co_airbitz_core_Jni_getCoreCurrencyNumbers(JNIEnv *env, jclass cls)
  * Return code from currency at index
  */
 JNIEXPORT jstring JNICALL
-Java_co_airbitz_core_Jni_getCurrencyCode(
+Java_co_airbitz_internal_Jni_getCurrencyCode(
         JNIEnv *env, jobject obj, jint currencyNum)
 {
     tABC_Error error;
@@ -245,7 +245,7 @@ Java_co_airbitz_core_Jni_getCurrencyCode(
  * Return description from currency at index
  */
 JNIEXPORT jstring JNICALL
-Java_co_airbitz_core_Jni_getCurrencyDescription(
+Java_co_airbitz_internal_Jni_getCurrencyDescription(
         JNIEnv *env, jobject obj, jint currencyNum)
 {
     tABC_Error error;
@@ -271,7 +271,7 @@ Java_co_airbitz_core_Jni_getCurrencyDescription(
  * Return 64 bit long from ptr
  */
 JNIEXPORT jlong JNICALL
-Java_co_airbitz_core_Jni_get64BitLongAtPtr(
+Java_co_airbitz_internal_Jni_get64BitLongAtPtr(
         JNIEnv *env, jobject obj, jlong ptr)
 {
     char *base = *(char **) &ptr;
@@ -288,7 +288,7 @@ Java_co_airbitz_core_Jni_get64BitLongAtPtr(
  * Set 64 bit long at ptr
  */
 JNIEXPORT void JNICALL
-Java_co_airbitz_core_Jni_set64BitLongAtPtr(
+Java_co_airbitz_internal_Jni_set64BitLongAtPtr(
         JNIEnv *jenv, jclass jcls, jlong obj, jlong value)
 {
     unsigned char *base = *(unsigned char **) &obj;
@@ -302,7 +302,7 @@ Java_co_airbitz_core_Jni_set64BitLongAtPtr(
  * Return 64 bit long from pointer
  */
 JNIEXPORT jlong JNICALL
-Java_co_airbitz_core_Jni_getLongAtPtr(jlong *obj)
+Java_co_airbitz_internal_Jni_getLongAtPtr(jlong *obj)
 {
     return *obj;
 }
@@ -311,7 +311,7 @@ Java_co_airbitz_core_Jni_getLongAtPtr(jlong *obj)
  * Proper conversion without SWIG problems
 */
 JNIEXPORT jlong JNICALL
-Java_co_airbitz_core_Jni_ParseAmount(
+Java_co_airbitz_internal_Jni_ParseAmount(
         JNIEnv *jenv, jclass jcls, jstring jarg1, jint decimalplaces)
 {
     tABC_CC result;
@@ -336,7 +336,7 @@ Java_co_airbitz_core_Jni_ParseAmount(
  * Proper conversion without SWIG problems
 */
 JNIEXPORT jint JNICALL
-Java_co_airbitz_core_Jni_FormatAmount(
+Java_co_airbitz_internal_Jni_FormatAmount(
         JNIEnv *jenv, jclass jcls, jlong satoshi, jlong ppchar,
         jlong decimalplaces, jboolean addSign, jlong perror) {
     jint jresult = 0 ;
@@ -363,7 +363,7 @@ Java_co_airbitz_core_Jni_FormatAmount(
  * Proper conversion to currency without SWIG problems
 */
 JNIEXPORT jint JNICALL
-Java_co_airbitz_core_Jni_satoshiToCurrency(
+Java_co_airbitz_internal_Jni_satoshiToCurrency(
         JNIEnv *jenv, jobject obj,
         jstring jarg1, jstring jarg2, jlong satoshi,
         jlong currencyp, jint currencyNumber, jlong error)

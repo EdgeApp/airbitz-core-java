@@ -36,6 +36,15 @@ import android.content.Context;
 import java.util.ArrayList;
 import java.util.List;
 
+import co.airbitz.internal.Jni;
+import co.airbitz.internal.SWIGTYPE_p_int;
+import co.airbitz.internal.SWIGTYPE_p_long;
+import co.airbitz.internal.SWIGTYPE_p_p_p_char;
+import co.airbitz.internal.SWIGTYPE_p_unsigned_int;
+import co.airbitz.internal.core;
+import co.airbitz.internal.tABC_CC;
+import co.airbitz.internal.tABC_Error;
+
 public class Categories {
     private static String TAG = Categories.class.getSimpleName();
 

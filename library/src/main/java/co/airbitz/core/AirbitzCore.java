@@ -45,6 +45,19 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+import co.airbitz.internal.Jni;
+import co.airbitz.internal.SWIGTYPE_p_bool;
+import co.airbitz.internal.SWIGTYPE_p_double;
+import co.airbitz.internal.SWIGTYPE_p_int;
+import co.airbitz.internal.SWIGTYPE_p_long;
+import co.airbitz.internal.SWIGTYPE_p_p_char;
+import co.airbitz.internal.SWIGTYPE_p_p_p_sABC_PasswordRule;
+import co.airbitz.internal.SWIGTYPE_p_p_sABC_QuestionChoices;
+import co.airbitz.internal.SWIGTYPE_p_unsigned_int;
+import co.airbitz.internal.core;
+import co.airbitz.internal.tABC_CC;
+import co.airbitz.internal.tABC_Error;
+
 public class AirbitzCore {
     private static String TAG = AirbitzCore.class.getSimpleName();
 
@@ -182,12 +195,12 @@ public class AirbitzCore {
         tABC_Error error = new tABC_Error();
 
         SWIGTYPE_p_long lp = core.new_longp();
-        SWIGTYPE_p_bool istestnet = new SWIGTYPE_p_bool(lp.getCPtr(lp), false);
+        SWIGTYPE_p_bool istestnet = Jni.newBool(Jni.getCPtr(lp));
 
         result = core.ABC_IsTestNet(istestnet, error);
 
         if(result.equals(tABC_CC.ABC_CC_Ok)) {
-            return Jni.getBytesAtPtr(lp.getCPtr(lp), 1)[0] != 0;
+            return Jni.getBytesAtPtr(Jni.getCPtr(lp), 1)[0] != 0;
         } else {
             AirbitzCore.debugLevel(1, "isTestNet error:"+error.getSzDescription());
         }
@@ -197,10 +210,10 @@ public class AirbitzCore {
     public boolean accountHasPassword(String username) {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_long lp = core.new_longp();
-        SWIGTYPE_p_bool exists = new SWIGTYPE_p_bool(lp.getCPtr(lp), false);
+        SWIGTYPE_p_bool exists = Jni.newBool(Jni.getCPtr(lp));
         core.ABC_PasswordExists(username, exists, error);
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
-            return Jni.getBytesAtPtr(lp.getCPtr(lp), 1)[0] != 0;
+            return Jni.getBytesAtPtr(Jni.getCPtr(lp), 1)[0] != 0;
         }
         return false;
     }
@@ -344,7 +357,7 @@ public class AirbitzCore {
     public Account recoveryLogin(String username, String answers, String otpToken) throws AirbitzException {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_int lp = core.new_intp();
-        SWIGTYPE_p_bool pbool = new SWIGTYPE_p_bool(lp.getCPtr(lp), false);
+        SWIGTYPE_p_bool pbool = Jni.newBool(Jni.getCPtr(lp));
 
         if (otpToken != null) {
             otpKeySet(username, otpToken);
@@ -366,12 +379,12 @@ public class AirbitzCore {
         tABC_Error error = new tABC_Error();
 
         SWIGTYPE_p_long lp = core.new_longp();
-        SWIGTYPE_p_bool exists = new SWIGTYPE_p_bool(lp.getCPtr(lp), false);
+        SWIGTYPE_p_bool exists = Jni.newBool(Jni.getCPtr(lp));
 
         core.ABC_PinLoginExists(username, exists, error);
 
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
-            return Jni.getBytesAtPtr(lp.getCPtr(lp), 1)[0] != 0;
+            return Jni.getBytesAtPtr(Jni.getCPtr(lp), 1)[0] != 0;
         } else {
             AirbitzCore.debugLevel(1, "PinLoginExists error:"+error.getSzDescription());
             return false;
@@ -443,10 +456,10 @@ public class AirbitzCore {
     public boolean accountSyncExistsLocal(String username) {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_long lp = core.new_longp();
-        SWIGTYPE_p_bool exists = new SWIGTYPE_p_bool(lp.getCPtr(lp), false);
+        SWIGTYPE_p_bool exists = Jni.newBool(Jni.getCPtr(lp));
         core.ABC_AccountSyncExists(username, exists, error);
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
-            return Jni.getBytesAtPtr(lp.getCPtr(lp), 1)[0] != 0;
+            return Jni.getBytesAtPtr(Jni.getCPtr(lp), 1)[0] != 0;
         }
         return false;
     }

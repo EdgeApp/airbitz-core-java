@@ -33,6 +33,16 @@ package co.airbitz.core;
 
 import android.text.TextUtils;
 
+import co.airbitz.internal.Jni;
+import co.airbitz.internal.SWIGTYPE_p_long;
+import co.airbitz.internal.SWIGTYPE_p_p_char;
+import co.airbitz.internal.SWIGTYPE_p_p_sABC_SpendTarget;
+import co.airbitz.internal.SWIGTYPE_p_uint64_t;
+import co.airbitz.internal.core;
+import co.airbitz.internal.tABC_CC;
+import co.airbitz.internal.tABC_Error;
+import co.airbitz.internal.tABC_SpendTarget;
+
 public class SpendTarget {
     SWIGTYPE_p_long _lpSpend;
     SWIGTYPE_p_p_sABC_SpendTarget _pSpendSWIG;
@@ -65,7 +75,7 @@ public class SpendTarget {
     }
 
     public long getSpendAmount() {
-        return Jni.get64BitLongAtPtr(SWIGTYPE_p_uint64_t.getCPtr(_pSpend.getAmount()));
+        return Jni.get64BitLongAtPtr(Jni.getCPtr(_pSpend.getAmount()));
     }
 
     public boolean isTransfer() {
@@ -74,7 +84,7 @@ public class SpendTarget {
 
     public void setSpendAmount(long amount) {
         SWIGTYPE_p_uint64_t ua = core.new_uint64_tp();
-        Jni.set64BitLongAtPtr(SWIGTYPE_p_uint64_t.getCPtr(ua), amount);
+        Jni.set64BitLongAtPtr(Jni.getCPtr(ua), amount);
         _pSpend.setAmount(ua);
     }
 
@@ -87,7 +97,7 @@ public class SpendTarget {
 
     public boolean newTransfer(String walletUUID) {
         SWIGTYPE_p_uint64_t amount = core.new_uint64_tp();
-        Jni.set64BitLongAtPtr(SWIGTYPE_p_uint64_t.getCPtr(amount), 0);
+        Jni.set64BitLongAtPtr(Jni.getCPtr(amount), 0);
         core.ABC_SpendNewTransfer(
                 mAccount.getUsername(), walletUUID,
                 amount, _pSpendSWIG, pError);
@@ -98,7 +108,7 @@ public class SpendTarget {
     public boolean spendNewInternal(String address, String label, String category,
                                     String notes, long amountSatoshi) {
         SWIGTYPE_p_uint64_t amountS = core.new_uint64_tp();
-        Jni.set64BitLongAtPtr(SWIGTYPE_p_uint64_t.getCPtr(amountS), amountSatoshi);
+        Jni.set64BitLongAtPtr(Jni.getCPtr(amountS), amountSatoshi);
 
         core.ABC_SpendNewInternal(address, label,
                 category, notes, amountS, _pSpendSWIG, pError);
@@ -150,13 +160,12 @@ public class SpendTarget {
 
     public long maxSpendable() {
         tABC_Error error = new tABC_Error();
-
         SWIGTYPE_p_uint64_t result = core.new_uint64_tp();
 
         core.ABC_SpendGetMax(
                 mAccount.getUsername(), mWallet.getUUID(),
                 _pSpend, result, pError);
-        long actual = Jni.get64BitLongAtPtr(SWIGTYPE_p_uint64_t.getCPtr(result));
+        long actual = Jni.get64BitLongAtPtr(Jni.getCPtr(result));
         return actual;
     }
 
@@ -167,7 +176,7 @@ public class SpendTarget {
                 mAccount.getUsername(), mWallet.getUUID(),
                 _pSpend, total, error);
 
-        long fees = Jni.get64BitLongAtPtr(SWIGTYPE_p_uint64_t.getCPtr(total));
+        long fees = Jni.get64BitLongAtPtr(Jni.getCPtr(total));
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
             throw new AirbitzException(null, error.getCode(), error);
         }

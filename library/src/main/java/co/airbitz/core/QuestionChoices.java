@@ -31,6 +31,10 @@
 
 package co.airbitz.core;
 
+import co.airbitz.internal.SWIGTYPE_p_p_sABC_QuestionChoice;
+import co.airbitz.internal.SWIGTYPE_p_void;
+import co.airbitz.internal.tABC_QuestionChoices;
+
 public class QuestionChoices extends tABC_QuestionChoices {
     long mNumChoices = 0;
     long mChoiceStart = 0;

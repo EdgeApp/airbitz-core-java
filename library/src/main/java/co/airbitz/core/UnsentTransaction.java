@@ -31,6 +31,13 @@
 
 package co.airbitz.core;
 
+import co.airbitz.internal.Jni;
+import co.airbitz.internal.core;
+import co.airbitz.internal.tABC_Error;
+import co.airbitz.internal.tABC_CC;
+import co.airbitz.internal.SWIGTYPE_p_long;
+import co.airbitz.internal.SWIGTYPE_p_p_char;
+
 public class UnsentTransaction {
     private Account mAccount;
     private Wallet mWallet;

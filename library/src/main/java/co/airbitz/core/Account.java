@@ -52,6 +52,22 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import co.airbitz.internal.Jni;
+import co.airbitz.internal.SWIGTYPE_p_bool;
+import co.airbitz.internal.SWIGTYPE_p_double;
+import co.airbitz.internal.SWIGTYPE_p_int64_t;
+import co.airbitz.internal.SWIGTYPE_p_int;
+import co.airbitz.internal.SWIGTYPE_p_long;
+import co.airbitz.internal.SWIGTYPE_p_p_char;
+import co.airbitz.internal.SWIGTYPE_p_p_p_char;
+import co.airbitz.internal.SWIGTYPE_p_p_unsigned_char;
+import co.airbitz.internal.SWIGTYPE_p_unsigned_int;
+import co.airbitz.internal.core;
+import co.airbitz.internal.tABC_AsyncBitCoinInfo;
+import co.airbitz.internal.tABC_AsyncEventType;
+import co.airbitz.internal.tABC_CC;
+import co.airbitz.internal.tABC_Error;
+
 public class Account {
     private static String TAG = Account.class.getSimpleName();
 
@@ -59,7 +75,7 @@ public class Account {
 
     private static int ABC_EXCHANGE_RATE_REFRESH_INTERVAL_SECONDS = 60;
     private static int ABC_SYNC_REFRESH_INTERVAL_SECONDS = 30;
-    private static final int TX_LOADED_DELAY = 1000 * 10;
+    private static final int TX_LOADED_DELAY = 1000 * 20;
 
     public static int ABC_DENOMINATION_BTC = 0;
     public static int ABC_DENOMINATION_MBTC = 1;
@@ -363,7 +379,7 @@ public class Account {
         public void run() {
             tABC_Error error = new tABC_Error();
 
-            int result = Jni.coreWatcherLoop(uuid, tABC_Error.getCPtr(error));
+            int result = Jni.coreWatcherLoop(uuid, Jni.getCPtr(error));
         }
     }
 
@@ -485,7 +501,7 @@ public class Account {
             result = core.ABC_WalletBalance(mUsername, uuid, l, error);
             if (result == tABC_CC.ABC_CC_Ok) {
                 wallet.setBalanceSatoshi(
-                    Jni.get64BitLongAtPtr(SWIGTYPE_p_int64_t.getCPtr(l)));
+                    Jni.get64BitLongAtPtr(Jni.getCPtr(l)));
             } else {
                 wallet.setBalanceSatoshi(0);
             }
@@ -493,11 +509,11 @@ public class Account {
 
         // If there is a UUID there are wallet attributes
         SWIGTYPE_p_long lp = core.new_longp();
-        SWIGTYPE_p_bool archived = new SWIGTYPE_p_bool(lp.getCPtr(lp), false);
+        SWIGTYPE_p_bool archived = Jni.newBool(Jni.getCPtr(lp));
         result = core.ABC_WalletArchived(mUsername, uuid, archived, error);
         if (result == tABC_CC.ABC_CC_Ok) {
             wallet.setAttributes(
-                Jni.getBytesAtPtr(lp.getCPtr(lp), 1)[0] != 0 ? 0x1 : 0);
+                Jni.getBytesAtPtr(Jni.getCPtr(lp), 1)[0] != 0 ? 0x1 : 0);
         }
 
         return wallet;
@@ -1029,9 +1045,9 @@ public class Account {
             public void run() {
                 tABC_Error error = new tABC_Error();
                 SWIGTYPE_p_long pdirty = core.new_longp();
-                SWIGTYPE_p_bool dirty = new SWIGTYPE_p_bool(pdirty.getCPtr(pdirty), false);
+                SWIGTYPE_p_bool dirty = Jni.newBool(Jni.getCPtr(pdirty));
                 SWIGTYPE_p_long pchange = core.new_longp();
-                SWIGTYPE_p_bool passwordChange = new SWIGTYPE_p_bool(pchange.getCPtr(pchange), false);
+                SWIGTYPE_p_bool passwordChange = Jni.newBool(Jni.getCPtr(pchange));
 
                 core.ABC_DataSyncAccount(mUsername, mPassword, dirty, passwordChange, error);
                 if (error.getCode() == tABC_CC.ABC_CC_InvalidOTP) {
@@ -1042,10 +1058,10 @@ public class Account {
                             }
                         }
                     });
-                } else if (Jni.getBytesAtPtr(pdirty.getCPtr(pdirty), 1)[0] != 0) {
+                } else if (Jni.getBytesAtPtr(Jni.getCPtr(pdirty), 1)[0] != 0) {
                     // Data changed remotel
                     receiveDataSyncUpdate();
-                } else if (Jni.getBytesAtPtr(pchange.getCPtr(pchange), 1)[0] != 0) {
+                } else if (Jni.getBytesAtPtr(Jni.getCPtr(pchange), 1)[0] != 0) {
                     if (mCallbacks != null) {
                         mCallbacks.userRemotePasswordChange();
                     }
@@ -1089,7 +1105,7 @@ public class Account {
             public void run() {
                 tABC_Error error = new tABC_Error();
                 SWIGTYPE_p_long pdirty = core.new_longp();
-                SWIGTYPE_p_bool dirty = new SWIGTYPE_p_bool(pdirty.getCPtr(pdirty), false);
+                SWIGTYPE_p_bool dirty = Jni.newBool(Jni.getCPtr(pdirty));
 
                 core.ABC_DataSyncWallet(mUsername, mPassword, uuid, dirty, error);
                 mMainHandler.post(new Runnable() {
@@ -1099,7 +1115,7 @@ public class Account {
                         }
                     }
                 });
-                if (Jni.getBytesAtPtr(pdirty.getCPtr(pdirty), 1)[0] != 0) {
+                if (Jni.getBytesAtPtr(Jni.getCPtr(pdirty), 1)[0] != 0) {
                     receiveDataSyncUpdate();
                 }
             }
@@ -1107,7 +1123,7 @@ public class Account {
     }
 
     private void callbackAsyncBitcoinInfo(long asyncBitCoinInfo_ptr) {
-        tABC_AsyncBitCoinInfo info = new tABC_AsyncBitCoinInfo(asyncBitCoinInfo_ptr, false);
+        tABC_AsyncBitCoinInfo info = Jni.newAsyncBitcoinInfo(asyncBitCoinInfo_ptr);
         tABC_AsyncEventType type = info.getEventType();
 
         AirbitzCore.debugLevel(1, "asyncBitCoinInfo callback type = "+type.toString());
@@ -1127,7 +1143,7 @@ public class Account {
         /*
         } else if (type == tABC_AsyncEventType.ABC_AsyncEventType_IncomingSweep) {
             String txid = info.getSzTxID();
-            long amount = get64BitLongAtPtr(SWIGTYPE_p_int64_t.getCPtr(info.getSweepSatoshi()));
+            long amount = get64BitLongAtPtr(Jni.getCPtr(info.getSweepSatoshi()));
             if (mCallbacks != null) {
                 mCallbacks.userSweep(wallet, tx);
             }
@@ -1212,7 +1228,7 @@ public class Account {
         boolean negative = amount < 0;
         if(negative)
             amount = -amount;
-        int result = Jni.FormatAmount(amount, SWIGTYPE_p_p_char.getCPtr(ppChar), decimalPlaces, false, tABC_Error.getCPtr(error));
+        int result = Jni.FormatAmount(amount, Jni.getCPtr(ppChar), decimalPlaces, false, Jni.getCPtr(error));
         if ( result != 0)
         {
             return "";
@@ -1371,7 +1387,7 @@ public class Account {
         SWIGTYPE_p_double currency = core.new_doublep();
 
         long out = Jni.satoshiToCurrency(mUsername, mPassword,
-                satoshi, SWIGTYPE_p_double.getCPtr(currency), currencyNum, tABC_Error.getCPtr(error));
+                satoshi, Jni.getCPtr(currency), currencyNum, Jni.getCPtr(error));
 
         return core.doublep_value(currency);
     }
@@ -1405,14 +1421,14 @@ public class Account {
         result = core.ABC_CurrencyToSatoshi(mUsername, mPassword,
             currency, currencyNum, satoshi, error);
 
-        return Jni.get64BitLongAtPtr(l.getCPtr(l));
+        return Jni.get64BitLongAtPtr(Jni.getCPtr(l));
     }
 
     public void otpAuthGet() throws AirbitzException {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_long ptimeout = core.new_longp();
         SWIGTYPE_p_int lp = core.new_intp();
-        SWIGTYPE_p_bool pbool = new SWIGTYPE_p_bool(lp.getCPtr(lp), false);
+        SWIGTYPE_p_bool pbool = Jni.newBool(Jni.getCPtr(lp));
 
         core.ABC_OtpAuthGet(
             mUsername, mPassword,
@@ -1460,11 +1476,11 @@ public class Account {
         } else {
             tABC_Error error = new tABC_Error();
             SWIGTYPE_p_long lp = core.new_longp();
-            SWIGTYPE_p_bool okay = new SWIGTYPE_p_bool(lp.getCPtr(lp), false);
+            SWIGTYPE_p_bool okay = Jni.newBool(Jni.getCPtr(lp));
 
             core.ABC_PasswordOk(mUsername, password, okay, error);
             if (error.getCode() == tABC_CC.ABC_CC_Ok) {
-                check = Jni.getBytesAtPtr(lp.getCPtr(lp), 1)[0] != 0;
+                check = Jni.getBytesAtPtr(Jni.getCPtr(lp), 1)[0] != 0;
             } else {
                 AirbitzCore.debugLevel(1, "Password OK error:"+ error.getSzDescription());
             }
@@ -1475,11 +1491,11 @@ public class Account {
     public boolean passwordExists() {
         tABC_Error pError = new tABC_Error();
         SWIGTYPE_p_long lp = core.new_longp();
-        SWIGTYPE_p_bool exists = new SWIGTYPE_p_bool(lp.getCPtr(lp), false);
+        SWIGTYPE_p_bool exists = Jni.newBool(Jni.getCPtr(lp));
 
         tABC_CC result = core.ABC_PasswordExists(mUsername, exists, pError);
         if(pError.getCode().equals(tABC_CC.ABC_CC_Ok)) {
-            return Jni.getBytesAtPtr(lp.getCPtr(lp), 1)[0] != 0;
+            return Jni.getBytesAtPtr(Jni.getCPtr(lp), 1)[0] != 0;
         } else {
             AirbitzCore.debugLevel(1, "Password Exists error:"+pError.getSzDescription());
             return true;

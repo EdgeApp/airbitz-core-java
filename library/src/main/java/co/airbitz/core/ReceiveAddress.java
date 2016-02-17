@@ -31,6 +31,17 @@
 
 package co.airbitz.core;
 
+import co.airbitz.internal.Jni;
+import co.airbitz.internal.SWIGTYPE_p_int;
+import co.airbitz.internal.SWIGTYPE_p_long;
+import co.airbitz.internal.SWIGTYPE_p_p_char;
+import co.airbitz.internal.SWIGTYPE_p_p_unsigned_char;
+import co.airbitz.internal.SWIGTYPE_p_unsigned_int;
+import co.airbitz.internal.core;
+import co.airbitz.internal.tABC_CC;
+import co.airbitz.internal.tABC_Error;
+import co.airbitz.internal.tABC_TxDetails;
+
 public class ReceiveAddress {
     private static String TAG = ReceiveAddress.class.getSimpleName();
 
@@ -145,7 +156,7 @@ public class ReceiveAddress {
     }
 
     private boolean update() {
-        Jni.set64BitLongAtPtr(mDetails.getCPtr(mDetails) + 0, mSatoshi);
+        Jni.set64BitLongAtPtr(Jni.getCPtr(mDetails) + 0, mSatoshi);
         tABC_Error error = new tABC_Error();
         mDetails.setAmountFeesAirbitzSatoshi(core.new_int64_tp());
         mDetails.setAmountFeesMinersSatoshi(core.new_int64_tp());

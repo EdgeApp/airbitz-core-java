@@ -31,10 +31,7 @@ android.libraryVariants.all { variant ->
     exclude '**/BuildConfig.java' 
     exclude '**/R.java' 
     exclude '**/SWIG*' 
-    exclude '**/tABC_*' 
-    exclude '**/core.java' 
-    exclude '**/coreJNI.java' 
-    exclude '**/coreConstants.java' 
+    exclude '**/internal/*.java' 
   }
 }
 
@@ -65,13 +62,13 @@ publishing {
 		mainnetLibrary(MavenPublication) {
             groupId 'co.airbitz'
             artifactId 'airbitz-core-android'
-            version '0.0.4'
+            version '0.0.5'
 			artifact("$buildDir/outputs/aar/library-mainnet-release.aar")
         }
 		testnetLibrary(MavenPublication) {
             groupId 'co.airbitz'
             artifactId 'airbitz-core-android-testnet'
-            version '0.0.4'
+            version '0.0.5'
 			artifact("$buildDir/outputs/aar/library-nettest-release.aar")
         }
     }

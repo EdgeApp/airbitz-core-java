@@ -37,6 +37,15 @@ import java.util.Currency;
 import java.util.Locale;
 import java.util.Map;
 
+import co.airbitz.internal.Jni;
+import co.airbitz.internal.SWIGTYPE_p_int64_t;
+import co.airbitz.internal.SWIGTYPE_p_long;
+import co.airbitz.internal.SWIGTYPE_p_p_sABC_AccountSettings;
+import co.airbitz.internal.core;
+import co.airbitz.internal.tABC_AccountSettings;
+import co.airbitz.internal.tABC_CC;
+import co.airbitz.internal.tABC_Error;
+
 public class AccountSettings {
     private static String TAG = AirbitzCore.class.getSimpleName();
 
@@ -55,7 +64,7 @@ public class AccountSettings {
 
         core.ABC_LoadAccountSettings(mAccount.getUsername(), mAccount.getPassword(), pAccountSettings, error);
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
-            mSettings = new tABC_AccountSettings(core.longp_value(lp), false);
+            mSettings = Jni.newAccountSettings(core.longp_value(lp));
             if (mSettings.getCurrencyNum() == 0) {
                 setupDefaultCurrency();
             }
@@ -200,13 +209,13 @@ public class AccountSettings {
 
     public void setDailySpendLimitSatoshis(long spendLimit) {
         SWIGTYPE_p_int64_t limit = core.new_int64_tp();
-        Jni.set64BitLongAtPtr(SWIGTYPE_p_int64_t.getCPtr(limit), spendLimit);
+        Jni.set64BitLongAtPtr(Jni.getCPtr(limit), spendLimit);
         settings().setDailySpendLimitSatoshis(limit);
     }
 
     public long getDailySpendLimitSatoshis() {
         SWIGTYPE_p_int64_t satoshi = settings().getDailySpendLimitSatoshis();
-        return Jni.get64BitLongAtPtr(SWIGTYPE_p_int64_t.getCPtr(satoshi));
+        return Jni.get64BitLongAtPtr(Jni.getCPtr(satoshi));
     }
 
     public void setSpendRequirePin(boolean value) {
@@ -219,13 +228,13 @@ public class AccountSettings {
 
     public void setSpendRequirePinSatoshis(long spendLimit) {
         SWIGTYPE_p_int64_t limit = core.new_int64_tp();
-        Jni.set64BitLongAtPtr(SWIGTYPE_p_int64_t.getCPtr(limit), spendLimit);
+        Jni.set64BitLongAtPtr(Jni.getCPtr(limit), spendLimit);
         settings().setSpendRequirePinSatoshis(limit);
     }
 
     public long getSpendRequirePinSatoshis() {
         SWIGTYPE_p_int64_t satoshi = settings().getSpendRequirePinSatoshis();
-        return Jni.get64BitLongAtPtr(SWIGTYPE_p_int64_t.getCPtr(satoshi));
+        return Jni.get64BitLongAtPtr(Jni.getCPtr(satoshi));
     }
 
     public void setBDisablePINLogin(boolean value) {

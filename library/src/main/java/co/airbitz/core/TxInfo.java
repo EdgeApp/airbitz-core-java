@@ -31,6 +31,13 @@
 
 package co.airbitz.core;
 
+import co.airbitz.internal.Jni;
+import co.airbitz.internal.SWIGTYPE_p_int64_t;
+import co.airbitz.internal.SWIGTYPE_p_p_sABC_TxOutput;
+import co.airbitz.internal.core;
+import co.airbitz.internal.tABC_TxDetails;
+import co.airbitz.internal.tABC_TxInfo;
+
 class TxInfo extends tABC_TxInfo {
     String mID;
     long mCountOutputs;
@@ -44,15 +51,15 @@ class TxInfo extends tABC_TxInfo {
             mID = super.getSzID();
             mCountOutputs = super.getCountOutputs();
             SWIGTYPE_p_int64_t temp = super.getTimeCreation();
-            mCreationTime = Jni.get64BitLongAtPtr(SWIGTYPE_p_int64_t.getCPtr(temp));
+            mCreationTime = Jni.get64BitLongAtPtr(Jni.getCPtr(temp));
 
             tABC_TxDetails txd = super.getPDetails();
-            mDetails = new TxDetails(tABC_TxDetails.getCPtr(txd));
+            mDetails = new TxDetails(Jni.getCPtr(txd));
 
-            if(mCountOutputs>0) {
+            if (mCountOutputs > 0) {
                 mOutputs = new TxOutput[(int) mCountOutputs];
                 SWIGTYPE_p_p_sABC_TxOutput outputs = super.getAOutputs();
-                long base = SWIGTYPE_p_p_sABC_TxOutput.getCPtr(outputs);
+                long base = Jni.getCPtr(outputs);
                 for (int i = 0; i < mCountOutputs; i++) {
                     long start = core.longp_value(new Jni.pLong(base + i * 4));
                     mOutputs[i] = new TxOutput(start);

@@ -31,6 +31,9 @@
 
 package co.airbitz.core;
 
+import co.airbitz.internal.SWIGTYPE_p_void;
+import co.airbitz.internal.tABC_QuestionChoice;
+
 public class QuestionChoice extends tABC_QuestionChoice {
     String mQuestion = null;
     String mCategory = null;

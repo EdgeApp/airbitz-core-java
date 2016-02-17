@@ -41,6 +41,9 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.List;
 
+import co.airbitz.internal.tABC_CC;
+import co.airbitz.internal.tABC_Error;
+
 class Utils {
     private static final String CERT_FILENAME = "ca-certificates.crt";
 

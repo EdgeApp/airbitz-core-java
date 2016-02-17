@@ -13,9 +13,7 @@ TODO
 .project
 *.keystore
 usercontext.properties
-library/src/main/java/co/airbitz/core/tABC_*.java
-library/src/main/java/co/airbitz/core/SWIGTYPE*.java
-library/src/main/java/co/airbitz/core/core*.java
+library/src/main/java/co/airbitz/internal/*.java
 library/src/main/jni/ABC-const.h
 library/src/main/jni/ABC.h
 library/src/main/jni/ABC_wrap.c

@@ -40,6 +40,14 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.List;
 
+import co.airbitz.internal.SWIGTYPE_p_int;
+import co.airbitz.internal.SWIGTYPE_p_long;
+import co.airbitz.internal.SWIGTYPE_p_p_sABC_TxDetails;
+import co.airbitz.internal.core;
+import co.airbitz.internal.tABC_CC;
+import co.airbitz.internal.tABC_Error;
+import co.airbitz.internal.tABC_TxDetails;
+
 public class Transaction {
     private static String TAG = Transaction.class.getSimpleName();
     private static int CONFIRMED_CONFIRMATION_COUNT = 3;

@@ -31,6 +31,11 @@
 
 package co.airbitz.core;
 
+import co.airbitz.internal.SWIGTYPE_p_int64_t;
+import co.airbitz.internal.core;
+import co.airbitz.internal.tABC_TxDetails;
+import co.airbitz.internal.Jni;
+
 public class TxDetails extends tABC_TxDetails {
     long mAmountSatoshi; /** amount of bitcoins in satoshi (including fees if any) */
     long mAmountFeesAirbitzSatoshi;   /** airbitz fees in satoshi */
@@ -46,11 +51,11 @@ public class TxDetails extends tABC_TxDetails {
         super(pv, false);
         if (pv != 0) {
             mAmountSatoshi = Jni.get64BitLongAtPtr(
-                SWIGTYPE_p_int64_t.getCPtr(getAmountSatoshi()));
+                Jni.getCPtr(getAmountSatoshi()));
             mAmountFeesAirbitzSatoshi = Jni.get64BitLongAtPtr(
-                SWIGTYPE_p_int64_t.getCPtr(getAmountFeesAirbitzSatoshi()));
+                Jni.getCPtr(getAmountFeesAirbitzSatoshi()));
             mAmountFeesMinersSatoshi = Jni.get64BitLongAtPtr(
-                SWIGTYPE_p_int64_t.getCPtr(getAmountFeesMinersSatoshi()));
+                Jni.getCPtr(getAmountFeesMinersSatoshi()));
             mAmountCurrency = super.getAmountCurrency();
 
             mName = super.getSzName();

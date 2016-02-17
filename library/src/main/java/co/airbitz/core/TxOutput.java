@@ -31,6 +31,10 @@
 
 package co.airbitz.core;
 
+import co.airbitz.internal.Jni;
+import co.airbitz.internal.SWIGTYPE_p_int64_t;
+import co.airbitz.internal.tABC_TxOutput;
+
 public class TxOutput extends tABC_TxOutput {
     /** Was this output used as an input to a tx? **/
     boolean     mInput;
@@ -49,7 +53,7 @@ public class TxOutput extends tABC_TxOutput {
             mInput = super.getInput();
             mAddress = super.getSzAddress();
             mTxId = super.getSzTxId();
-            mValue = Jni.get64BitLongAtPtr(SWIGTYPE_p_int64_t.getCPtr(getValue()));
+            mValue = Jni.get64BitLongAtPtr(Jni.getCPtr(getValue()));
         }
     }
 

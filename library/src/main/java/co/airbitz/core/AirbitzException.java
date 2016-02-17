@@ -2,6 +2,9 @@ package co.airbitz.core;
 
 import android.content.Context;
 
+import co.airbitz.internal.tABC_CC;
+import co.airbitz.internal.tABC_Error;
+
 public class AirbitzException extends Exception {
     private tABC_CC mCode;
     private tABC_Error mError;

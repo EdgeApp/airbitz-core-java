@@ -38,6 +38,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import co.airbitz.internal.Jni;
+import co.airbitz.internal.core;
+
 public class Currencies {
     private int[] mCurrencyNumbers;
     private Map<Integer, String> mCurrencySymbolCache = new HashMap<>();
