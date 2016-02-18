@@ -36,6 +36,7 @@ import java.util.Calendar;
 import java.util.List;
 
 import co.airbitz.internal.Jni;
+import co.airbitz.internal.SWIGTYPE_p_bool;
 import co.airbitz.internal.SWIGTYPE_p_int64_t;
 import co.airbitz.internal.SWIGTYPE_p_int;
 import co.airbitz.internal.SWIGTYPE_p_long;
@@ -50,17 +51,165 @@ import co.airbitz.internal.tABC_Error;
 public class Wallet {
     private Account mAccount;
     private String mName;
-    private String mUUID;
+    private String mId;
     private int mCurrencyNum;
-    private long mAttributes;
     private long mBalanceSatoshi = 0;
+    private boolean mArchived = false;
     private List<Transaction> mTransactions;
 
-    Wallet(Account account) {
+    Wallet(Account account, String uuid) {
         this.mAccount = account;
         this.mCurrencyNum = -1;
         this.mTransactions = new ArrayList<Transaction>();
+        this.mId = uuid;
+        setup();
     }
+
+    private void setup() {
+        tABC_Error error = new tABC_Error();
+        SWIGTYPE_p_long lp = core.new_longp();
+        SWIGTYPE_p_bool archived = Jni.newBool(Jni.getCPtr(lp));
+        core.ABC_WalletArchived(mAccount.getUsername(), mId, archived, error);
+        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
+            mArchived = Jni.get64BitLongAtPtr(Jni.getCPtr(lp)) == 1;
+        } else {
+            mArchived = false;
+        }
+    }
+
+    public boolean isSynced() {
+        return mCurrencyNum != -1;
+    }
+
+    public boolean isArchived() {
+        return mArchived;
+    }
+
+    public String id() {
+        return mId;
+    }
+
+    /**
+     * Internally only...
+     */
+    protected void setUUID(String uuid) {
+        mId = uuid;
+    }
+
+    public boolean walletArchived(boolean archived) {
+        long attr = archived ? 1 : 0;
+        tABC_Error error = new tABC_Error();
+        tABC_CC result = core.ABC_SetWalletArchived(
+                mAccount.getUsername(), mAccount.getPassword(),
+                id(), attr, error);
+        if (result == tABC_CC.ABC_CC_Ok) {
+            mArchived = archived;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean walletRemove() {
+        tABC_Error error = new tABC_Error();
+        tABC_CC result = core.ABC_WalletRemove(mAccount.getUsername(), id(), error);
+        if (result == tABC_CC.ABC_CC_Ok) {
+            mAccount.stopWatcher(id());
+            mAccount.reloadWallets();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean name(String name) {
+        tABC_Error error = new tABC_Error();
+        tABC_CC result = core.ABC_RenameWallet(
+                mAccount.getUsername(), mAccount.getPassword(),
+                id(), name, error);
+        if (result == tABC_CC.ABC_CC_Ok) {
+            mName = name;
+        }
+        return result == tABC_CC.ABC_CC_Ok;
+    }
+
+    public String name() {
+        return mName;
+    }
+
+    /**
+     * Only used internally.
+     */
+    protected void setName(String name) {
+        this.mName = name;
+    }
+
+    public int currencyNum() {
+        return mCurrencyNum;
+    }
+
+    public void currencyNum(int num) {
+        mCurrencyNum = num;
+    }
+
+    public long balance() {
+        return mBalanceSatoshi;
+    }
+
+    public void balance(long bal) {
+        mBalanceSatoshi = bal;
+    }
+
+    public String seed() {
+        tABC_Error error = new tABC_Error();
+        SWIGTYPE_p_long lp = core.new_longp();
+        SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
+
+        tABC_CC result = core.ABC_ExportWalletSeed(
+                mAccount.getUsername(), mAccount.getPassword(),
+                id(), ppChar, error);
+        if (tABC_CC.ABC_CC_Ok == result) {
+            return Jni.getStringAtPtr(core.longp_value(lp));
+        } else {
+            return null;
+        }
+    }
+
+    public String csvExport(long start, long end) {
+        tABC_Error pError = new tABC_Error();
+
+        SWIGTYPE_p_long lp = core.new_longp();
+        SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
+
+        SWIGTYPE_p_int64_t startTime = core.new_int64_tp();
+        Jni.set64BitLongAtPtr(Jni.getCPtr(startTime), start); //0 means all transactions
+
+        SWIGTYPE_p_int64_t endTime = core.new_int64_tp();
+        Jni.set64BitLongAtPtr(Jni.getCPtr(endTime), end); //0 means all transactions
+
+        tABC_CC result = core.ABC_CsvExport(
+                mAccount.getUsername(), mAccount.getPassword(),
+                id(), startTime, endTime, ppChar, pError);
+        if (result == tABC_CC.ABC_CC_Ok) {
+            return Jni.getStringAtPtr(core.longp_value(lp)); // will be null for NoRecoveryQuestions
+        } else if (result == tABC_CC.ABC_CC_NoTransaction) {
+            return "";
+        } else {
+            AirbitzCore.debugLevel(1, pError.getSzDescription() +
+                            ";" + pError.getSzSourceFile() +
+                            ";" + pError.getSzSourceFunc() +
+                            ";" + pError.getNSourceLine());
+            return null;
+        }
+    }
+
+    public ReceiveAddress.Builder receiveRequestBuilders() {
+        return new ReceiveAddress.Builder(mAccount, this);
+    }
+
+    public SpendTarget newSpendTarget() {
+        return new SpendTarget(mAccount, this);
+    }
+
 
     public Transaction getTransaction(String txid) {
         tABC_Error error = new tABC_Error();
@@ -71,7 +220,7 @@ public class Wallet {
 
         tABC_CC result = core.ABC_GetTransaction(
                 mAccount.getUsername(), mAccount.getPassword(),
-                this.getUUID(), txid, pTxInfo, error);
+                id(), txid, pTxInfo, error);
         if (result == tABC_CC.ABC_CC_Ok) {
             TxInfo txInfo = new TxInfo(core.longp_value(lp));
             transaction = new Transaction(mAccount, this, txInfo);
@@ -82,7 +231,11 @@ public class Wallet {
         return transaction;
     }
 
-    public List<Transaction> loadTransactionsRange(long start, long end) {
+    public List<Transaction> transactions() {
+        return transactions(0, 0);
+    }
+
+    public List<Transaction> transactions(long start, long end) {
         List<Transaction> listTransactions = new ArrayList<Transaction>();
         tABC_Error error = new tABC_Error();
 
@@ -100,7 +253,7 @@ public class Wallet {
 
         tABC_CC result = core.ABC_GetTransactions(
                 mAccount.getUsername(), mAccount.getPassword(),
-                this.getUUID(), startTime, endTime, paTxInfo, puCount, error);
+                id(), startTime, endTime, paTxInfo, puCount, error);
 
         if (result == tABC_CC.ABC_CC_Ok) {
             int ptrToInfo = core.longp_value(lp);
@@ -114,11 +267,6 @@ public class Wallet {
                 Transaction in = new Transaction(mAccount, this, txi);
                 listTransactions.add(in);
             }
-            long bal = 0;
-            for (Transaction at : listTransactions) {
-                bal += at.getAmountSatoshi();
-                at.setBalance(bal);
-            }
 
             core.ABC_FreeTransactions(new Jni.ppTxInfo(ptrToInfo), count);
             mTransactions = listTransactions;
@@ -128,11 +276,7 @@ public class Wallet {
         return listTransactions;
     }
 
-    public List<Transaction> loadAllTransactions() {
-        return loadTransactionsRange(0, 0);
-    }
-
-    public List<Transaction> searchTransactionsIn(String searchText) {
+    public List<Transaction> transactionsSearch(String searchText) {
         List<Transaction> listTransactions = new ArrayList<Transaction>();
         tABC_Error error = new tABC_Error();
 
@@ -144,7 +288,7 @@ public class Wallet {
 
         tABC_CC result = core.ABC_SearchTransactions(
                 mAccount.getUsername(), mAccount.getPassword(),
-                this.getUUID(), searchText, paTxInfo, puCount, error);
+                id(), searchText, paTxInfo, puCount, error);
         if (result == tABC_CC.ABC_CC_Ok) {
             int ptrToInfo = core.longp_value(lp);
             int count = core.intp_value(pCount);
@@ -164,86 +308,6 @@ public class Wallet {
         return listTransactions;
     }
 
-    public boolean walletRemove() {
-        tABC_Error error = new tABC_Error();
-        tABC_CC result = core.ABC_WalletRemove(mAccount.getUsername(), this.getUUID(), error);
-        if (result == tABC_CC.ABC_CC_Ok) {
-            mAccount.stopWatcher(this.getUUID());
-            mAccount.reloadWallets();
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public boolean walletRename(String name) {
-        tABC_Error error = new tABC_Error();
-        tABC_CC result = core.ABC_RenameWallet(
-                mAccount.getUsername(), mAccount.getPassword(),
-                this.getUUID(), name, error);
-        return result == tABC_CC.ABC_CC_Ok;
-    }
-
-    public boolean walletArchived(boolean archived) {
-        if (archived) {
-            setAttributes(1);
-        } else {
-            setAttributes(0);
-        }
-        tABC_Error error = new tABC_Error();
-        tABC_CC result = core.ABC_SetWalletArchived(
-                mAccount.getUsername(), mAccount.getPassword(),
-                this.getUUID(), this.getAttributes(), error);
-        if (result == tABC_CC.ABC_CC_Ok) {
-            return true;
-        }
-        return false;
-    }
-
-
-    public String csvExport(long start, long end) {
-        tABC_Error pError = new tABC_Error();
-
-        SWIGTYPE_p_long lp = core.new_longp();
-        SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
-
-        SWIGTYPE_p_int64_t startTime = core.new_int64_tp();
-        Jni.set64BitLongAtPtr(Jni.getCPtr(startTime), start); //0 means all transactions
-
-        SWIGTYPE_p_int64_t endTime = core.new_int64_tp();
-        Jni.set64BitLongAtPtr(Jni.getCPtr(endTime), end); //0 means all transactions
-
-        tABC_CC result = core.ABC_CsvExport(
-                mAccount.getUsername(), mAccount.getPassword(),
-                getUUID(), startTime, endTime, ppChar, pError);
-        if (result == tABC_CC.ABC_CC_Ok) {
-            return Jni.getStringAtPtr(core.longp_value(lp)); // will be null for NoRecoveryQuestions
-        } else if (result == tABC_CC.ABC_CC_NoTransaction) {
-            return "";
-        } else {
-            AirbitzCore.debugLevel(1, pError.getSzDescription() +
-                            ";" + pError.getSzSourceFile() +
-                            ";" + pError.getSzSourceFunc() +
-                            ";" + pError.getNSourceLine());
-            return null;
-        }
-    }
-
-    public String getPrivateSeed() {
-        tABC_Error error = new tABC_Error();
-        SWIGTYPE_p_long lp = core.new_longp();
-        SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
-
-        tABC_CC result = core.ABC_ExportWalletSeed(
-                mAccount.getUsername(), mAccount.getPassword(),
-                this.getUUID(), ppChar, error);
-        if (tABC_CC.ABC_CC_Ok == result) {
-            return Jni.getStringAtPtr(core.longp_value(lp));
-        } else {
-            return null;
-        }
-    }
-
     public String sweepKey(String wif) {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_long lp = core.new_longp();
@@ -251,7 +315,7 @@ public class Wallet {
 
         int result = Jni.coreSweepKey(
                 mAccount.getUsername(), mAccount.getPassword(),
-                getUUID(), wif, Jni.getCPtr(ppChar), Jni.getCPtr(error));
+                id(), wif, Jni.getCPtr(ppChar), Jni.getCPtr(error));
         if (result != 0) {
             return "";
         } else {
@@ -259,88 +323,11 @@ public class Wallet {
         }
     }
 
-    public ReceiveAddress.Builder receiveRequestBuilders() {
-        return new ReceiveAddress.Builder(mAccount, this);
-    }
-
-    public SpendTarget newSpendTarget() {
-        return new SpendTarget(mAccount, this);
-    }
-
-    public long GetTotalSentToday() {
-        Calendar beginning = Calendar.getInstance();
-        long end = beginning.getTimeInMillis() / 1000;
-        beginning.set(Calendar.HOUR_OF_DAY, 0);
-        beginning.set(Calendar.MINUTE, 0);
-        long start = beginning.getTimeInMillis() / 1000;
-
-        long sum = 0;
-        List<Transaction> list = loadTransactionsRange(start, end);
-        for (Transaction tx : list) {
-            if (tx.getAmountSatoshi() < 0) {
-                sum -= tx.getAmountSatoshi();
-            }
-        }
-        return sum;
-    }
-
-    public boolean isArchived() {
-        return (getAttributes() & 0x1) == 1;
-    }
-
-    public String getName() {
-        return mName;
-    }
-
-    public void setName(String name) {
-        mName = name;
-    }
-
-    public String getUUID() {
-        return mUUID;
-    }
-
-    public void setUUID(String uuid) {
-        mUUID = uuid;
-    }
-
-    public int getCurrencyNum() {
-        return mCurrencyNum;
-    }
-
-    public void setCurrencyNum(int num) {
-        mCurrencyNum = num;
-    }
-
-    public boolean isLoading() {
-        return mCurrencyNum == -1;
-    }
-
-    public long getAttributes() {
-        return mAttributes;
-    }
-
-    public void setAttributes(long attr) {
-        mAttributes = attr;
-    }
-
-    public long getBalanceSatoshi() {
-        return mBalanceSatoshi;
-    }
-
-    public void setBalanceSatoshi(long bal) {
-        mBalanceSatoshi = bal;
-    }
-
-    public List<Transaction> getTransactions() {
-        return mTransactions;
-    }
-
     public boolean finalizeRequest(String address) {
         tABC_Error error = new tABC_Error();
         core.ABC_FinalizeReceiveRequest(
                 mAccount.getUsername(), mAccount.getPassword(),
-                getUUID(), address, error);
+                id(), address, error);
         return error.getCode() == tABC_CC.ABC_CC_Ok;
     }
 }

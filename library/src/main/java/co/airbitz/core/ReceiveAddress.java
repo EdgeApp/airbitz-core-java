@@ -139,7 +139,7 @@ public class ReceiveAddress {
         tABC_Error error = new tABC_Error();
         core.ABC_PrioritizeAddress(
                 mAccount.getUsername(), mAccount.getPassword(),
-                mWallet.getUUID(), mAddress, error);
+                mWallet.id(), mAddress, error);
     }
 
     public boolean finalizeRequest() {
@@ -148,7 +148,7 @@ public class ReceiveAddress {
         tABC_Error error = new tABC_Error();
         core.ABC_FinalizeReceiveRequest(
                 mAccount.getUsername(), mAccount.getPassword(),
-                mWallet.getUUID(), mAddress, error);
+                mWallet.id(), mAddress, error);
         return error.getCode() == tABC_CC.ABC_CC_Ok;
     }
 
@@ -173,13 +173,13 @@ public class ReceiveAddress {
         SWIGTYPE_p_p_char pRequestID = core.longp_to_ppChar(lp);
         core.ABC_CreateReceiveRequest(
             mAccount.getUsername(), mAccount.getPassword(),
-            mWallet.getUUID(), mDetails, pRequestID, error);
+            mWallet.id(), mDetails, pRequestID, error);
 
         if (tABC_CC.ABC_CC_Ok == error.getCode()) {
             mAddress = Jni.getStringAtPtr(core.longp_value(lp));
             core.ABC_ModifyReceiveRequest(
                     mAccount.getUsername(), mAccount.getPassword(),
-                    mWallet.getUUID(), mAddress, mDetails, error);
+                    mWallet.id(), mAddress, mDetails, error);
             if (tABC_CC.ABC_CC_Ok == error.getCode()) {
                 setupQrCode();
                 return true;
@@ -202,7 +202,7 @@ public class ReceiveAddress {
 
         core.ABC_GenerateRequestQRCode(
                 mAccount.getUsername(), mAccount.getPassword(),
-                mWallet.getUUID(), mAddress, ppURI, ppChar, pUCount, error);
+                mWallet.id(), mAddress, ppURI, ppChar, pUCount, error);
         int width = core.intp_value(pWidth);
         mUri = Jni.getStringAtPtr(core.longp_value(lp2));
         mQrCode = Jni.getBytesAtPtr(core.longp_value(lp), width * width);

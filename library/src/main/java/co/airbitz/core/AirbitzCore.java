@@ -171,13 +171,13 @@ public class AirbitzCore {
 
     public void background() {
         for (Account account : mAccounts) {
-            account.startAllAsyncUpdates();
+            account.stopAllAsyncUpdates();
         }
     }
 
     public void foreground() {
         for (Account account : mAccounts) {
-            account.stopAllAsyncUpdates();
+            account.startAllAsyncUpdates();
         }
     }
 

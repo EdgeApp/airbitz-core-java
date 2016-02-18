@@ -471,17 +471,14 @@ public class Account {
         tABC_CC result;
         tABC_Error error = new tABC_Error();
 
-        Wallet wallet = new Wallet(this);
-        wallet.setName("Loading...");
-        wallet.setUUID(uuid);
-
+        Wallet wallet = new Wallet(this, uuid);
         if (null != mWatcherTasks.get(uuid)) {
             // Load Wallet name
             SWIGTYPE_p_long pName = core.new_longp();
             SWIGTYPE_p_p_char ppName = core.longp_to_ppChar(pName);
             result = core.ABC_WalletName(mUsername, uuid, ppName, error);
             if (result == tABC_CC.ABC_CC_Ok) {
-                wallet.setName(Jni.getStringAtPtr(core.longp_value(pName)));
+                wallet.name(Jni.getStringAtPtr(core.longp_value(pName)));
             }
 
             // Load currency
@@ -490,32 +487,20 @@ public class Account {
 
             result = core.ABC_WalletCurrency(mUsername, uuid, pCurrency, error);
             if (result == tABC_CC.ABC_CC_Ok) {
-                wallet.setCurrencyNum(core.intp_value(pCurrency));
+                wallet.currencyNum(core.intp_value(pCurrency));
             } else {
-                wallet.setCurrencyNum(-1);
-                wallet.setName("Loading...");
+                wallet.currencyNum(-1);
             }
 
             // Load balance
             SWIGTYPE_p_int64_t l = core.new_int64_tp();
             result = core.ABC_WalletBalance(mUsername, uuid, l, error);
             if (result == tABC_CC.ABC_CC_Ok) {
-                wallet.setBalanceSatoshi(
-                    Jni.get64BitLongAtPtr(Jni.getCPtr(l)));
+                wallet.balance(Jni.get64BitLongAtPtr(Jni.getCPtr(l)));
             } else {
-                wallet.setBalanceSatoshi(0);
+                wallet.balance(0);
             }
         }
-
-        // If there is a UUID there are wallet attributes
-        SWIGTYPE_p_long lp = core.new_longp();
-        SWIGTYPE_p_bool archived = Jni.newBool(Jni.getCPtr(lp));
-        result = core.ABC_WalletArchived(mUsername, uuid, archived, error);
-        if (result == tABC_CC.ABC_CC_Ok) {
-            wallet.setAttributes(
-                Jni.getBytesAtPtr(Jni.getCPtr(lp), 1)[0] != 0 ? 0x1 : 0);
-        }
-
         return wallet;
     }
 
@@ -575,7 +560,7 @@ public class Account {
             return null;
         }
         for (Wallet w : wallets) {
-            if (uuid.equals(w.getUUID())) {
+            if (uuid.equals(w.id())) {
                 return w;
             }
         }
@@ -586,7 +571,7 @@ public class Account {
         boolean archived = false; // non-archive
         StringBuffer uuids = new StringBuffer("");
         for (Wallet wallet : wallets) {
-            uuids.append(wallet.getUUID()).append("\n");
+            uuids.append(wallet.id()).append("\n");
         }
 
         tABC_Error error = new tABC_Error();
@@ -996,8 +981,8 @@ public class Account {
                 && null != wallets) {
             requestExchangeRateUpdate(settings().getCurrencyNum());
             for (Wallet wallet : wallets) {
-                if (wallet.getCurrencyNum() != -1) {
-                    requestExchangeRateUpdate(wallet.getCurrencyNum());
+                if (wallet.currencyNum() != -1) {
+                    requestExchangeRateUpdate(wallet.currencyNum());
                 }
             }
             mMainHandler.post(new Runnable() {

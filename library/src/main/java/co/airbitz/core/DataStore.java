@@ -89,7 +89,7 @@ public class DataStore  {
         return error.getCode() == tABC_CC.ABC_CC_Ok;
     }
 
-    public boolean clear() {
+    public boolean removeAll() {
         tABC_Error error = new tABC_Error();
         core.ABC_PluginDataClear(
             mAccount.getUsername(), mAccount.getPassword(),

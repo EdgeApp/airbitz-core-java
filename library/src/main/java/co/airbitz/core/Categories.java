@@ -54,12 +54,7 @@ public class Categories {
         this.mAccount = account;
     }
 
-    private boolean isValidCategory(String category) {
-        return category.startsWith("Expense") || category.startsWith("Exchange") ||
-                category.startsWith("Income") || category.startsWith("Transfer");
-    }
-
-    public List<String> loadCategories() {
+    public List<String> list() {
         List<String> categories = new ArrayList<String>();
 
         // get the categories from the core
@@ -89,8 +84,8 @@ public class Categories {
         return categories;
     }
 
-    public void addCategory(String strCategory) {
-        List<String> categories = loadCategories();
+    public void insert(String strCategory) {
+        List<String> categories = list();
         if (categories != null && !categories.contains(strCategory)) {
             // add the category to the core
             AirbitzCore.debugLevel(1, "Adding category: "+strCategory);
@@ -101,7 +96,7 @@ public class Categories {
         }
     }
 
-    public boolean removeCategory(String strCategory) {
+    public boolean remove(String strCategory) {
         AirbitzCore.debugLevel(1, "Remove category: "+strCategory);
         tABC_Error Error = new tABC_Error();
         tABC_CC result = core.ABC_RemoveCategory(

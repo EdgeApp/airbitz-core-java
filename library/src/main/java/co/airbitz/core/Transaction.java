@@ -54,89 +54,54 @@ public class Transaction {
 
     long mAmountFeesAirbitzSatoshi;
     long mAmountFeesMinersSatoshi;
-    long mBizId;
-    int mAttributes;
-    private String mWalletUUID;
-    private String mWalletName;
-    private String mID;
-    private String mMalleableID;
+    private String mId;
+    private String mMalId;
     private long mDate;
-    private String mName;
-    private String mAddress;
-    private String mCategory;
-    private String mNotes;
     private TxOutput[] mOutputs;
     private boolean mConfirmed;
     private boolean mSyncing;
     private int mConfirmations;
     private long mAmountSatoshi;
-    private double mAmountFiat;
     private long mMinerFees;
     private long mABFees;
-    private long mBalance;
 
     private Wallet mWallet;
     private Account mAccount;
     private TxInfo mTxInfo;
+    private MetadataSet mMeta;
 
     Transaction(Account account, Wallet wallet, TxInfo txInfo) {
         mAccount = account;
         mWallet = wallet;
         mTxInfo = txInfo;
-
-        mID = "";
-        mMalleableID = "";
-        mWalletUUID = "";
-        mWalletName = "";
-        mName = "";
-        mAmountSatoshi = 0;
-        mDate = System.currentTimeMillis();
-        mCategory = "";
-        mNotes = "";
-        mAmountFeesAirbitzSatoshi = 0;
-        mAmountFeesMinersSatoshi = 0;
-        mBizId = 0;
-        mAttributes = 0;
+        mMeta = new MetadataSet();
         setup();
     }
 
     public void setup() {
-        setID(mTxInfo.getID());
-        setName(mTxInfo.getDetails().getSzName());
-        setNotes(mTxInfo.getDetails().getSzNotes());
-        setCategory(mTxInfo.getDetails().getSzCategory());
-        setmBizId(mTxInfo.getDetails().getBizId());
-        setDate(mTxInfo.getCreationTime());
+        mId = mTxInfo.getID();
+        mMeta.name(mTxInfo.getDetails().getSzName());
+        mMeta.notes(mTxInfo.getDetails().getSzNotes());
+        mMeta.category(mTxInfo.getDetails().getSzCategory());
+        mMeta.bizid(mTxInfo.getDetails().getBizId());
+        mMeta.fiat(mTxInfo.getDetails().getmAmountCurrency());
 
-        setAmountSatoshi(mTxInfo.getDetails().getmAmountSatoshi());
+        mDate = mTxInfo.getCreationTime();
+        amount(mTxInfo.getDetails().getmAmountSatoshi());
+
         setABFees(mTxInfo.getDetails().getmAmountFeesAirbitzSatoshi());
         setMinerFees(mTxInfo.getDetails().getmAmountFeesMinersSatoshi());
 
-        setAmountFiat(mTxInfo.getDetails().getmAmountCurrency());
-        setWalletName(mWallet.getName());
-        setWalletUUID(mWallet.getUUID());
-        if (mTxInfo.getSzMalleableTxId()!=null) {
-            setmMalleableID(mTxInfo.getSzMalleableTxId());
+        if (mTxInfo.getSzMalleableTxId() != null) {
+            mMalId = mTxInfo.getSzMalleableTxId();
         }
 
-        int confirmations = height();
-        setConfirmations(confirmations);
-        setConfirmed(false);
-        setConfirmed(getConfirmations() >= CONFIRMED_CONFIRMATION_COUNT);
-        if (!getName().isEmpty()) {
-            setAddress(getName());
-        } else {
-            setAddress("");
-        }
+        mConfirmations = height();
+        mConfirmed = mConfirmations >= CONFIRMED_CONFIRMATION_COUNT;
 
-        if (!getName().isEmpty()) {
-            setAddress(getName());
-        } else {
-            setAddress("");
-        }
         TxOutput[] txo = mTxInfo.getOutputs();
         if (txo != null) {
-            setOutputs(txo);
+            mOutputs = txo;
         }
     }
 
@@ -147,22 +112,22 @@ public class Transaction {
 
         core.ABC_GetTransactionDetails(
                 mAccount.getUsername(), mAccount.getPassword(),
-                mWallet.getUUID(), getID(), pDetails, error);
+                mWallet.id(), getID(), pDetails, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
             throw new AirbitzException(null, error.getCode(), error);
         }
 
         tABC_TxDetails details = new TxDetails(core.longp_value(lp));
-        details.setSzName(getName());
-        details.setSzCategory(getCategory());
-        details.setSzNotes(getNotes());
-        details.setAmountCurrency(getAmountFiat());
-        details.setBizId(getmBizId());
+        details.setSzName(mMeta.name());
+        details.setSzCategory(mMeta.category());
+        details.setSzNotes(mMeta.notes());
+        details.setAmountCurrency(mMeta.fiat());
+        details.setBizId(mMeta.bizid());
 
         error = new tABC_Error();
         core.ABC_SetTransactionDetails(
                 mAccount.getUsername(), mAccount.getPassword(),
-                mWallet.getUUID(), getID(), details, error);
+                mWallet.id(), getID(), details, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
             throw new AirbitzException(null, error.getCode(), error);
         }
@@ -175,14 +140,14 @@ public class Transaction {
         SWIGTYPE_p_int bh = core.new_intp();
 
         setSyncing(false);
-        if (mWallet.getUUID().length() == 0 || getID().length() == 0) {
+        if (mWallet.id().length() == 0 || getID().length() == 0) {
             return 0;
         }
-        if (core.ABC_TxHeight(mWallet.getUUID(), getID(), th, Error) != tABC_CC.ABC_CC_Ok) {
+        if (core.ABC_TxHeight(mWallet.id(), getID(), th, Error) != tABC_CC.ABC_CC_Ok) {
             setSyncing(true);
             return 0;
         }
-        if (core.ABC_BlockHeight(mWallet.getUUID(), bh, Error) != tABC_CC.ABC_CC_Ok) {
+        if (core.ABC_BlockHeight(mWallet.id(), bh, Error) != tABC_CC.ABC_CC_Ok) {
             setSyncing(true);
             return 0;
         }
@@ -195,132 +160,48 @@ public class Transaction {
         return (blockHeight - txHeight) + 1;
     }
 
-    public String getWalletUUID() {
-        return mWalletUUID;
-    }
-
-    public void setWalletUUID(String uuid) {
-        this.mWalletUUID = uuid;
-    }
-
-    public String getWalletName() {
-        return mWalletName;
-    }
-
-    public void setWalletName(String name) {
-        this.mWalletName = name;
-    }
-
     public String getID() {
-        return mID;
+        return mId;
     }
 
-    public void setID(String mID) {
-        this.mID = mID;
+    public String malId() {
+        return mMalId;
     }
 
-    public String getmMalleableID() {
-        return mMalleableID;
+    public MetadataSet meta() {
+        return mMeta;
     }
 
-    public void setmMalleableID(String mID) {
-        this.mMalleableID = mID;
-    }
-
-    public long getDate() {
+    public long date() {
         return mDate;
     }
 
-    public void setDate(long mDate) {
-        this.mDate = mDate;
-    }
-
-    public String getName() {
-        return mName;
-    }
-
-    public void setName(String mName) {
-        this.mName = mName;
-    }
-
-    public String getAddress() {
-        return mAddress;
-    }
-
-    public void setAddress(String mAddress) {
-        this.mAddress = mAddress;
-    }
-
-    public String getCategory() {
-        return mCategory;
-    }
-
-    public void setCategory(String mCategory) {
-        this.mCategory = mCategory;
-    }
-
-    public String getNotes() {
-        return mNotes;
-    }
-
-    public void setNotes(String mNotes) {
-        this.mNotes = mNotes;
-    }
-
-    public TxOutput[] getOutputs() {
+    public TxOutput[] outputs() {
         return mOutputs;
-    }
-
-    public void setOutputs(TxOutput[] outputs) {
-        this.mOutputs = outputs;
     }
 
     public boolean isConfirmed() {
         return mConfirmed;
     }
 
-    public void setConfirmed(boolean mConfirmed) {
-        this.mConfirmed = mConfirmed;
-    }
-
     public boolean isSyncing() {
         return mSyncing;
     }
 
-    public void setSyncing(boolean syncing) {
+    private void setSyncing(boolean syncing) {
         this.mSyncing = syncing;
     }
 
-    public int getConfirmations() {
+    public int confirmations() {
         return mConfirmations;
     }
 
-    public void setConfirmations(int mConfirmations) {
-        this.mConfirmations = mConfirmations;
-    }
-
-    public int getAttributes() {
-        return mAttributes;
-    }
-
-    public void setAttributes(int mAttributes) {
-        this.mAttributes = mAttributes;
-    }
-
-    public long getAmountSatoshi() {
+    public long amount() {
         return mAmountSatoshi;
     }
 
-    public void setAmountSatoshi(long mAmountSatoshi) {
+    public void amount(long mAmountSatoshi) {
         this.mAmountSatoshi = mAmountSatoshi;
-    }
-
-    public double getAmountFiat() {
-        return mAmountFiat;
-    }
-
-    public void setAmountFiat(double mAmountFiat) {
-        this.mAmountFiat = mAmountFiat;
     }
 
     public long getMinerFees() {
@@ -339,14 +220,6 @@ public class Transaction {
         this.mABFees = mABFees;
     }
 
-    public long getBalance() {
-        return mBalance;
-    }
-
-    public void setBalance(long mBalance) {
-        this.mBalance = mBalance;
-    }
-
     public long getmAmountFeesAirbitzSatoshi() {
         return mAmountFeesAirbitzSatoshi;
     }
@@ -362,13 +235,4 @@ public class Transaction {
     public void setmAmountFeesMinersSatoshi(long mAmountFeesMinersSatoshi) {
         this.mAmountFeesMinersSatoshi = mAmountFeesMinersSatoshi;
     }
-
-    public long getmBizId() {
-        return mBizId;
-    }
-
-    public void setmBizId(long mBizId) {
-        this.mBizId = mBizId;
-    }
-
 }

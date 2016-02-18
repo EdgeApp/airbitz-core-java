@@ -59,7 +59,7 @@ public class UnsentTransaction {
     public boolean broadcast() {
         tABC_Error error = new tABC_Error();
         core.ABC_SpendBroadcastTx(
-                mAccount.getUsername(), mWallet.getUUID(),
+                mAccount.getUsername(), mWallet.id(),
                 mSpendTarget._pSpend, mRawTx, error);
         return error.getCode() == tABC_CC.ABC_CC_Ok;
     }
@@ -70,7 +70,7 @@ public class UnsentTransaction {
         SWIGTYPE_p_long txid = core.new_longp();
         SWIGTYPE_p_p_char pTxId = core.longp_to_ppChar(txid);
         core.ABC_SpendSaveTx(
-                mAccount.getUsername(), mWallet.getUUID(),
+                mAccount.getUsername(), mWallet.id(),
                 mSpendTarget._pSpend, mRawTx, pTxId, error);
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
             mTxId = Jni.getStringAtPtr(core.longp_value(txid));
@@ -96,14 +96,14 @@ public class UnsentTransaction {
         Transaction tx = mWallet.getTransaction(mTxId);
         if (null != tx) {
             if (destWallet != null) {
-                tx.setName(destWallet.getName());
-                tx.setCategory(categoryText + destWallet.getName());
+                tx.meta().name(destWallet.name());
+                tx.meta().category(categoryText + destWallet.name());
             }
             if (mSpendTarget.getAmountFiat() > 0) {
-                tx.setAmountFiat(mSpendTarget.getAmountFiat());
+                tx.meta().fiat(mSpendTarget.getAmountFiat());
             }
             if (0 < mSpendTarget.getBizId()) {
-                tx.setmBizId(mSpendTarget.getBizId());
+                tx.meta().bizid(mSpendTarget.getBizId());
             }
             try {
                 tx.save();
@@ -116,8 +116,8 @@ public class UnsentTransaction {
         if (destWallet != null) {
             Transaction destTx = destWallet.getTransaction(mTxId);
             if (null != destTx) {
-                destTx.setName(mWallet.getName());
-                destTx.setCategory(categoryText + mWallet.getName());
+                destTx.meta().name(mWallet.name());
+                destTx.meta().category(categoryText + mWallet.name());
                 try {
                     destTx.save();
                 } catch (AirbitzException e) {

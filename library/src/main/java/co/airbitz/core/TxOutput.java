@@ -35,31 +35,40 @@ import co.airbitz.internal.Jni;
 import co.airbitz.internal.SWIGTYPE_p_int64_t;
 import co.airbitz.internal.tABC_TxOutput;
 
-public class TxOutput extends tABC_TxOutput {
-    /** Was this output used as an input to a tx? **/
-    boolean     mInput;
-    /** The number of satoshis used in the transaction **/
-    long  mValue;
-    /** The coin address **/
-    String mAddress;
-    /** The tx address **/
-    String mTxId;
-    /** The tx index **/
-    long  mIndex;
+public class TxOutput {
+    private boolean mInput;
+    private long  mIndex;
+    private long  mValue;
+    private String mAddress;
+    private String mTxId;
 
     public TxOutput(long pv) {
-        super(pv, false);
+        tABC_TxOutput output = Jni.newTxOutput(pv);
         if (pv != 0) {
-            mInput = super.getInput();
-            mAddress = super.getSzAddress();
-            mTxId = super.getSzTxId();
-            mValue = Jni.get64BitLongAtPtr(Jni.getCPtr(getValue()));
+            mInput = output.getInput();
+            mAddress = output.getSzAddress();
+            mTxId = output.getSzTxId();
+            mValue = Jni.get64BitLongAtPtr(Jni.getCPtr(output.getValue()));
         }
     }
 
-    public boolean getmInput() {return mInput; }
-    public long getmValue() {return mValue; }
-    public String getAddress() {return mAddress; }
-    public String getTxId() {return mTxId; }
-    public long getmIndex() {return mIndex; }
+    public boolean isInput() {
+        return mInput;
+    }
+
+    public long amount() {
+        return mValue;
+    }
+
+    public String address() {
+        return mAddress;
+    }
+
+    public String txId() {
+        return mTxId;
+    }
+
+    public long index() {
+        return mIndex;
+    }
 }

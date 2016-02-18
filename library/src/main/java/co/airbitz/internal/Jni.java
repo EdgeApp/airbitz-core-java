@@ -81,6 +81,10 @@ public class Jni  {
         return new tABC_AccountSettings(cPtr, false);
     }
 
+    public static tABC_TxOutput newTxOutput(long cPtr) {
+        return new tABC_TxOutput(cPtr, false);
+    }
+
     public static SWIGTYPE_p_bool newBool(long cPtr) {
         return new SWIGTYPE_p_bool(cPtr, false);
     }
