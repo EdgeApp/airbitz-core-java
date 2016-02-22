@@ -34,6 +34,7 @@ package co.airbitz.core;
 import java.util.ArrayList;
 import java.util.Currency;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -42,9 +43,24 @@ import co.airbitz.internal.Jni;
 import co.airbitz.internal.core;
 
 public class Currencies {
+
+    public static class CurrencyEntry {
+        public String description;
+        public String code;
+        public String symbol;
+        int currencyNum;
+
+        @Override
+        public String toString() {
+            return code + " - " + description;
+        }
+    }
+
+    static Map<String, CurrencyEntry> mNumberIndex;
+    static Map<String, CurrencyEntry> mCodeIndex;
+
     private int[] mCurrencyNumbers;
     private Map<Integer, String> mCurrencySymbolCache = new HashMap<>();
-    private Map<Integer, String> mCurrencyCodeCache = new HashMap<>();
     private Map<Integer, String> mCurrencyDescriptionCache = new HashMap<>();
 
     private static Currencies sSingleton;
@@ -56,160 +72,61 @@ public class Currencies {
         return sSingleton;
     }
 
-    public String currencyCodeLookup(int currencyNum) {
-        String cached = mCurrencyCodeCache.get(currencyNum);
-        if (cached != null) {
-            return cached;
+    protected Currencies() {
+        int[] nums = Jni.getCoreCurrencyNumbers();
+        mCodeIndex = new LinkedHashMap<String, CurrencyEntry>();
+        mNumberIndex = new LinkedHashMap<String, CurrencyEntry>();
+        for (Integer number : nums) {
+            CurrencyEntry c = new CurrencyEntry();
+            c.currencyNum = number;
+            c.code = Jni.getCurrencyCode(number);
+            c.description = Jni.getCurrencyDescription(number);
+            try {
+                c.symbol = Currency.getInstance(c.code).getSymbol();
+            } catch (IllegalArgumentException e) {
+                c.symbol = "";
+            }
+            mCodeIndex.put(c.code, c);
+            mNumberIndex.put(String.valueOf(c.currencyNum), c);
         }
-
-        String code = Jni.getCurrencyCode(currencyNum);
-        if(code != null) {
-            mCurrencyCodeCache.put(currencyNum, code);
-            return code;
-        }
-
-        return "";
     }
 
-    public String currencyDescriptionLookup(int currencyNum)
-    {
-        String cached = mCurrencyDescriptionCache.get(currencyNum);
-        if (cached != null) {
-            return cached;
-        }
-
-        String description = Jni.getCurrencyDescription(currencyNum);
-        if(description != null) {
-            mCurrencyDescriptionCache.put(currencyNum, description);
-            return description;
-        }
-
-        return "";
+    public List<CurrencyEntry> getCurrencies() {
+        return new ArrayList<CurrencyEntry>(mCodeIndex.values());
     }
 
-    public String currencySymbolLookup(int currencyNum)
-    {
-        String cached = mCurrencySymbolCache.get(currencyNum);
-        if (cached != null) {
-            return cached;
+    public CurrencyEntry defaultCurrency() {
+        Locale locale = Locale.getDefault();
+        Currency currency = Currency.getInstance(locale);
+        if (mCodeIndex.containsValue(currency.getCurrencyCode())) {
+            return mCodeIndex.get(currency.getCurrencyCode());
+        } else {
+            return mCodeIndex.get("USD");
         }
+    }
 
-        try {
-            String code = currencyCodeLookup(currencyNum);
-            String symbol  = Currency.getInstance(code).getSymbol();
-            if(symbol != null) {
-                mCurrencySymbolCache.put(currencyNum, symbol);
-                return symbol;
-            }
-            else {
-                AirbitzCore.debugLevel(1, "Bad currency code: " + code);
-                return "";
-            }
-        }
-        catch (Exception e) {
+    public String currencySymbol(String code) {
+        CurrencyEntry e = mCodeIndex.get(code);
+        if (e != null) {
+            return e.symbol;
+        } else {
             return "";
         }
     }
 
-    public String getCurrencyDenomination(int currencyNum) {
-        return currencySymbolLookup(currencyNum);
-    }
-
-    public int[] getCurrencyNumberArray() {
-        ArrayList<Integer> intKeys = new ArrayList<Integer>(mCurrencyCodeCache.keySet());
-        int[] ints = new int[intKeys.size()];
-        int i = 0;
-        for (Integer n : intKeys) {
-            ints[i++] = n;
-        }
-        return ints;
-    }
-
-    public String getCurrencyAcronym(int currencyNum) {
-        return currencyCodeLookup(currencyNum);
-    }
-
-    public List<String> getCurrencyCodeAndDescriptionArray() {
-        initCurrencies();
-        List<String> strings = new ArrayList<>();
-        // Populate all codes and lists and the return list
-        for(Integer number : mCurrencyNumbers) {
-            String code = currencyCodeLookup(number);
-            String description = currencyDescriptionLookup(number);
-            String symbol = currencySymbolLookup(number);
-            strings.add(code + " - " + description);
-        }
-        return strings;
-    }
-
-    public List<String> getCurrencyCodeArray() {
-        initCurrencies();
-        List<String> strings = new ArrayList<>();
-        // Populate all codes and lists and the return list
-        for(Integer number : mCurrencyNumbers) {
-            String code = currencyCodeLookup(number);
-            strings.add(code);
-        }
-        return strings;
-    }
-
-    public void initCurrencies() {
-        if (mCurrencyNumbers == null) {
-            mCurrencyNumbers = Jni.getCoreCurrencyNumbers();
-            mCurrencySymbolCache = new HashMap<>();
-            mCurrencyCodeCache = new HashMap<>();
-            mCurrencyDescriptionCache = new HashMap<>();
-            for(Integer number : mCurrencyNumbers) {
-                currencyCodeLookup(number);
-                currencyDescriptionLookup(number);
-                currencySymbolLookup(number);
-            }
-        }
-    }
-
-    private int findCurrencyIndex(int currencyNum) {
-        for(int i=0; i< mCurrencyNumbers.length; i++) {
-            if (currencyNum == mCurrencyNumbers[i])
-                return i;
-        }
-        AirbitzCore.debugLevel(1, "CurrencyIndex not found, using default");
-        return 10; // default US
-    }
-
-    public int getCurrencyNumberFromCode(String currencyCode) {
-        Currencies.instance().initCurrencies();
-        int index = -1;
-        for (int i=0; i< mCurrencyNumbers.length; i++) {
-            if (currencyCode.equals(currencyCodeLookup(mCurrencyNumbers[i]))) {
-                index = i;
-                break;
-            }
-        }
-        if (index != -1) {
-            return mCurrencyNumbers[index];
-        }
-        return 840;
-    }
-
-    public int defaultCurrencyNum() {
-        initCurrencies();
-
-        Locale locale = Locale.getDefault();
-        Currency currency = Currency.getInstance(locale);
-        Map<Integer, String> supported = mCurrencyCodeCache;
-        if (supported.containsValue(currency.getCurrencyCode())) {
-            int number = getCurrencyNumberFromCode(currency.getCurrencyCode());
-            return number;
+    protected int map(String code) {
+        if (mCodeIndex.containsKey(code)) {
+            return mCodeIndex.get(code).currencyNum;
         } else {
             return 840;
         }
     }
 
-    public String getCurrencyCode(int currencyNumber) {
-        return Jni.getCurrencyCode(currencyNumber);
-    }
-
-    public int[] getCoreCurrencyNumbers() {
-        return Jni.getCoreCurrencyNumbers();
+    protected String map(int num) {
+        if (mNumberIndex.containsKey(String.valueOf(num))) {
+            return mNumberIndex.get(String.valueOf(num)).code;
+        } else {
+            return "USD";
+        }
     }
 }

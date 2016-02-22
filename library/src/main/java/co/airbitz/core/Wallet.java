@@ -52,10 +52,11 @@ public class Wallet {
     private Account mAccount;
     private String mName;
     private String mId;
-    private int mCurrencyNum;
-    private long mBalanceSatoshi = 0;
-    private boolean mArchived = false;
-    private List<Transaction> mTransactions;
+    int mCurrencyNum;
+    long mBalanceSatoshi = 0;
+    boolean mArchived = false;
+    boolean mSynced = false;
+    List<Transaction> mTransactions;
 
     Wallet(Account account, String uuid) {
         this.mAccount = account;
@@ -78,7 +79,7 @@ public class Wallet {
     }
 
     public boolean isSynced() {
-        return mCurrencyNum != -1;
+        return mSynced;
     }
 
     public boolean isArchived() {
@@ -143,12 +144,12 @@ public class Wallet {
         this.mName = name;
     }
 
-    public int currencyNum() {
-        return mCurrencyNum;
+    public String currencyCode() {
+        return Currencies.instance().map(mCurrencyNum);
     }
 
-    public void currencyNum(int num) {
-        mCurrencyNum = num;
+    public void currencyCode(String code) {
+        mCurrencyNum = Currencies.instance().map(code);
     }
 
     public long balance() {

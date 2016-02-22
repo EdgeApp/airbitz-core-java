@@ -79,7 +79,7 @@ public class AccountSettings {
     }
 
     protected void setupDefaultCurrency() {
-        settings().setCurrencyNum(Currencies.instance().defaultCurrencyNum());
+        currencyCode(Currencies.instance().defaultCurrency().code);
         try {
             save();
         } catch (AirbitzException e) {
@@ -159,12 +159,13 @@ public class AccountSettings {
         return settings().getSzLanguage();
     }
 
-    public void setCurrencyNum(int value) {
-        settings().setCurrencyNum(value);
+    public void currencyCode(String value) {
+        settings().setCurrencyNum(
+                Currencies.instance().map(value));
     }
 
-    public int getCurrencyNum() {
-        return settings().getCurrencyNum();
+    public String currencyCode() {
+        return Currencies.instance().map(settings().getCurrencyNum());
     }
 
     public void setExchangeRateSource(String value) {

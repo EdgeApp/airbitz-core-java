@@ -171,20 +171,15 @@ public class Account {
     }
 
     public String getUserCurrencyAcronym() {
-        AccountSettings settings = settings();
-        if (settings == null) {
-            return Currencies.instance().currencyCodeLookup(840);
-        } else {
-            return Currencies.instance().currencyCodeLookup(settings.settings().getCurrencyNum());
-        }
+        return settings().currencyCode();
     }
 
     public String getUserCurrencySymbol() {
         AccountSettings settings = settings();
         if (settings == null) {
-            return Currencies.instance().currencySymbolLookup(840);
+            return Currencies.instance().currencySymbol("USD");
         } else {
-            return Currencies.instance().currencySymbolLookup(settings.settings().getCurrencyNum());
+            return Currencies.instance().currencySymbol(settings.currencyCode());
         }
     }
 
@@ -487,10 +482,11 @@ public class Account {
 
             result = core.ABC_WalletCurrency(mUsername, uuid, pCurrency, error);
             if (result == tABC_CC.ABC_CC_Ok) {
-                wallet.currencyNum(core.intp_value(pCurrency));
+                wallet.mCurrencyNum = core.intp_value(pCurrency);
             } else {
-                wallet.currencyNum(-1);
+                wallet.mCurrencyNum = -1;
             }
+            wallet.mSynced = wallet.mCurrencyNum != -1;
 
             // Load balance
             SWIGTYPE_p_int64_t l = core.new_int64_tp();
@@ -504,13 +500,14 @@ public class Account {
         return wallet;
     }
 
-    public boolean createWallet(String walletName, int currencyNum) {
-        AirbitzCore.debugLevel(1, "createWallet(" + walletName + "," + currencyNum + ")");
+    public boolean createWallet(String walletName, String currency) {
+        AirbitzCore.debugLevel(1, "createWallet(" + walletName + "," + currency + ")");
         tABC_Error pError = new tABC_Error();
 
         SWIGTYPE_p_long lp = core.new_longp();
         SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
 
+        int currencyNum = Currencies.instance().map(currency);
         tABC_CC result = core.ABC_CreateWallet(
                 mUsername, mPassword,
                 walletName, currencyNum, ppChar, pError);
@@ -979,10 +976,10 @@ public class Account {
         if (isLoggedIn()
                 && null != settings()
                 && null != wallets) {
-            requestExchangeRateUpdate(settings().getCurrencyNum());
+            requestExchangeRateUpdate(settings().currencyCode());
             for (Wallet wallet : wallets) {
-                if (wallet.currencyNum() != -1) {
-                    requestExchangeRateUpdate(wallet.currencyNum());
+                if (wallet.isSynced()) {
+                    requestExchangeRateUpdate(wallet.currencyCode());
                 }
             }
             mMainHandler.post(new Runnable() {
@@ -996,12 +993,13 @@ public class Account {
         mExchangeHandler.sendEmptyMessage(REPEAT);
     }
 
-    private void requestExchangeRateUpdate(final Integer currencyNum) {
+    private void requestExchangeRateUpdate(final String currency) {
         mExchangeHandler.post(new Runnable() {
             public void run() {
+                int num = Currencies.instance().map(currency);
                 tABC_Error error = new tABC_Error();
                 core.ABC_RequestExchangeRateUpdate(mUsername,
-                    mPassword, currencyNum, error);
+                    mPassword, num, error);
             }
         });
     }
@@ -1149,13 +1147,13 @@ public class Account {
         return "";
     }
 
-    public String formatCurrency(double in, int currencyNum, boolean withSymbol) {
-        return formatCurrency(in, currencyNum, withSymbol, 2);
+    public String formatCurrency(double in, String currency, boolean withSymbol) {
+        return formatCurrency(in, currency, withSymbol, 2);
     }
 
-    public String formatCurrency(double in, int currencyNum, boolean withSymbol, int decimalPlaces) {
+    public String formatCurrency(double in, String currency, boolean withSymbol, int decimalPlaces) {
         String pre;
-        String denom = Currencies.instance().currencySymbolLookup(currencyNum) + " ";
+        String denom = Currencies.instance().currencySymbol(currency) + " ";
         if (in < 0)
         {
             in = Math.abs(in);
@@ -1244,46 +1242,6 @@ public class Account {
         }
     }
 
-    private int mCurrencyIndex = 0;
-    public int SettingsCurrencyIndex() {
-        int index = -1;
-        int currencyNum;
-        AccountSettings settings = settings();
-        if(settings == null && mCurrencyIndex != 0) {
-            currencyNum = mCurrencyIndex;
-        }
-        else {
-            currencyNum = settings.settings().getCurrencyNum();
-            mCurrencyIndex = currencyNum;
-        }
-        int[] currencyNumbers = Currencies.instance().getCurrencyNumberArray();
-
-        for(int i=0; i<currencyNumbers.length; i++) {
-            if(currencyNumbers[i] == currencyNum)
-                index = i;
-        }
-        if((index==-1) || (index >= currencyNumbers.length)) { // default usd
-            AirbitzCore.debugLevel(1, "currency index out of bounds "+index);
-            index = currencyNumbers.length-1;
-        }
-        return index;
-    }
-
-    public int CurrencyIndex(int currencyNum) {
-        int index = -1;
-        int[] currencyNumbers = Currencies.instance().getCurrencyNumberArray();
-
-        for(int i=0; i<currencyNumbers.length; i++) {
-            if(currencyNumbers[i] == currencyNum)
-                index = i;
-        }
-        if((index==-1) || (index >= currencyNumbers.length)) { // default usd
-            AirbitzCore.debugLevel(1, "currency index out of bounds "+index);
-            index = currencyNumbers.length-1;
-        }
-        return index;
-    }
-
     public long denominationToSatoshi(String amount) {
         int decimalPlaces = userDecimalPlaces();
 
@@ -1307,7 +1265,7 @@ public class Account {
         return 0L;
     }
 
-    public String BTCtoFiatConversion(int currencyNum) {
+    public String BTCtoFiatConversion(String currency) {
         AccountSettings settings = settings();
         if(settings != null) {
             BitcoinDenomination denomination =
@@ -1334,15 +1292,14 @@ public class Account {
                     amtBTCDenom = "1000 ";
                 }
             }
-            double o = SatoshiToCurrency(satoshi, currencyNum);
+            double o = SatoshiToCurrency(satoshi, currency);
             if (denomIndex == 2) {
                 // unit of 'bits' is so small it's useless to show it's conversion rate
                 // Instead show "1000 bits = $0.253 USD"
                 o = o * 1000;
             }
-            String currency = formatCurrency(o, currencyNum, true, fiatDecimals);
-            String currencyLabel = Currencies.instance().currencyCodeLookup(currencyNum);
-            return amtBTCDenom + mBTCDenominations[denomIndex] + " = " + currency + " " + currencyLabel;
+            String amount = formatCurrency(o, currency, true, fiatDecimals);
+            return amtBTCDenom + mBTCDenominations[denomIndex] + " = " + amount + " " + currency;
         }
         return "";
     }
@@ -1350,42 +1307,41 @@ public class Account {
     public String FormatDefaultCurrency(long satoshi, boolean btc, boolean withSymbol) {
         AccountSettings settings = settings();
         if (settings != null) {
-            int currencyNumber = settings.settings().getCurrencyNum();
-            return FormatCurrency(satoshi, currencyNumber, btc, withSymbol);
+            return FormatCurrency(satoshi, settings.currencyCode(), btc, withSymbol);
         }
         return "";
     }
 
-    public String FormatCurrency(long satoshi, int currencyNum, boolean btc, boolean withSymbol) {
+    public String FormatCurrency(long satoshi, String currency, boolean btc, boolean withSymbol) {
         String out;
         if (!btc) {
-            double o = SatoshiToCurrency(satoshi, currencyNum);
-            out = formatCurrency(o, currencyNum, withSymbol);
+            double o = SatoshiToCurrency(satoshi, currency);
+            out = formatCurrency(o, currency, withSymbol);
         } else {
             out = formatSatoshi(satoshi, withSymbol, 2);
         }
         return out;
     }
 
-    public double SatoshiToCurrency(long satoshi, int currencyNum) {
+    public double SatoshiToCurrency(long satoshi, String currency) {
         tABC_Error error = new tABC_Error();
-        SWIGTYPE_p_double currency = core.new_doublep();
+        SWIGTYPE_p_double amountFiat = core.new_doublep();
 
+        int currencyNum = Currencies.instance().map(currency);
         long out = Jni.satoshiToCurrency(mUsername, mPassword,
-                satoshi, Jni.getCPtr(currency), currencyNum, Jni.getCPtr(error));
-
-        return core.doublep_value(currency);
+                satoshi, Jni.getCPtr(amountFiat), currencyNum, Jni.getCPtr(error));
+        return core.doublep_value(amountFiat);
     }
 
-    public long parseFiatToSatoshi(String amount, int currencyNum) {
+    public long parseFiatToSatoshi(String amount, String currency) {
         try {
              Number cleanAmount =
                 new DecimalFormat().parse(amount, new ParsePosition(0));
              if (null == cleanAmount) {
                  return 0;
              }
-            double currency = cleanAmount.doubleValue();
-            long satoshi = CurrencyToSatoshi(currency, currencyNum);
+            double amountFiat = cleanAmount.doubleValue();
+            long satoshi = CurrencyToSatoshi(amountFiat, currency);
 
             // Round up to nearest 1 bits, .001 mBTC, .00001 BTC
             satoshi = 100 * (satoshi / 100);
@@ -1397,14 +1353,15 @@ public class Account {
         return 0;
     }
 
-    public long CurrencyToSatoshi(double currency, int currencyNum) {
+    public long CurrencyToSatoshi(double amount, String currency) {
         tABC_Error error = new tABC_Error();
         tABC_CC result;
         SWIGTYPE_p_int64_t satoshi = core.new_int64_tp();
         SWIGTYPE_p_long l = core.p64_t_to_long_ptr(satoshi);
 
+        int currencyNum = Currencies.instance().map(currency);
         result = core.ABC_CurrencyToSatoshi(mUsername, mPassword,
-            currency, currencyNum, satoshi, error);
+            amount, currencyNum, satoshi, error);
 
         return Jni.get64BitLongAtPtr(Jni.getCPtr(l));
     }

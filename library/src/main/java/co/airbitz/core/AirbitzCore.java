@@ -113,8 +113,6 @@ public class AirbitzCore {
                 generalInfoUpdate();
             }
         }).start();
-
-        Currencies.instance().initCurrencies();
     }
 
     boolean generalInfoUpdate() {
