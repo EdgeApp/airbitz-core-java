@@ -30,14 +30,12 @@
  */
 package co.airbitz.core;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
-import android.util.Log;
 
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
@@ -270,7 +268,7 @@ public class Account {
                 } catch (java.util.concurrent.CancellationException e) {
                     AirbitzCore.debugLevel(1, "task cancelled");
                 } catch (Exception e) {
-                    Log.e(TAG, "", e);
+                    AirbitzCore.debugLevel(1, e.getMessage());
                 }
             }
         }
@@ -356,7 +354,7 @@ public class Account {
             try {
                 Thread.sleep(1000);
             } catch (Exception e) {
-                Log.e(TAG, "", e);
+                AirbitzCore.debugLevel(1, e.getMessage());
             }
         }
     }
@@ -388,7 +386,7 @@ public class Account {
             try {
                 thread.join();
             } catch (InterruptedException e) {
-                Log.e(TAG, "", e);
+                AirbitzCore.debugLevel(1, e.getMessage());
             }
         }
         for (String uuid : mWatcherTasks.keySet()) {
@@ -800,7 +798,7 @@ public class Account {
                     "Main: " + mMainHandler.hasMessages(LAST));
                 Thread.sleep(200);
             } catch (Exception e) {
-                Log.e(TAG, "", e);
+                AirbitzCore.debugLevel(1, e.getMessage());
             }
         }
 

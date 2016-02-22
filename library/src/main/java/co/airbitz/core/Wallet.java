@@ -72,7 +72,7 @@ public class Wallet {
         SWIGTYPE_p_bool archived = Jni.newBool(Jni.getCPtr(lp));
         core.ABC_WalletArchived(mAccount.getUsername(), mId, archived, error);
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
-            mArchived = Jni.get64BitLongAtPtr(Jni.getCPtr(lp)) == 1;
+            mArchived = Jni.getBytesAtPtr(Jni.getCPtr(lp), 1)[0] != 0;
         } else {
             mArchived = false;
         }
@@ -100,10 +100,10 @@ public class Wallet {
     public boolean walletArchived(boolean archived) {
         long attr = archived ? 1 : 0;
         tABC_Error error = new tABC_Error();
-        tABC_CC result = core.ABC_SetWalletArchived(
+        core.ABC_SetWalletArchived(
                 mAccount.getUsername(), mAccount.getPassword(),
                 id(), attr, error);
-        if (result == tABC_CC.ABC_CC_Ok) {
+        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
             mArchived = archived;
             return true;
         }
