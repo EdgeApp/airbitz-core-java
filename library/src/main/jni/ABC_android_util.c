@@ -122,7 +122,7 @@ Java_co_airbitz_internal_Jni_coreWatcherLoop(
 }
 
 JNIEXPORT jboolean JNICALL
-Java_co_airbitz_core_Account_registerAsyncCallback(JNIEnv *env, jobject obj)
+Java_co_airbitz_core_Engine_registerAsyncCallback(JNIEnv *env, jobject obj)
 {
     // convert local to global reference
     // (local will die after this method call)

@@ -70,7 +70,7 @@ public class Wallet {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_long lp = core.new_longp();
         SWIGTYPE_p_bool archived = Jni.newBool(Jni.getCPtr(lp));
-        core.ABC_WalletArchived(mAccount.getUsername(), mId, archived, error);
+        core.ABC_WalletArchived(mAccount.username(), mId, archived, error);
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
             mArchived = Jni.getBytesAtPtr(Jni.getCPtr(lp), 1)[0] != 0;
         } else {
@@ -101,7 +101,7 @@ public class Wallet {
         long attr = archived ? 1 : 0;
         tABC_Error error = new tABC_Error();
         core.ABC_SetWalletArchived(
-                mAccount.getUsername(), mAccount.getPassword(),
+                mAccount.username(), mAccount.password(),
                 id(), attr, error);
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
             mArchived = archived;
@@ -112,9 +112,9 @@ public class Wallet {
 
     public boolean walletRemove() {
         tABC_Error error = new tABC_Error();
-        tABC_CC result = core.ABC_WalletRemove(mAccount.getUsername(), id(), error);
+        tABC_CC result = core.ABC_WalletRemove(mAccount.username(), id(), error);
         if (result == tABC_CC.ABC_CC_Ok) {
-            mAccount.stopWatcher(id());
+            mAccount.engine().stopWatcher(id());
             mAccount.reloadWallets();
             return true;
         } else {
@@ -125,7 +125,7 @@ public class Wallet {
     public boolean name(String name) {
         tABC_Error error = new tABC_Error();
         tABC_CC result = core.ABC_RenameWallet(
-                mAccount.getUsername(), mAccount.getPassword(),
+                mAccount.username(), mAccount.password(),
                 id(), name, error);
         if (result == tABC_CC.ABC_CC_Ok) {
             mName = name;
@@ -166,7 +166,7 @@ public class Wallet {
         SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
 
         tABC_CC result = core.ABC_ExportWalletSeed(
-                mAccount.getUsername(), mAccount.getPassword(),
+                mAccount.username(), mAccount.password(),
                 id(), ppChar, error);
         if (tABC_CC.ABC_CC_Ok == result) {
             return Jni.getStringAtPtr(core.longp_value(lp));
@@ -188,7 +188,7 @@ public class Wallet {
         Jni.set64BitLongAtPtr(Jni.getCPtr(endTime), end); //0 means all transactions
 
         tABC_CC result = core.ABC_CsvExport(
-                mAccount.getUsername(), mAccount.getPassword(),
+                mAccount.username(), mAccount.password(),
                 id(), startTime, endTime, ppChar, pError);
         if (result == tABC_CC.ABC_CC_Ok) {
             return Jni.getStringAtPtr(core.longp_value(lp)); // will be null for NoRecoveryQuestions
@@ -220,7 +220,7 @@ public class Wallet {
         SWIGTYPE_p_p_sABC_TxInfo pTxInfo = core.longp_to_ppTxInfo(lp);
 
         tABC_CC result = core.ABC_GetTransaction(
-                mAccount.getUsername(), mAccount.getPassword(),
+                mAccount.username(), mAccount.password(),
                 id(), txid, pTxInfo, error);
         if (result == tABC_CC.ABC_CC_Ok) {
             TxInfo txInfo = new TxInfo(core.longp_value(lp));
@@ -253,7 +253,7 @@ public class Wallet {
         Jni.set64BitLongAtPtr(Jni.getCPtr(endTime), end); // 0 means all transactions
 
         tABC_CC result = core.ABC_GetTransactions(
-                mAccount.getUsername(), mAccount.getPassword(),
+                mAccount.username(), mAccount.password(),
                 id(), startTime, endTime, paTxInfo, puCount, error);
 
         if (result == tABC_CC.ABC_CC_Ok) {
@@ -288,7 +288,7 @@ public class Wallet {
         SWIGTYPE_p_p_p_sABC_TxInfo paTxInfo = core.longp_to_pppTxInfo(lp);
 
         tABC_CC result = core.ABC_SearchTransactions(
-                mAccount.getUsername(), mAccount.getPassword(),
+                mAccount.username(), mAccount.password(),
                 id(), searchText, paTxInfo, puCount, error);
         if (result == tABC_CC.ABC_CC_Ok) {
             int ptrToInfo = core.longp_value(lp);
@@ -315,7 +315,7 @@ public class Wallet {
         SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
 
         int result = Jni.coreSweepKey(
-                mAccount.getUsername(), mAccount.getPassword(),
+                mAccount.username(), mAccount.password(),
                 id(), wif, Jni.getCPtr(ppChar), Jni.getCPtr(error));
         if (result != 0) {
             return "";
@@ -324,10 +324,14 @@ public class Wallet {
         }
     }
 
+    public void walletReconnect() {
+        mAccount.engine().connectWatcher(id());
+    }
+
     public boolean finalizeRequest(String address) {
         tABC_Error error = new tABC_Error();
         core.ABC_FinalizeReceiveRequest(
-                mAccount.getUsername(), mAccount.getPassword(),
+                mAccount.username(), mAccount.password(),
                 id(), address, error);
         return error.getCode() == tABC_CC.ABC_CC_Ok;
     }

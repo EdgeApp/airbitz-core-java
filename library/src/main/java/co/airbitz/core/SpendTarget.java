@@ -99,7 +99,7 @@ public class SpendTarget {
         SWIGTYPE_p_uint64_t amount = core.new_uint64_tp();
         Jni.set64BitLongAtPtr(Jni.getCPtr(amount), 0);
         core.ABC_SpendNewTransfer(
-                mAccount.getUsername(), walletUUID,
+                mAccount.username(), walletUUID,
                 amount, _pSpendSWIG, pError);
         _pSpend = new Spend(core.longp_value(_lpSpend));
         return pError.getCode() == tABC_CC.ABC_CC_Ok;
@@ -139,7 +139,7 @@ public class SpendTarget {
         SWIGTYPE_p_p_char pRawTx = core.longp_to_ppChar(tx);
 
         core.ABC_SpendSignTx(
-                mAccount.getUsername(), mWallet.id(),
+                mAccount.username(), mWallet.id(),
                 _pSpend, pRawTx, error);
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
             rawTx = Jni.getStringAtPtr(core.longp_value(tx));
@@ -163,7 +163,7 @@ public class SpendTarget {
         SWIGTYPE_p_uint64_t result = core.new_uint64_tp();
 
         core.ABC_SpendGetMax(
-                mAccount.getUsername(), mWallet.id(),
+                mAccount.username(), mWallet.id(),
                 _pSpend, result, pError);
         long actual = Jni.get64BitLongAtPtr(Jni.getCPtr(result));
         return actual;
@@ -173,7 +173,7 @@ public class SpendTarget {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_uint64_t total = core.new_uint64_tp();
         core.ABC_SpendGetFee(
-                mAccount.getUsername(), mWallet.id(),
+                mAccount.username(), mWallet.id(),
                 _pSpend, total, error);
 
         long fees = Jni.get64BitLongAtPtr(Jni.getCPtr(total));

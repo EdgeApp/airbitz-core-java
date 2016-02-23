@@ -67,7 +67,7 @@ public class Categories {
         SWIGTYPE_p_unsigned_int pUCount = core.int_to_uint(pCount);
 
         tABC_CC result = core.ABC_GetCategories(
-                mAccount.getUsername(), mAccount.getPassword(),
+                mAccount.username(), mAccount.password(),
                 aszCategories, pUCount, Error);
 
         if (result!=tABC_CC.ABC_CC_Ok) {
@@ -91,7 +91,7 @@ public class Categories {
             AirbitzCore.debugLevel(1, "Adding category: "+strCategory);
             tABC_Error Error = new tABC_Error();
             core.ABC_AddCategory(
-                    mAccount.getUsername(), mAccount.getPassword(),
+                    mAccount.username(), mAccount.password(),
                     strCategory, Error);
         }
     }
@@ -100,7 +100,7 @@ public class Categories {
         AirbitzCore.debugLevel(1, "Remove category: "+strCategory);
         tABC_Error Error = new tABC_Error();
         tABC_CC result = core.ABC_RemoveCategory(
-                mAccount.getUsername(), mAccount.getPassword(),
+                mAccount.username(), mAccount.password(),
                 strCategory, Error);
         return result==tABC_CC.ABC_CC_Ok;
     }

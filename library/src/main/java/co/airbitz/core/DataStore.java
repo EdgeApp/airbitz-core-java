@@ -64,7 +64,7 @@ public class DataStore  {
         SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
 
         core.ABC_PluginDataGet(
-            mAccount.getUsername(), mAccount.getPassword(),
+            mAccount.username(), mAccount.password(),
             mPluginId, key, ppChar, error);
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
             return Jni.getStringAtPtr(core.longp_value(lp));
@@ -76,7 +76,7 @@ public class DataStore  {
     public boolean set(String key, String value) {
         tABC_Error error = new tABC_Error();
         core.ABC_PluginDataSet(
-            mAccount.getUsername(), mAccount.getPassword(),
+            mAccount.username(), mAccount.password(),
             mPluginId, key, value, error);
         return error.getCode() == tABC_CC.ABC_CC_Ok;
     }
@@ -84,7 +84,7 @@ public class DataStore  {
     public boolean remove(String key) {
         tABC_Error error = new tABC_Error();
         core.ABC_PluginDataRemove(
-            mAccount.getUsername(), mAccount.getPassword(),
+            mAccount.username(), mAccount.password(),
             mPluginId, key, error);
         return error.getCode() == tABC_CC.ABC_CC_Ok;
     }
@@ -92,7 +92,7 @@ public class DataStore  {
     public boolean removeAll() {
         tABC_Error error = new tABC_Error();
         core.ABC_PluginDataClear(
-            mAccount.getUsername(), mAccount.getPassword(),
+            mAccount.username(), mAccount.password(),
             mPluginId, error);
         return error.getCode() == tABC_CC.ABC_CC_Ok;
     }

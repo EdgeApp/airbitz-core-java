@@ -97,14 +97,14 @@ public class AirbitzCore {
         return mContext;
     }
 
-    public void init(Context context, String airbitzApiKey, String hiddenbitzKey, String seed, long seedLength) {
+    public void init(Context context, String airbitzApiKey, String hiddenbitzKey, String seed) {
         if (mInitialized) {
             return;
         }
         tABC_Error error = new tABC_Error();
         File filesDir = context.getFilesDir();
         String certPath = Utils.setupCerts(context, filesDir);
-        core.ABC_Initialize(filesDir.getPath(), certPath, airbitzApiKey, hiddenbitzKey, seed, seedLength, error);
+        core.ABC_Initialize(filesDir.getPath(), certPath, airbitzApiKey, hiddenbitzKey, seed, seed.length(), error);
         mInitialized = true;
 
         // Fetch General Info
@@ -169,13 +169,13 @@ public class AirbitzCore {
 
     public void background() {
         for (Account account : mAccounts) {
-            account.stopAllAsyncUpdates();
+            account.engine().stop();
         }
     }
 
     public void foreground() {
         for (Account account : mAccounts) {
-            account.startAllAsyncUpdates();
+            account.engine().start();
         }
     }
 
@@ -187,6 +187,27 @@ public class AirbitzCore {
             lostConnectivity();
         }
     }
+
+    private void restoreConnectivity() {
+        synchronized (mAccounts) {
+            for (Account account : mAccounts) {
+                account.restoreConnectivity();
+            }
+        }
+    }
+
+    private void lostConnectivity() {
+        synchronized (mAccounts) {
+            for (Account account : mAccounts) {
+                account.lostConnectivity();
+            }
+        }
+    }
+
+    public boolean hasConnectivity() {
+        return mConnectivity;
+    }
+
 
     public boolean isTestNet() {
         tABC_CC result;
@@ -205,32 +226,24 @@ public class AirbitzCore {
         return false;
     }
 
-    public boolean accountHasPassword(String username) {
-        tABC_Error error = new tABC_Error();
-        SWIGTYPE_p_long lp = core.new_longp();
-        SWIGTYPE_p_bool exists = Jni.newBool(Jni.getCPtr(lp));
-        core.ABC_PasswordExists(username, exists, error);
-        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
-            return Jni.getBytesAtPtr(Jni.getCPtr(lp), 1)[0] != 0;
-        }
-        return false;
+    public Bitmap qrEncode(byte[] array) {
+        return qrEncode(array, (int) Math.sqrt(array.length), 16);
     }
 
-    public Account passwordLogin(String username, String password, String otpToken) throws AirbitzException {
-        tABC_Error error = new tABC_Error();
-        if (otpToken != null) {
-            otpKeySet(username, otpToken);
+    public Bitmap qrEncode(byte[] bits, int width, int scale) {
+        Bitmap bmpBinary = Bitmap.createBitmap(width*scale, width*scale, Bitmap.Config.ARGB_8888);
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < width; y++) {
+                bmpBinary.setPixel(x, y, bits[y * width + x] != 0 ? Color.BLACK : Color.WHITE);
+            }
         }
-        core.ABC_SignIn(username, password, error);
-        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            throw new AirbitzException(mContext, error.getCode(), error);
-        }
-        Account account = new Account(this, username, password);
-        mAccounts.add(account);
-        return account;
+        Matrix matrix = new Matrix();
+        matrix.postScale(scale, scale);
+        Bitmap resizedBitmap = Bitmap.createBitmap(bmpBinary, 0, 0, width, width, matrix, false);
+        return resizedBitmap;
     }
 
-    public List<String> getExchangeRateSources() {
+    public List<String> exchangeRateSources() {
         List<String> sources = new ArrayList<>();
         sources.add("Bitstamp");
         sources.add("BraveNewCoin");
@@ -239,19 +252,81 @@ public class AirbitzCore {
         return sources;
     }
 
-    public QuestionChoice[] recoveryQuestionChoices() {
+    public List<String> accountListLocal() {
         tABC_Error error = new tABC_Error();
-        QuestionChoice[] mChoices = null;
-        SWIGTYPE_p_long plong = core.new_longp();
-        SWIGTYPE_p_p_sABC_QuestionChoices ppQuestionChoices = core.longp_to_ppQuestionChoices(plong);
-
-        core.ABC_GetQuestionChoices(ppQuestionChoices, error);
+        SWIGTYPE_p_long lp = core.new_longp();
+        SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
+        core.ABC_ListAccounts(ppChar, error);
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
-            long lp = core.longp_value(plong);
-            QuestionChoices qcs = new QuestionChoices(lp);
-            mChoices = qcs.getChoices();
+            List<String> array = Arrays.asList(Jni.getStringAtPtr(core.longp_value(lp)).split("\\n"));
+            List<String> list = new ArrayList<String>();
+            for (int i=0; i< array.size(); i++) {
+                if(!array.get(i).isEmpty()) {
+                    list.add(array.get(i));
+                }
+            }
+            return list;
         }
-        return mChoices;
+        return null;
+    }
+
+    public boolean accountSyncExistsLocal(String username) {
+        tABC_Error error = new tABC_Error();
+        SWIGTYPE_p_long lp = core.new_longp();
+        SWIGTYPE_p_bool exists = Jni.newBool(Jni.getCPtr(lp));
+        core.ABC_AccountSyncExists(username, exists, error);
+        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
+            return Jni.getBytesAtPtr(Jni.getCPtr(lp), 1)[0] != 0;
+        }
+        return false;
+    }
+
+    public boolean isOtpResetPending(String username) throws AirbitzException {
+        tABC_Error error = new tABC_Error();
+        SWIGTYPE_p_long lp = core.new_longp();
+        SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
+        core.ABC_OtpResetGet(ppChar, error);
+        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
+            String userNames = Jni.getStringAtPtr(core.longp_value(lp));
+            if (userNames != null && username != null) {
+                return userNames.contains(username);
+            }
+        } else {
+            throw new AirbitzException(mContext, error.getCode(), error);
+        }
+        return false;
+    }
+
+    public boolean accountDeleteLocal(String account) {
+        tABC_Error error = new tABC_Error();
+        core.ABC_AccountDelete(account, error);
+        return error.getCode() == tABC_CC.ABC_CC_Ok;
+    }
+
+    public String usernameAvailable(String account) throws AirbitzException {
+        tABC_Error error = new tABC_Error();
+        core.ABC_AccountAvailable(account, error);
+        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
+            return null;
+        } else {
+            throw new AirbitzException(mContext, error.getCode(), null);
+        }
+    }
+
+    public Account createAccount(String username, String password, String pin) throws AirbitzException {
+        tABC_Error error = new tABC_Error();
+        core.ABC_CreateAccount(username, password, error);
+        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
+            core.ABC_SetPIN(username, password, pin, error);
+            if (error.getCode() != tABC_CC.ABC_CC_Ok) {
+                throw new AirbitzException(null, error.getCode(), error);
+            }
+        } else {
+            throw new AirbitzException(null, error.getCode(), error);
+        }
+        Account account = new Account(this, username, password);
+        mAccounts.add(account);
+        return account;
     }
 
     public double passwordSecondsToCrack(String password) {
@@ -299,44 +374,48 @@ public class AirbitzCore {
         return list;
     }
 
-    private void restoreConnectivity() {
-        synchronized (mAccounts) {
-            for (Account account : mAccounts) {
-                account.restoreConnectivity();
-            }
+
+    public boolean accountHasPassword(String username) {
+        tABC_Error error = new tABC_Error();
+        SWIGTYPE_p_long lp = core.new_longp();
+        SWIGTYPE_p_bool exists = Jni.newBool(Jni.getCPtr(lp));
+        core.ABC_PasswordExists(username, exists, error);
+        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
+            return Jni.getBytesAtPtr(Jni.getCPtr(lp), 1)[0] != 0;
         }
+        return false;
     }
 
-    private void lostConnectivity() {
-        synchronized (mAccounts) {
-            for (Account account : mAccounts) {
-                account.lostConnectivity();
-            }
+    public Account passwordLogin(String username, String password, String otpToken) throws AirbitzException {
+        tABC_Error error = new tABC_Error();
+        if (otpToken != null) {
+            otpKeySet(username, otpToken);
         }
-    }
-
-    public boolean hasConnectivity() {
-        return mConnectivity;
-    }
-
-    public Bitmap qrEncode(byte[] array) {
-        return qrEncode(array, (int) Math.sqrt(array.length), 16);
-    }
-
-    public Bitmap qrEncode(byte[] bits, int width, int scale) {
-        Bitmap bmpBinary = Bitmap.createBitmap(width*scale, width*scale, Bitmap.Config.ARGB_8888);
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < width; y++) {
-                bmpBinary.setPixel(x, y, bits[y * width + x] != 0 ? Color.BLACK : Color.WHITE);
-            }
+        core.ABC_SignIn(username, password, error);
+        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
+            throw new AirbitzException(mContext, error.getCode(), error);
         }
-        Matrix matrix = new Matrix();
-        matrix.postScale(scale, scale);
-        Bitmap resizedBitmap = Bitmap.createBitmap(bmpBinary, 0, 0, width, width, matrix, false);
-        return resizedBitmap;
+        Account account = new Account(this, username, password);
+        mAccounts.add(account);
+        return account;
     }
 
-    public String getRecoveryQuestionsForUser(String username) throws AirbitzException {
+    public QuestionChoice[] recoveryQuestionChoices() {
+        tABC_Error error = new tABC_Error();
+        QuestionChoice[] mChoices = null;
+        SWIGTYPE_p_long plong = core.new_longp();
+        SWIGTYPE_p_p_sABC_QuestionChoices ppQuestionChoices = core.longp_to_ppQuestionChoices(plong);
+
+        core.ABC_GetQuestionChoices(ppQuestionChoices, error);
+        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
+            long lp = core.longp_value(plong);
+            QuestionChoices qcs = new QuestionChoices(lp);
+            mChoices = qcs.getChoices();
+        }
+        return mChoices;
+    }
+
+    public String recoveryQuestions(String username) throws AirbitzException {
         tABC_Error error = new tABC_Error();
 
         SWIGTYPE_p_long lp = core.new_longp();
@@ -351,6 +430,21 @@ public class AirbitzCore {
         }
     }
 
+    public boolean accountHasRecovery(String username) {
+        try {
+            String qstring = recoveryQuestions(username);
+            if (qstring != null) {
+                String[] qs = qstring.split("\n");
+                if (qs.length > 1) {
+                    // Recovery questions set
+                    return true;
+                }
+            }
+        } catch (AirbitzException e) {
+            AirbitzCore.debugLevel(1, "hasRecoveryQuestionsSet error:");
+        }
+        return false;
+    }
 
     public Account recoveryLogin(String username, String answers, String otpToken) throws AirbitzException {
         tABC_Error error = new tABC_Error();
@@ -416,6 +510,7 @@ public class AirbitzCore {
         }
     }
 
+    /* XXX: needs to be moved work */
     public void otpKeySet(String username, String secret) throws AirbitzException {
         tABC_Error error = new tABC_Error();
         core.ABC_OtpKeySet(username, secret, error);
@@ -424,23 +519,7 @@ public class AirbitzCore {
         }
     }
 
-    public boolean isTwoFactorResetPending(String username) throws AirbitzException {
-        tABC_Error error = new tABC_Error();
-        SWIGTYPE_p_long lp = core.new_longp();
-        SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
-        core.ABC_OtpResetGet(ppChar, error);
-        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
-            String userNames = Jni.getStringAtPtr(core.longp_value(lp));
-            if (userNames != null && username != null) {
-                return userNames.contains(username);
-            }
-        } else {
-            throw new AirbitzException(mContext, error.getCode(), error);
-        }
-        return false;
-    }
-
-    public String getTwoFactorDate() throws AirbitzException {
+    public String otpResetDate() throws AirbitzException {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_long lp = core.new_longp();
         SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
@@ -449,86 +528,5 @@ public class AirbitzCore {
             throw new AirbitzException(mContext, error.getCode(), error);
         }
         return Jni.getStringAtPtr(core.longp_value(lp));
-    }
-
-    public boolean accountSyncExistsLocal(String username) {
-        tABC_Error error = new tABC_Error();
-        SWIGTYPE_p_long lp = core.new_longp();
-        SWIGTYPE_p_bool exists = Jni.newBool(Jni.getCPtr(lp));
-        core.ABC_AccountSyncExists(username, exists, error);
-        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
-            return Jni.getBytesAtPtr(Jni.getCPtr(lp), 1)[0] != 0;
-        }
-        return false;
-    }
-
-    public List<String> listAccounts() {
-        tABC_Error error = new tABC_Error();
-        SWIGTYPE_p_long lp = core.new_longp();
-        SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
-        core.ABC_ListAccounts(ppChar, error);
-        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
-            List<String> array = Arrays.asList(Jni.getStringAtPtr(core.longp_value(lp)).split("\\n"));
-            List<String> list = new ArrayList<String>();
-            for (int i=0; i< array.size(); i++) {
-                if(!array.get(i).isEmpty()) {
-                    list.add(array.get(i));
-                }
-            }
-            return list;
-        }
-        return null;
-    }
-
-    public boolean deleteAccount(String account) {
-        tABC_Error error = new tABC_Error();
-        core.ABC_AccountDelete(account, error);
-        return error.getCode() == tABC_CC.ABC_CC_Ok;
-    }
-
-    public String accountAvailable(String account) throws AirbitzException {
-        tABC_Error error = new tABC_Error();
-        core.ABC_AccountAvailable(account, error);
-        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
-            return null;
-        } else {
-            throw new AirbitzException(mContext, error.getCode(), null);
-        }
-    }
-
-    public Account createAccount(String username, String password, String pin) throws AirbitzException {
-        tABC_Error error = new tABC_Error();
-        core.ABC_CreateAccount(username, password, error);
-        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
-            core.ABC_SetPIN(username, password, pin, error);
-            if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-                throw new AirbitzException(null, error.getCode(), error);
-            }
-        } else {
-            throw new AirbitzException(null, error.getCode(), error);
-        }
-        Account account = new Account(this, username, password);
-        mAccounts.add(account);
-        return account;
-    }
-
-    public static String getSeedData() {
-        String strSeed = "";
-
-        strSeed += Build.MANUFACTURER;
-        strSeed += Build.DEVICE;
-        strSeed += Build.SERIAL;
-
-        long time = System.nanoTime();
-        ByteBuffer bb1 = ByteBuffer.allocate(8);
-        bb1.putLong(time);
-        strSeed += bb1.array();
-
-        Random r = new SecureRandom();
-        ByteBuffer bb2 = ByteBuffer.allocate(4);
-        bb2.putInt(r.nextInt());
-        strSeed += bb2.array();
-
-        return strSeed;
     }
 }

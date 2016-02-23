@@ -111,7 +111,7 @@ public class Transaction {
         SWIGTYPE_p_p_sABC_TxDetails pDetails = core.longp_to_ppTxDetails(lp);
 
         core.ABC_GetTransactionDetails(
-                mAccount.getUsername(), mAccount.getPassword(),
+                mAccount.username(), mAccount.password(),
                 mWallet.id(), getID(), pDetails, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
             throw new AirbitzException(null, error.getCode(), error);
@@ -126,7 +126,7 @@ public class Transaction {
 
         error = new tABC_Error();
         core.ABC_SetTransactionDetails(
-                mAccount.getUsername(), mAccount.getPassword(),
+                mAccount.username(), mAccount.password(),
                 mWallet.id(), getID(), details, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
             throw new AirbitzException(null, error.getCode(), error);

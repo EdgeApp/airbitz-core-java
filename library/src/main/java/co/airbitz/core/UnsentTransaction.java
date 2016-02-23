@@ -59,7 +59,7 @@ public class UnsentTransaction {
     public boolean broadcast() {
         tABC_Error error = new tABC_Error();
         core.ABC_SpendBroadcastTx(
-                mAccount.getUsername(), mWallet.id(),
+                mAccount.username(), mWallet.id(),
                 mSpendTarget._pSpend, mRawTx, error);
         return error.getCode() == tABC_CC.ABC_CC_Ok;
     }
@@ -70,7 +70,7 @@ public class UnsentTransaction {
         SWIGTYPE_p_long txid = core.new_longp();
         SWIGTYPE_p_p_char pTxId = core.longp_to_ppChar(txid);
         core.ABC_SpendSaveTx(
-                mAccount.getUsername(), mWallet.id(),
+                mAccount.username(), mWallet.id(),
                 mSpendTarget._pSpend, mRawTx, pTxId, error);
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
             mTxId = Jni.getStringAtPtr(core.longp_value(txid));

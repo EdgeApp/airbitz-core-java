@@ -62,7 +62,7 @@ public class AccountSettings {
         SWIGTYPE_p_long lp = core.new_longp();
         SWIGTYPE_p_p_sABC_AccountSettings pAccountSettings = core.longp_to_ppAccountSettings(lp);
 
-        core.ABC_LoadAccountSettings(mAccount.getUsername(), mAccount.getPassword(), pAccountSettings, error);
+        core.ABC_LoadAccountSettings(mAccount.username(), mAccount.password(), pAccountSettings, error);
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
             mSettings = Jni.newAccountSettings(core.longp_value(lp));
             if (mSettings.getCurrencyNum() == 0) {
@@ -89,41 +89,41 @@ public class AccountSettings {
 
     public void save() throws AirbitzException {
         tABC_Error error = new tABC_Error();
-        core.ABC_UpdateAccountSettings(mAccount.getUsername(), mAccount.getPassword(), mSettings, error);
+        core.ABC_UpdateAccountSettings(mAccount.username(), mAccount.password(), mSettings, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
             throw new AirbitzException(null, error.getCode(), error);
         }
     }
 
-    public void setFirstName(String value) {
+    public void firstName(String value) {
         settings().setSzFirstName(value);
     }
 
-    public String getFirstName() {
+    public String firstName() {
         return settings().getSzFirstName();
     }
 
-    public void setLastName(String value) {
+    public void lastName(String value) {
         settings().setSzLastName(value);
     }
 
-    public String getLastName() {
+    public String lastName() {
         return settings().getSzLastName();
     }
 
-    public void setNickName(String value) {
+    public void nickName(String value) {
         settings().setSzNickname(value);
     }
 
-    public String getNickname() {
+    public String nickname() {
         return settings().getSzNickname();
     }
 
-    public void setPIN(String value) {
+    public void pin(String value) {
         settings().setSzPIN(value);
     }
 
-    public String getPIN() {
+    public String pin() {
         return settings().getSzPIN();
     }
 
@@ -131,31 +131,31 @@ public class AccountSettings {
         settings().setBNameOnPayments(value);
     }
 
-    public boolean getBNameOnPayments() {
+    public boolean nameOnPayments() {
         return settings().getBNameOnPayments();
     }
 
-    public void setSecondsAutoLogout(int value) {
+    public void secondsAutoLogout(int value) {
         settings().setSecondsAutoLogout(value);
     }
 
-    public int getSecondsAutoLogout() {
+    public int secondsAutoLogout() {
         return settings().getSecondsAutoLogout();
     }
 
-    public void setRecoveryReminderCount(int value) {
+    public void recoveryReminderCount(int value) {
         settings().setRecoveryReminderCount(value);
     }
 
-    public int getRecoveryReminderCount() {
+    public int recoveryReminderCount() {
         return settings().getRecoveryReminderCount();
     }
 
-    public void setSzLanguage(String value) {
+    public void language(String value) {
         settings().setSzLanguage(value);
     }
 
-    public String getSzLanguage() {
+    public String language() {
         return settings().getSzLanguage();
     }
 
@@ -168,97 +168,97 @@ public class AccountSettings {
         return Currencies.instance().map(settings().getCurrencyNum());
     }
 
-    public void setExchangeRateSource(String value) {
+    public void exchangeRateSource(String value) {
         settings().setSzExchangeRateSource(value);
     }
 
-    public String getExchangeRateSource() {
+    public String exchangeRateSource() {
         return settings().getSzExchangeRateSource();
     }
 
-    public void setBitcoinDenomination(BitcoinDenomination value) {
+    public void bitcoinDenomination(BitcoinDenomination value) {
         settings().setBitcoinDenomination(value.get());
     }
 
-    public BitcoinDenomination getBitcoinDenomination() {
+    public BitcoinDenomination bitcoinDenomination() {
         return new BitcoinDenomination(settings().getBitcoinDenomination());
     }
 
-    public void setBAdvancedFeatures(boolean value) {
+    public void advancedFeatures(boolean value) {
         settings().setBAdvancedFeatures(value);
     }
 
-    public boolean getBAdvancedFeatures() {
+    public boolean advancedFeatures() {
         return settings().getBAdvancedFeatures();
     }
 
-    public void setSzFullName(String value) {
+    public void fullName(String value) {
         settings().setSzFullName(value);
     }
 
-    public String getSzFullName() {
+    public String fullName() {
         return settings().getSzFullName();
     }
 
-    public void setBDailySpendLimit(boolean value) {
+    public void dailySpendLimit(boolean value) {
         settings().setBDailySpendLimit(value);
     }
 
-    public boolean getBDailySpendLimit() {
+    public boolean dailySpendLimit() {
         return settings().getBDailySpendLimit();
     }
 
-    public void setDailySpendLimitSatoshis(long spendLimit) {
+    public void dailySpendLimitSatoshis(long spendLimit) {
         SWIGTYPE_p_int64_t limit = core.new_int64_tp();
         Jni.set64BitLongAtPtr(Jni.getCPtr(limit), spendLimit);
         settings().setDailySpendLimitSatoshis(limit);
     }
 
-    public long getDailySpendLimitSatoshis() {
+    public long dailySpendLimitSatoshis() {
         SWIGTYPE_p_int64_t satoshi = settings().getDailySpendLimitSatoshis();
         return Jni.get64BitLongAtPtr(Jni.getCPtr(satoshi));
     }
 
-    public void setSpendRequirePin(boolean value) {
+    public void spendRequirePin(boolean value) {
         settings().setBSpendRequirePin(value);
     }
 
-    public boolean getSpendRequirePin() {
+    public boolean spendRequirePin() {
         return settings().getBSpendRequirePin();
     }
 
-    public void setSpendRequirePinSatoshis(long spendLimit) {
+    public void spendRequirePinSatoshis(long spendLimit) {
         SWIGTYPE_p_int64_t limit = core.new_int64_tp();
         Jni.set64BitLongAtPtr(Jni.getCPtr(limit), spendLimit);
         settings().setSpendRequirePinSatoshis(limit);
     }
 
-    public long getSpendRequirePinSatoshis() {
+    public long spendRequirePinSatoshis() {
         SWIGTYPE_p_int64_t satoshi = settings().getSpendRequirePinSatoshis();
         return Jni.get64BitLongAtPtr(Jni.getCPtr(satoshi));
     }
 
-    public void setBDisablePINLogin(boolean value) {
+    public void disablePINLogin(boolean value) {
         settings().setBDisablePINLogin(value);
     }
 
-    public boolean getBDisablePINLogin() {
+    public boolean disablePINLogin() {
         return settings().getBDisablePINLogin();
     }
 
-    public void setPinLoginCount(int value) {
+    public void pinLoginCount(int value) {
         settings().setPinLoginCount(value);
     }
 
-    public int getPinLoginCount() {
+    public int pinLoginCount() {
         return settings().getPinLoginCount();
     }
 
-    public void setBDisableFingerprintLogin(boolean value) {
+    public void disableFingerprintLogin(boolean value) {
         settings().setBDisableFingerprintLogin(value);
     }
 
-    public boolean getBDisableFingerprintLogin() {
+    public boolean disableFingerprintLogin() {
         return settings().getBDisableFingerprintLogin();
     }
 }
