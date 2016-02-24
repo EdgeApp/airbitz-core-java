@@ -267,9 +267,6 @@ public class Engine {
         }
     }
 
-    private String mIncomingWallet;
-    private String mIncomingTxId;
-
     final Runnable mNotifyBitcoinLoaded = new Runnable() {
         public void run() {
             if (mAccount.mCallbacks != null) {
@@ -278,13 +275,18 @@ public class Engine {
         }
     };
 
+    String mIncomingWallet;
+    String mIncomingTxId;
+
     final Runnable mIncomingBitcoinUpdater = new Runnable() {
         public void run() {
-            Wallet wallet = mAccount.getWallet(mIncomingWallet);
-            Transaction tx = wallet.getTransaction(mIncomingTxId);
             if (mAccount.mCallbacks != null) {
+                Wallet wallet = mAccount.getWallet(mIncomingWallet);
+                Transaction tx = wallet.getTransaction(mIncomingTxId);
                 mAccount.mCallbacks.userIncomingBitcoin(wallet, tx);
             }
+            mIncomingWallet = null;
+            mIncomingTxId = null;
         }
     };
 
@@ -709,13 +711,13 @@ public class Engine {
             final String txid = info.getSzTxID();
             final long amount = Jni.get64BitLongAtPtr(Jni.getCPtr(info.getSweepSatoshi()));
             if (mAccount.mCallbacks != null) {
-                mMainHandler.post(new Runnable() {
+                mMainHandler.postDelayed(new Runnable() {
                     public void run() {
                         final Wallet wallet = mAccount.getWallet(uuid);
                         final Transaction tx = wallet.getTransaction(txid);
                         mAccount.mCallbacks.userSweep(wallet, tx, amount);
                     }
-                });
+                }, BALANCE_CHANGE_DELAY);
             }
         }
     }
