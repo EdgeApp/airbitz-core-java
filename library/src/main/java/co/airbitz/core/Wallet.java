@@ -309,16 +309,15 @@ public class Wallet {
         return listTransactions;
     }
 
-    public String sweepKey(String wif) {
+    public String sweepKey(String wif) throws AirbitzException {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_long lp = core.new_longp();
         SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
 
-        int result = Jni.coreSweepKey(
-                mAccount.username(), mAccount.password(),
-                id(), wif, Jni.getCPtr(ppChar), Jni.getCPtr(error));
-        if (result != 0) {
-            return "";
+
+        core.ABC_SweepKey(mAccount.username(), mAccount.password(), id(), wif, ppChar, error);
+        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
+            throw new AirbitzException(null, error.getCode(), error);
         } else {
             return Jni.getStringAtPtr(core.longp_value(lp));
         }

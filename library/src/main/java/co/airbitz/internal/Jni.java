@@ -58,7 +58,6 @@ public class Jni  {
     public static native void set64BitLongAtPtr(long pointer, long value);
     public static native int FormatAmount(long satoshi, long ppchar, long decimalplaces, boolean addSign, long perror);
     public static native int satoshiToCurrency(String jarg1, String jarg2, long satoshi, long currencyp, int currencyNum, long error);
-    public static native int coreSweepKey(String jusername, String jpassword, String juuid, String wif, long ppchar, long jerrorp);
     public static native int coreWatcherLoop(String juuid, long jerrorp);
     public static native long ParseAmount(String jarg1, int decimalplaces);
 

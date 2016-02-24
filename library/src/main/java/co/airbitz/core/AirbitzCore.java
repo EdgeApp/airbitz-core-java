@@ -61,6 +61,8 @@ import co.airbitz.internal.tABC_Error;
 public class AirbitzCore {
     private static String TAG = AirbitzCore.class.getSimpleName();
 
+    private static Object LOCK = new Object();
+
     private static AirbitzCore mInstance = null;
     private static boolean mInitialized = false;
     private static Context mContext;
@@ -78,17 +80,21 @@ public class AirbitzCore {
 
     public static AirbitzCore getApi(Context context) {
         mContext = context;
-        if (mInstance == null) {
-            mInstance = new AirbitzCore();
-            mInstance.debugLevel(1, "New AirbitzCore");
+        synchronized (LOCK) {
+            if (mInstance == null) {
+                mInstance = new AirbitzCore();
+                mInstance.debugLevel(1, "New AirbitzCore");
+            }
         }
         return mInstance;
     }
 
     public static AirbitzCore getApi() {
-        if (mInstance == null) {
-            mInstance = new AirbitzCore();
-            mInstance.debugLevel(1, "New AirbitzCore");
+        synchronized (LOCK) {
+            if (mInstance == null) {
+                mInstance = new AirbitzCore();
+                mInstance.debugLevel(1, "New AirbitzCore");
+            }
         }
         return mInstance;
     }
@@ -129,7 +135,7 @@ public class AirbitzCore {
         }
     }
 
-    static public void debugLevel(int level, String debugString) {
+    public static void debugLevel(int level, String debugString) {
         int DEBUG_LEVEL = 1;
         if (level <= DEBUG_LEVEL) {
             core.ABC_Log(debugString);
@@ -313,20 +319,23 @@ public class AirbitzCore {
         }
     }
 
+    public Account createAccount(String username, String password) throws AirbitzException {
+        return createAccount(username, password, null);
+    }
+
     public Account createAccount(String username, String password, String pin) throws AirbitzException {
         tABC_Error error = new tABC_Error();
         core.ABC_CreateAccount(username, password, error);
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
-            core.ABC_SetPIN(username, password, pin, error);
-            if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-                throw new AirbitzException(null, error.getCode(), error);
+            Account account = new Account(this, username, password);
+            if (null != pin) {
+                account.pinSetup(pin);
             }
+            mAccounts.add(account);
+            return account;
         } else {
             throw new AirbitzException(null, error.getCode(), error);
         }
-        Account account = new Account(this, username, password);
-        mAccounts.add(account);
-        return account;
     }
 
     public double passwordSecondsToCrack(String password) {
@@ -510,7 +519,7 @@ public class AirbitzCore {
         }
     }
 
-    /* XXX: needs to be moved work */
+    /* XXX: needs to be moved */
     public void otpKeySet(String username, String secret) throws AirbitzException {
         tABC_Error error = new tABC_Error();
         core.ABC_OtpKeySet(username, secret, error);
@@ -519,6 +528,7 @@ public class AirbitzCore {
         }
     }
 
+    /* XXX: needs to be moved */
     public String otpResetDate() throws AirbitzException {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_long lp = core.new_longp();

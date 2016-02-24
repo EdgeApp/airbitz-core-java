@@ -74,7 +74,7 @@ public class AccountSettings {
         return this;
     }
 
-    public tABC_AccountSettings settings() {
+    tABC_AccountSettings settings() {
         return mSettings;
     }
 
@@ -238,11 +238,11 @@ public class AccountSettings {
         return Jni.get64BitLongAtPtr(Jni.getCPtr(satoshi));
     }
 
-    public void disablePINLogin(boolean value) {
+    public void disablePinLogin(boolean value) {
         settings().setBDisablePINLogin(value);
     }
 
-    public boolean disablePINLogin() {
+    public boolean disablePinLogin() {
         return settings().getBDisablePINLogin();
     }
 

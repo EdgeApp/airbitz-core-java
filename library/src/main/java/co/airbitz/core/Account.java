@@ -84,7 +84,7 @@ public class Account {
         public void userBlockHeightChanged();
         public void userBalanceUpdate();
         public void userIncomingBitcoin(Wallet wallet, Transaction transaction);
-        public void userSweep(Wallet wallet, Transaction transaction);
+        public void userSweep(Wallet wallet, Transaction transaction, long amountSwept);
 
         public void userBitcoinLoading();
         public void userBitcoinLoaded();
@@ -178,24 +178,30 @@ public class Account {
         }
     }
 
-    public String pin() {
+    public void pinSetup() throws AirbitzException {
         AccountSettings settings = settings();
         if (settings != null) {
-            return settings.settings().getSzPIN();
+            pinSetup(settings.settings().getSzPIN());
         }
-        return "";
     }
 
-    public void pin(String pin) throws AirbitzException {
+    public void pinSetup(String pin) throws AirbitzException {
         tABC_Error error = new tABC_Error();
-        tABC_CC cc = core.ABC_SetPIN(mUsername, mPassword, pin, error);
+        core.ABC_PinSetup(mUsername, mPassword, pin, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
             throw new AirbitzException(null, error.getCode(), error);
         }
     }
 
     public boolean checkPin(String pin) {
-        return pin().equals(pin);
+        tABC_Error error = new tABC_Error();
+        SWIGTYPE_p_long lp = core.new_longp();
+        SWIGTYPE_p_bool result = Jni.newBool(Jni.getCPtr(lp));
+        core.ABC_PinCheck(mUsername, mPassword, pin, result, error);
+        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
+            return Jni.getBytesAtPtr(Jni.getCPtr(lp), 1)[0] != 0;
+        }
+        return false;
     }
 
     public void logout() {
@@ -342,22 +348,6 @@ public class Account {
 
     public void reloadWallets() {
         mEngine.reloadWallets();
-    }
-
-    public tABC_CC pinSetup() {
-        AccountSettings settings = settings();
-        if (settings != null) {
-            String username = mUsername;
-            String pin = settings.settings().getSzPIN();
-            tABC_Error pError = new tABC_Error();
-            return core.ABC_PinSetup(username, pin, pError);
-        }
-        return tABC_CC.ABC_CC_Error;
-    }
-
-    public void pinLoginDelete(String username) {
-        tABC_Error pError = new tABC_Error();
-        tABC_CC result = core.ABC_PinLoginDelete(username, pError);
     }
 
     public void startAllAsyncUpdates() {
