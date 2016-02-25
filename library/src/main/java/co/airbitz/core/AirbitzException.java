@@ -2,17 +2,25 @@ package co.airbitz.core;
 
 import android.content.Context;
 
+import co.airbitz.internal.Jni;
+import co.airbitz.internal.SWIGTYPE_p_long;
+import co.airbitz.internal.SWIGTYPE_p_p_char;
+import co.airbitz.internal.core;
 import co.airbitz.internal.tABC_CC;
 import co.airbitz.internal.tABC_Error;
 
 public class AirbitzException extends Exception {
     private tABC_CC mCode;
     private tABC_Error mError;
+    private String mOtpResetDate;
 
     protected AirbitzException(Context context, tABC_CC code, tABC_Error error) {
         super(errorMap(context, code, error));
         mCode = code;
         mError = error;
+
+        // if this is an otp error, set the reset date if available
+        setOtpResetDate();
     }
 
     public boolean isOkay() {
@@ -27,9 +35,27 @@ public class AirbitzException extends Exception {
         return mCode == tABC_CC.ABC_CC_InvalidOTP;
     }
 
+    public String otpResetDate() {
+        return mOtpResetDate;
+    }
+
+    void setOtpResetDate() {
+        if (!isOtpError()) {
+            return;
+        }
+        tABC_Error error = new tABC_Error();
+        SWIGTYPE_p_long lp = core.new_longp();
+        SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
+        tABC_CC cc = core.ABC_OtpResetDate(ppChar, error);
+        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
+            mOtpResetDate = Jni.getStringAtPtr(core.longp_value(lp));
+        }
+    }
+
     public String errorMap() {
         return AirbitzException.errorMap(null, mCode, mError);
     }
+
     static String errorMap(Context context, tABC_CC code, tABC_Error error) {
         if (context == null) {
             return error.getSzDescription();

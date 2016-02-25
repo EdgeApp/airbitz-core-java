@@ -319,10 +319,23 @@ public class AirbitzCore {
         }
     }
 
+    /**
+     * Create an Airbitz account with specified username and password.
+     * @param username
+     * @param password
+     * @return Account* Account object
+     */
     public Account createAccount(String username, String password) throws AirbitzException {
         return createAccount(username, password, null);
     }
 
+    /**
+     * Create an Airbitz account with specified username, password, and PIN.
+     * @param username
+     * @param password
+     * @param pin
+     * @return Account* Account object
+     */
     public Account createAccount(String username, String password, String pin) throws AirbitzException {
         tABC_Error error = new tABC_Error();
         core.ABC_CreateAccount(username, password, error);
@@ -338,6 +351,11 @@ public class AirbitzCore {
         }
     }
 
+    /**
+     * Calculate the number of seconds it would take to crack the given password.
+     * @param password
+     * @return seconds to crack the password
+     */
     public double passwordSecondsToCrack(String password) {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_double seconds = core.new_doublep();
@@ -354,6 +372,13 @@ public class AirbitzCore {
         return core.doublep_value(seconds);
     }
 
+    /**
+     * Checks a password for valid entropy looking for correct minimum
+     * requirements such as upper, lowercase letters, numbers, and # of digits.
+     * This should be used by app to give feedback to user before creating a
+     * new account.
+     * @param password password to check
+     */
     public List<PasswordRule> passwordRules(String password) {
         List<PasswordRule> list = new ArrayList<PasswordRule>();
         boolean bNewPasswordFieldsAreValid = true;
@@ -383,7 +408,12 @@ public class AirbitzCore {
         return list;
     }
 
-
+    /**
+     * Checks if this account has a password set. Accounts without passwords
+     * cannot be logged into from a different device.
+     * @param username
+     * @return true is the account has a password set
+     */
     public boolean accountHasPassword(String username) {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_long lp = core.new_longp();
@@ -395,6 +425,13 @@ public class AirbitzCore {
         return false;
     }
 
+    /**
+     * Login into an account with a password.
+     * @param username
+     * @param password
+     * @param otpToken
+     * @return Account object of signed in user
+     */
     public Account passwordLogin(String username, String password, String otpToken) throws AirbitzException {
         tABC_Error error = new tABC_Error();
         if (otpToken != null) {
@@ -409,6 +446,10 @@ public class AirbitzCore {
         return account;
     }
 
+    /**
+     * Fetch the possible choices for recovery questions.
+     * @return an array of QuestionChoice
+     */
     public QuestionChoice[] recoveryQuestionChoices() {
         tABC_Error error = new tABC_Error();
         QuestionChoice[] mChoices = null;
@@ -424,6 +465,11 @@ public class AirbitzCore {
         return mChoices;
     }
 
+    /**
+     * Fetch the recovery questions for a user.
+     * @param username
+     * @return new line delimited string of recovery questions
+     */
     public String recoveryQuestions(String username) throws AirbitzException {
         tABC_Error error = new tABC_Error();
 
@@ -439,6 +485,11 @@ public class AirbitzCore {
         }
     }
 
+    /**
+     * Checks whether a user has recovery as an option for login
+     * @param username
+     * @return true if there are recovery questions for this user
+     */
     public boolean accountHasRecovery(String username) {
         try {
             String qstring = recoveryQuestions(username);
@@ -455,6 +506,13 @@ public class AirbitzCore {
         return false;
     }
 
+    /**
+     * Login using recovery questions rather than a password
+     * @param username
+     * @param answers
+     * @param otpToken
+     * @return Account object of signed in user
+     */
     public Account recoveryLogin(String username, String answers, String otpToken) throws AirbitzException {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_int lp = core.new_intp();
@@ -476,6 +534,11 @@ public class AirbitzCore {
         }
     }
 
+    /**
+     * Checks if this account has a pin set
+     * @param username
+     * @return true if a pin is set
+     */
     public boolean accountHasPin(String username) {
         tABC_Error error = new tABC_Error();
 
@@ -492,6 +555,14 @@ public class AirbitzCore {
         }
     }
 
+    /**
+     * Login using a pin. This only works if the user's data already exists
+     * locally (from a password or recovery login).
+     * @param username
+     * @param pin
+     * @param otpToken
+     * @return Account object of signed in user
+     */
     public Account pinLogin(String username, String pin, String otpToken) throws AirbitzException {
         if (username == null || pin == null) {
             tABC_Error error = new tABC_Error();
@@ -519,24 +590,11 @@ public class AirbitzCore {
         }
     }
 
-    /* XXX: needs to be moved */
-    public void otpKeySet(String username, String secret) throws AirbitzException {
+    private void otpKeySet(String username, String secret) throws AirbitzException {
         tABC_Error error = new tABC_Error();
         core.ABC_OtpKeySet(username, secret, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
             throw new AirbitzException(mContext, error.getCode(), error);
         }
-    }
-
-    /* XXX: needs to be moved */
-    public String otpResetDate() throws AirbitzException {
-        tABC_Error error = new tABC_Error();
-        SWIGTYPE_p_long lp = core.new_longp();
-        SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
-        tABC_CC cc = core.ABC_OtpResetDate(ppChar, error);
-        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            throw new AirbitzException(mContext, error.getCode(), error);
-        }
-        return Jni.getStringAtPtr(core.longp_value(lp));
     }
 }

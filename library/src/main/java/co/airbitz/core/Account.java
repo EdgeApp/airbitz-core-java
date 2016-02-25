@@ -65,29 +65,105 @@ public class Account {
     private String mPassword;
     private AirbitzCore mApi;
     private Categories mCategories;
+    List<Wallet> mCachedWallets = null;
     Engine mEngine;
     AccountSettings mSettings;
 
-    private boolean mOtpEnabled = false;
-
+    /**
+     * Callbacks are used to handle asynchronous events.
+     */
     public interface Callbacks {
+        /**
+         * Called when the password changed remotely for this user.
+         */
         public void userRemotePasswordChange();
-        public void userLoggedOut();
-        public void userAccountChanged();
-        public void userWalletsLoading();
-        public void userWalletStatusChange(int loaded, int total);
-        public void userWalletsLoaded();
-        public void userWalletsChanged();
-        public void userOTPRequired(String secret);
-        public void userOtpResetPending();
-        public void userExchangeRateChanged();
-        public void userBlockHeightChanged();
-        public void userBalanceUpdate();
-        public void userIncomingBitcoin(Wallet wallet, Transaction transaction);
-        public void userSweep(Wallet wallet, Transaction transaction, long amountSwept);
 
-        public void userBitcoinLoading();
-        public void userBitcoinLoaded();
+        /**
+         * Called when the user has been completed logged out.
+         */
+        public void userLoggedOut();
+
+        /**
+         * Called when the account has changed remotely. This includes a change
+         * in settings which ocurred on a different device.
+         */
+        public void userAccountChanged();
+
+        /**
+         * Called when wallets have begun loading. This can be used to display
+         * a notification to the user that the wallet meta-data is still being
+         * fetched or cloned.
+         */
+        public void userWalletsLoading();
+
+        /**
+         * When a wallet completes loading, this is called.
+         * @param loaded how many wallets have been loaded so far
+         * @param total the total number of wallets that will be loaded
+         */
+        public void userWalletStatusChange(int loaded, int total);
+
+        /**
+         * Called when all the wallets have been loaded.
+         */
+        public void userWalletsLoaded();
+
+        /**
+         * Called when the data in a wallet changed remotely.
+         */
+        public void userWalletsChanged();
+
+        /**
+         * If the user has OTP enabled, this is called when a clock skew is
+         * detected.
+         */
+        public void otpSkew();
+
+        /**
+         * Called when OTP has been enabled remotely.
+         */
+        public void otpRequired(String resetDate);
+
+        /**
+         * Called when OTP reset has been triggered.
+         */
+        public void otpResetPending();
+
+        /**
+         * Called when an exchange rate changes.
+         */
+        public void exchangeRateChanged();
+
+        /**
+         * Called when the block height changes.
+         */
+        public void blockHeightChanged();
+
+        /**
+         * Called when a wallet balance changes.
+         */
+        public void balanceUpdate();
+
+        /**
+         * Called when new bitcoin has been received.
+         */
+        public void incomingBitcoin(Wallet wallet, Transaction transaction);
+
+        /**
+         * Called when a private key sweep finishes.
+         */
+        public void sweep(Wallet wallet, Transaction transaction, long amountSwept);
+
+        /**
+         * Called when connecting to the bitcoin network is initialized.
+         */
+        public void bitcoinLoading();
+
+        /**
+         * Called when the device is in sync with the bitcoin network. This
+         * means that existing addresses for this wallet have all been queried.
+         */
+        public void bitcoinLoaded();
     }
     Callbacks mCallbacks;
 
@@ -104,10 +180,16 @@ public class Account {
         return mEngine;
     }
 
+    /**
+     * Define callbacks that will handle asynchronous events.
+     */
     public void callbacks(Callbacks callbacks) {
         mCallbacks = callbacks;
     }
 
+    /**
+     * @return the accounts username
+     */
     public String username() {
         return mUsername;
     }
@@ -116,22 +198,43 @@ public class Account {
         return mPassword;
     }
 
+    /**
+     * This indicates if the user logged in using a password, or some other
+     * technique such as PIN or recovery answers.
+     * @return true if the user logged in with a password
+     */
     public boolean wasPasswordLogin() {
         return mPassword != null;
     }
 
+    /**
+     * This indicates if the user is logged in.
+     * @return true if the user is logged in
+     */
     public boolean isLoggedIn() {
         return mUsername != null;
     }
 
+    /**
+     * This provides access to the account's category manager.
+     * @return the category manager
+     */
     public Categories categories() {
         return mCategories;
     }
 
+    /**
+     * This provides access to the account's DataStore manager.
+     * @return the DataStore manager
+     */
     public DataStore data(String storeId) {
         return new DataStore(this, storeId);
     }
 
+    /**
+     * This provides access to the account's settings.
+     * @return the settings
+     */
     public AccountSettings settings() {
         if (mSettings != null) {
             return mSettings;
@@ -145,6 +248,11 @@ public class Account {
         }
     }
 
+    /**
+     * Check if the input password matches the account password.
+     * @param password the password to test
+     * @return true if the password is correct
+     */
     public boolean checkPassword(String password) {
         boolean check = false;
         if (password == null || password.isEmpty()) {
@@ -164,6 +272,10 @@ public class Account {
         return check;
     }
 
+    /**
+     * Check if a password exists for this account.
+     * @return true if the account has a password set
+     */
     public boolean passwordExists() {
         tABC_Error pError = new tABC_Error();
         SWIGTYPE_p_long lp = core.new_longp();
@@ -178,13 +290,10 @@ public class Account {
         }
     }
 
-    public void pinSetup() throws AirbitzException {
-        AccountSettings settings = settings();
-        if (settings != null) {
-            pinSetup(settings.settings().getSzPIN());
-        }
-    }
-
+    /**
+     * Setup the account PIN. If the account settings allow PIN login, then
+     * this will setup the account PIN package as well.
+     */
     public void pinSetup(String pin) throws AirbitzException {
         tABC_Error error = new tABC_Error();
         core.ABC_PinSetup(mUsername, mPassword, pin, error);
@@ -193,6 +302,11 @@ public class Account {
         }
     }
 
+    /**
+     * Check the input against the account's PIN.
+     * @param pin the PIN to check
+     * @return true if the PIN matches the accoutn PIN
+     */
     public boolean checkPin(String pin) {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_long lp = core.new_longp();
@@ -204,6 +318,10 @@ public class Account {
         return false;
     }
 
+    /**
+     * Log the account out. This stops the exchange rate, data sync and bitcoin
+     * network threads.
+     */
     public void logout() {
         mEngine.stop();
         mSettings = null;
@@ -212,7 +330,12 @@ public class Account {
         mApi.destroy();
     }
 
-    public List<String> getWalletIds() {
+    /**
+     * Returns a list of the wallet ids for this account. This can be called
+     * before the wallets have all be loaded.
+     * @return list of wallet ids
+     */
+    public List<String> walletIds() {
         tABC_Error Error = new tABC_Error();
         List<String> uuids = new ArrayList<String>();
 
@@ -243,13 +366,20 @@ public class Account {
         return uuids;
     }
 
-    List<Wallet> mCachedWallets = null;
-    public List<Wallet> getWallets() {
+    /**
+     * Returns a list of the wallets for this account, include Archived
+     * wallets.  @return list of wallets
+     */
+    public List<Wallet> wallets() {
         return mCachedWallets;
     }
 
-    public List<Wallet> getActiveWallets() {
-        List<Wallet> wallets = getWallets();
+    /**
+     * Returns a list of the non-archived wallets for this account
+     * @return list of non-archived wallets
+     */
+    public List<Wallet> activeWallets() {
+        List<Wallet> wallets = wallets();
         if (wallets == null) {
             return null;
         }
@@ -262,6 +392,13 @@ public class Account {
         return out;
     }
 
+    /**
+     * Create a new wallet for this account.
+     * @param walletName the name of the wallet. This can be changed later.
+     * @param currency the currency symbol such as "USD" or "EUR", for the fiat
+     *      currency of this wallet.
+     * @return true if wallet was successfully created
+     */
     public boolean createWallet(String walletName, String currency) {
         AirbitzCore.debugLevel(1, "createWallet(" + walletName + "," + currency + ")");
         tABC_Error pError = new tABC_Error();
@@ -282,6 +419,10 @@ public class Account {
         }
     }
 
+    /**
+     * This can be used to change or set the password for the account.
+     * @param password
+     */
     public void passwordSetup(String password) throws AirbitzException {
         tABC_Error error = new tABC_Error();
         tABC_CC cc = core.ABC_ChangePassword(
@@ -292,6 +433,10 @@ public class Account {
         mPassword = password;
     }
 
+    /**
+     * This is used to login with recovery answers.
+     * @param recoveryAnswers a newline concatenated string of recovery answers
+     */
     public void recoverySetup(String recoveryAnswers) throws AirbitzException {
         tABC_Error error = new tABC_Error();
         tABC_CC cc = core.ABC_ChangePasswordWithRecoveryAnswers(
@@ -301,6 +446,11 @@ public class Account {
         }
     }
 
+    /**
+     * Used to set the recovery questions and answers for an account.
+     * @param questions a newline concatenated string of recovery questions
+     * @param recoveryAnswers a newline concatenated string of recovery answers
+     */
     public void saveRecoveryAnswers(String questions, String answers) throws AirbitzException {
         tABC_Error error = new tABC_Error();
         core.ABC_SetAccountRecoveryQuestions(mUsername,
@@ -310,11 +460,16 @@ public class Account {
         }
     }
 
-    public Wallet getWallet(String uuid) {
+    /**
+     * Fetch a wallet by wallet id.
+     * @param uuid the wallet id
+     * @return a wallet object
+     */
+    public Wallet wallet(String uuid) {
         if (uuid == null) {
             return null;
         }
-        List<Wallet> wallets = getWallets();
+        List<Wallet> wallets = wallets();
         if (wallets == null) {
             return null;
         }
@@ -326,6 +481,11 @@ public class Account {
         return null;
     }
 
+    /**
+     * Reorder the account's wallets. wallets() and activeWallets() will change
+     * the order of what is returned.
+     * @param wallets
+     */
     public void walletReorder(List<Wallet> wallets) {
         boolean archived = false; // non-archive
         StringBuffer uuids = new StringBuffer("");
@@ -346,22 +506,38 @@ public class Account {
         mEngine.sendReloadWallets();
     }
 
+    /**
+     * Request the the wallets be reloaded. This is an asynchronous call and will return immediately.
+     * @param wallets
+     */
     public void reloadWallets() {
         mEngine.reloadWallets();
     }
 
+    /**
+     * TODO: remove this
+     */
     public void startAllAsyncUpdates() {
         mEngine.start();
     }
 
+    /**
+     * TODO: remove this
+     */
     public void waitOnWatchers() {
         mEngine.waitOnWatchers();
     }
 
+    /**
+     * TODO: remove this
+     */
     public void deleteWatcherCache() {
         mEngine.deleteWatcherCache();
     }
 
+    /**
+     * TODO: remove this
+     */
     public void stopAllAsyncUpdates() {
         mEngine.stop();
     }
@@ -371,6 +547,11 @@ public class Account {
         public String signature;
     }
 
+    /**
+     * Parse a bitid uri, and return the domain of the uri.
+     * @param uri
+     * @return the domain of the uri
+     */
     public String parseBitidUri(String uri) {
         tABC_Error error = new tABC_Error();
         String urlDomain = null;
@@ -385,6 +566,12 @@ public class Account {
         return urlDomain;
     }
 
+    /**
+     * Sign the message using the bitid key requested by the uri
+     * @param uri
+     * @param message
+     * @return the tuple of address and the signature
+     */
     public BitidSignature bitidSignature(String uri, String message) {
         BitidSignature bitid = new BitidSignature();
 
@@ -403,6 +590,11 @@ public class Account {
         return bitid;
     }
 
+    /**
+     * Login to the uri using bitid.
+     * @param uri
+     * @return true if the login was successful
+     */
     public boolean bitidLogin(String uri) {
         tABC_Error error = new tABC_Error();
         core.ABC_BitidLogin(mUsername, null, uri, error);
@@ -417,6 +609,10 @@ public class Account {
         mEngine.lostConnectivity();
     }
 
+    /**
+     * Request an exchange rate update. This is a non-blocking call, which will
+     * return immediately.
+     */
     public void updateExchangeRates() {
         mEngine.updateExchangeRates();
     }
@@ -425,14 +621,104 @@ public class Account {
         mEngine.requestExchangeRateUpdate(currency);
     }
 
-    public String formatDefaultCurrency(double in) {
-        AccountSettings settings = settings();
-        if (settings != null) {
-            String pre = settings.bitcoinDenomination().btcSymbol();
-            String out = String.format("%.3f", in);
-            return pre+out;
+    /**
+     * Used to check if OTP is enabled for this account.
+     * @returns true if OTP is enabled
+     */
+    public boolean otpAuthGet() throws AirbitzException {
+        tABC_Error error = new tABC_Error();
+        SWIGTYPE_p_long ptimeout = core.new_longp();
+        SWIGTYPE_p_int lp = core.new_intp();
+        SWIGTYPE_p_bool pbool = Jni.newBool(Jni.getCPtr(lp));
+
+        core.ABC_OtpAuthGet(
+            mUsername, mPassword,
+            pbool, ptimeout, error);
+        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
+            throw new AirbitzException(mApi.getContext(), error.getCode(), error);
         }
-        return "";
+        return core.intp_value(lp) == 1;
+    }
+
+    /**
+     * Enable OTP for this account
+     */
+    public void otpSetup() throws AirbitzException {
+        tABC_Error error = new tABC_Error();
+        core.ABC_OtpAuthSet(mUsername, mPassword, OTP_RESET_DELAY_SECS, error);
+        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
+            throw new AirbitzException(null, error.getCode(), error);
+        }
+    }
+
+    /**
+     * Disable OTP for this account.
+     */
+    public void otpDisable() throws AirbitzException {
+        tABC_Error error = new tABC_Error();
+        core.ABC_OtpAuthRemove(mUsername, mPassword, error);
+        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
+            core.ABC_OtpKeyRemove(mUsername, error);
+        } else {
+            throw new AirbitzException(mApi.getContext(), error.getCode(), error);
+        }
+    }
+
+    /**
+     * Cancel the OTP reset request.
+     */
+    public void otpResetCancel() throws AirbitzException {
+        tABC_Error error = new tABC_Error();
+        core.ABC_OtpResetRemove(mUsername, mPassword, error);
+        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
+            throw new AirbitzException(mApi.getContext(), error.getCode(), error);
+        }
+    }
+
+    /**
+     * Retreived the OTP secret.
+     */
+    public String otpSecret() {
+        tABC_Error error = new tABC_Error();
+        SWIGTYPE_p_long lp = core.new_longp();
+        SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
+        tABC_CC cc = core.ABC_OtpKeyGet(mUsername, ppChar, error);
+        String secret = cc == tABC_CC.ABC_CC_Ok ? Jni.getStringAtPtr(core.longp_value(lp)) : null;
+        return secret;
+    }
+
+    /**
+     * Generate an OTP QR code.
+     * @returns a byte-array for the two factor secret QR code
+     */
+    public byte[] otpQrCode() {
+        SWIGTYPE_p_long lp = core.new_longp();
+        SWIGTYPE_p_p_unsigned_char ppData = core.longp_to_unsigned_ppChar(lp);
+
+        SWIGTYPE_p_int pWidth = core.new_intp();
+        SWIGTYPE_p_unsigned_int pWCount = core.int_to_uint(pWidth);
+
+        tABC_Error error = new tABC_Error();
+        tABC_CC cc = core.ABC_QrEncode(otpSecret(), ppData, pWCount, error);
+        if (cc == tABC_CC.ABC_CC_Ok) {
+            int width = core.intp_value(pWidth);
+            return Jni.getBytesAtPtr(core.longp_value(lp), width*width);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Generate an OTP QR code.
+     * @returns a bitmap for the two factor secret QR code
+     */
+    public Bitmap otpQrCodeBitmap() {
+        byte[] array = otpQrCode();
+        if (null != array) {
+            return mApi.qrEncode(array, (int) Math.sqrt(array.length), 4);
+        } else {
+            return null;
+        }
     }
 
     public String formatCurrency(double in, String currency, boolean withSymbol) {
@@ -442,8 +728,7 @@ public class Account {
     public String formatCurrency(double in, String currency, boolean withSymbol, int decimalPlaces) {
         String pre;
         String denom = Currencies.instance().currencySymbol(currency) + " ";
-        if (in < 0)
-        {
+        if (in < 0) {
             in = Math.abs(in);
             pre = withSymbol ? "-" + denom : "-";
         } else {
@@ -452,33 +737,14 @@ public class Account {
         BigDecimal bd = new BigDecimal(in);
         DecimalFormat df;
         switch(decimalPlaces) {
-            case 3:
-                df = new DecimalFormat("#,##0.000", new DecimalFormatSymbols(Locale.getDefault()));
-                break;
-            default:
-                df = new DecimalFormat("#,##0.00", new DecimalFormatSymbols(Locale.getDefault()));
-                break;
+        case 3:
+            df = new DecimalFormat("#,##0.000", new DecimalFormatSymbols(Locale.getDefault()));
+            break;
+        default:
+            df = new DecimalFormat("#,##0.00", new DecimalFormatSymbols(Locale.getDefault()));
+            break;
         }
-
         return pre + df.format(bd.doubleValue());
-    }
-
-    private int userDecimalPlaces() {
-        int decimalPlaces = 8; // for BitcoinDenomination.BTC
-        AccountSettings settings = settings();
-        if (settings == null) {
-            return 2;
-        }
-        BitcoinDenomination bitcoinDenomination =
-            settings.bitcoinDenomination();
-        if (bitcoinDenomination != null) {
-            int label = bitcoinDenomination.getDenominationType();
-            if (label == BitcoinDenomination.UBTC)
-                decimalPlaces = 2;
-            else if (label == BitcoinDenomination.MBTC)
-                decimalPlaces = 5;
-        }
-        return decimalPlaces;
     }
 
     public String formatSatoshi(long amount) {
@@ -486,7 +752,7 @@ public class Account {
     }
 
     public String formatSatoshi(long amount, boolean withSymbol) {
-        return formatSatoshi(amount, withSymbol, userDecimalPlaces());
+        return formatSatoshi(amount, withSymbol, Utils.userDecimalPlaces(this));
     }
 
     public String formatSatoshi(long amount, boolean withSymbol, int decimals) {
@@ -494,45 +760,63 @@ public class Account {
         SWIGTYPE_p_long lp = core.new_longp();
         SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
 
-        int decimalPlaces = userDecimalPlaces();
+        int decimalPlaces = Utils.userDecimalPlaces(this);
 
         boolean negative = amount < 0;
         if(negative)
             amount = -amount;
         int result = Jni.FormatAmount(amount, Jni.getCPtr(ppChar), decimalPlaces, false, Jni.getCPtr(error));
-        if ( result != 0)
-        {
+        if (result != 0) {
             return "";
-        }
-        else {
+        } else {
             decimalPlaces = decimals > -1 ? decimals : decimalPlaces;
             String pretext = "";
             if (negative) {
                 pretext += "-";
             }
             if (withSymbol) {
-                pretext += userBtcSymbol();
+                pretext += Utils.userBtcSymbol(this);
             }
 
             BigDecimal bd = new BigDecimal(amount);
             bd = bd.movePointLeft(decimalPlaces);
 
-            DecimalFormat df = new DecimalFormat("#,##0.##", new DecimalFormatSymbols(Locale.getDefault()));
-
-            if(decimalPlaces == 5) {
+            DecimalFormat df =
+                new DecimalFormat("#,##0.##", new DecimalFormatSymbols(Locale.getDefault()));
+            if (decimalPlaces == 5) {
                 df = new DecimalFormat("#,##0.#####", new DecimalFormatSymbols(Locale.getDefault()));
-            }
-            else if(decimalPlaces == 8) {
+            } else if(decimalPlaces == 8) {
                 df = new DecimalFormat("#,##0.########", new DecimalFormatSymbols(Locale.getDefault()));
             }
-
             return pretext + df.format(bd.doubleValue());
         }
     }
 
-    public long denominationToSatoshi(String amount) {
-        int decimalPlaces = userDecimalPlaces();
+    public double satoshiToCurrency(long satoshi, String currency) {
+        tABC_Error error = new tABC_Error();
+        SWIGTYPE_p_double amountFiat = core.new_doublep();
 
+        int currencyNum = Currencies.instance().map(currency);
+        long out = Jni.satoshiToCurrency(mUsername, mPassword,
+                satoshi, Jni.getCPtr(amountFiat), currencyNum, Jni.getCPtr(error));
+        return core.doublep_value(amountFiat);
+    }
+
+    public long currencyToSatoshi(double amount, String currency) {
+        tABC_Error error = new tABC_Error();
+        tABC_CC result;
+        SWIGTYPE_p_int64_t satoshi = core.new_int64_tp();
+        SWIGTYPE_p_long l = core.p64_t_to_long_ptr(satoshi);
+
+        int currencyNum = Currencies.instance().map(currency);
+        result = core.ABC_CurrencyToSatoshi(mUsername, mPassword,
+            amount, currencyNum, satoshi, error);
+
+        return Jni.get64BitLongAtPtr(Jni.getCPtr(l));
+    }
+
+    public long denominationToSatoshi(String amount) {
+        int decimalPlaces = Utils.userDecimalPlaces(this);
         try {
             // Parse using the current locale
             Number cleanAmount =
@@ -551,174 +835,5 @@ public class Account {
             // Shhhhh
         }
         return 0L;
-    }
-
-    public String formatCurrency(long satoshi, String currency, boolean btc, boolean withSymbol) {
-        String out;
-        if (!btc) {
-            double o = satoshiToCurrency(satoshi, currency);
-            out = formatCurrency(o, currency, withSymbol);
-        } else {
-            out = formatSatoshi(satoshi, withSymbol, 2);
-        }
-        return out;
-    }
-
-    public double satoshiToCurrency(long satoshi, String currency) {
-        tABC_Error error = new tABC_Error();
-        SWIGTYPE_p_double amountFiat = core.new_doublep();
-
-        int currencyNum = Currencies.instance().map(currency);
-        long out = Jni.satoshiToCurrency(mUsername, mPassword,
-                satoshi, Jni.getCPtr(amountFiat), currencyNum, Jni.getCPtr(error));
-        return core.doublep_value(amountFiat);
-    }
-
-    public long parseFiatToSatoshi(String amount, String currency) {
-        try {
-             Number cleanAmount =
-                new DecimalFormat().parse(amount, new ParsePosition(0));
-             if (null == cleanAmount) {
-                 return 0;
-             }
-            double amountFiat = cleanAmount.doubleValue();
-            long satoshi = currencyToSatoshi(amountFiat, currency);
-
-            // Round up to nearest 1 bits, .001 mBTC, .00001 BTC
-            satoshi = 100 * (satoshi / 100);
-            return satoshi;
-
-        } catch (NumberFormatException e) {
-            /* Sshhhhh */
-        }
-        return 0;
-    }
-
-    public long currencyToSatoshi(double amount, String currency) {
-        tABC_Error error = new tABC_Error();
-        tABC_CC result;
-        SWIGTYPE_p_int64_t satoshi = core.new_int64_tp();
-        SWIGTYPE_p_long l = core.p64_t_to_long_ptr(satoshi);
-
-        int currencyNum = Currencies.instance().map(currency);
-        result = core.ABC_CurrencyToSatoshi(mUsername, mPassword,
-            amount, currencyNum, satoshi, error);
-
-        return Jni.get64BitLongAtPtr(Jni.getCPtr(l));
-    }
-
-    public void otpAuthGet() throws AirbitzException {
-        tABC_Error error = new tABC_Error();
-        SWIGTYPE_p_long ptimeout = core.new_longp();
-        SWIGTYPE_p_int lp = core.new_intp();
-        SWIGTYPE_p_bool pbool = Jni.newBool(Jni.getCPtr(lp));
-
-        core.ABC_OtpAuthGet(
-            mUsername, mPassword,
-            pbool, ptimeout, error);
-        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            throw new AirbitzException(mApi.getContext(), error.getCode(), error);
-        }
-
-        mOtpEnabled = core.intp_value(lp)==1;
-    }
-
-    public void otpSetup() throws AirbitzException {
-        tABC_Error error = new tABC_Error();
-        core.ABC_OtpAuthSet(mUsername, mPassword, OTP_RESET_DELAY_SECS, error);
-        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
-            mOtpEnabled = true;
-        } else {
-            throw new AirbitzException(null, error.getCode(), error);
-        }
-    }
-
-    public void otpDisable() throws AirbitzException {
-        tABC_Error error = new tABC_Error();
-        core.ABC_OtpAuthRemove(mUsername, mPassword, error);
-        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
-            mOtpEnabled = false;
-            core.ABC_OtpKeyRemove(mUsername, error);
-        } else {
-            throw new AirbitzException(mApi.getContext(), error.getCode(), error);
-        }
-    }
-
-    public void otpResetCancel() throws AirbitzException {
-        tABC_Error error = new tABC_Error();
-        core.ABC_OtpResetRemove(mUsername, mPassword, error);
-        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            throw new AirbitzException(mApi.getContext(), error.getCode(), error);
-        }
-    }
-
-    public boolean isOtpEnabled() {
-        return mOtpEnabled;
-    }
-
-    public String otpSecret() {
-        tABC_Error error = new tABC_Error();
-        SWIGTYPE_p_long lp = core.new_longp();
-        SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
-        tABC_CC cc = core.ABC_OtpKeyGet(mUsername, ppChar, error);
-        String secret = cc == tABC_CC.ABC_CC_Ok ? Jni.getStringAtPtr(core.longp_value(lp)) : null;
-        return secret;
-    }
-
-    boolean mOTPError = false;
-    public boolean hasOTPError() {
-        return mOTPError;
-    }
-
-    public void otpSetError(tABC_CC cc) {
-        mOTPError = tABC_CC.ABC_CC_InvalidOTP == cc;
-    }
-
-    public void otpSetError(AirbitzException error) {
-        mOTPError = error.isOtpError();
-    }
-
-    public void otpClearError() {
-        mOTPError = false;
-    }
-
-    public byte[] otpQrCode() {
-        SWIGTYPE_p_long lp = core.new_longp();
-        SWIGTYPE_p_p_unsigned_char ppData = core.longp_to_unsigned_ppChar(lp);
-
-        SWIGTYPE_p_int pWidth = core.new_intp();
-        SWIGTYPE_p_unsigned_int pWCount = core.int_to_uint(pWidth);
-
-        tABC_Error error = new tABC_Error();
-        tABC_CC cc = core.ABC_QrEncode(otpSecret(), ppData, pWCount, error);
-        if (cc == tABC_CC.ABC_CC_Ok) {
-            int width = core.intp_value(pWidth);
-            return Jni.getBytesAtPtr(core.longp_value(lp), width*width);
-        } else {
-            return null;
-        }
-    }
-
-    public Bitmap otpQrCodeBitmap() {
-        byte[] array = otpQrCode();
-        if (null != array) {
-            return mApi.qrEncode(array, (int) Math.sqrt(array.length), 4);
-        } else {
-            return null;
-        }
-    }
-
-    private String userBtcSymbol() {
-        AccountSettings settings = settings();
-        if (settings == null) {
-            return "";
-        }
-        BitcoinDenomination bitcoinDenomination =
-            settings.bitcoinDenomination();
-        if (bitcoinDenomination == null) {
-            AirbitzCore.debugLevel(1, "Bad bitcoin denomination from core settings");
-            return "";
-        }
-        return bitcoinDenomination.btcSymbol();
     }
 }

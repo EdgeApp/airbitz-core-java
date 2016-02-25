@@ -75,7 +75,7 @@ public class UnsentTransaction {
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
             mTxId = Jni.getStringAtPtr(core.longp_value(txid));
             updateTransaction();
-            return mWallet.getTransaction(mTxId);
+            return mWallet.transaction(mTxId);
         } else {
             mTxId = null;
             return null;
@@ -90,10 +90,10 @@ public class UnsentTransaction {
         String categoryText = "Transfer:Wallet:";
         Wallet destWallet = null;
         if (mSpendTarget._pSpend != null) {
-            destWallet = mAccount.getWallet(mSpendTarget._pSpend.getSzDestUUID());
+            destWallet = mAccount.wallet(mSpendTarget._pSpend.getSzDestUUID());
         }
 
-        Transaction tx = mWallet.getTransaction(mTxId);
+        Transaction tx = mWallet.transaction(mTxId);
         if (null != tx) {
             if (destWallet != null) {
                 tx.meta().name(destWallet.name());
@@ -114,7 +114,7 @@ public class UnsentTransaction {
 
         // This was a transfer
         if (destWallet != null) {
-            Transaction destTx = destWallet.getTransaction(mTxId);
+            Transaction destTx = destWallet.transaction(mTxId);
             if (null != destTx) {
                 destTx.meta().name(mWallet.name());
                 destTx.meta().category(categoryText + mWallet.name());

@@ -212,7 +212,7 @@ public class Wallet {
     }
 
 
-    public Transaction getTransaction(String txid) {
+    public Transaction transaction(String txid) {
         tABC_Error error = new tABC_Error();
         Transaction transaction = null;
 
@@ -227,7 +227,7 @@ public class Wallet {
             transaction = new Transaction(mAccount, this, txInfo);
             core.ABC_FreeTransaction(txInfo);
         } else {
-            AirbitzCore.debugLevel(1, "Error: CoreBridge.getTransaction: "+ error.getSzDescription());
+            AirbitzCore.debugLevel(1, "Error: Wallet.transaction: "+ error.getSzDescription());
         }
         return transaction;
     }

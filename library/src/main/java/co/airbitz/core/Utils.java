@@ -95,4 +95,35 @@ class Utils {
         }
     }
 
+    static String userBtcSymbol(Account account) {
+        AccountSettings settings = account.settings();
+        if (settings == null) {
+            return "";
+        }
+        BitcoinDenomination bitcoinDenomination =
+            settings.bitcoinDenomination();
+        if (bitcoinDenomination == null) {
+            AirbitzCore.debugLevel(1, "Bad bitcoin denomination from core settings");
+            return "";
+        }
+        return bitcoinDenomination.btcSymbol();
+    }
+
+    static int userDecimalPlaces(Account account) {
+        int decimalPlaces = 8; // for BitcoinDenomination.BTC
+        AccountSettings settings = account.settings();
+        if (settings == null) {
+            return 2;
+        }
+        BitcoinDenomination bitcoinDenomination =
+            settings.bitcoinDenomination();
+        if (bitcoinDenomination != null) {
+            int label = bitcoinDenomination.getDenominationType();
+            if (label == BitcoinDenomination.UBTC)
+                decimalPlaces = 2;
+            else if (label == BitcoinDenomination.MBTC)
+                decimalPlaces = 5;
+        }
+        return decimalPlaces;
+    }
 }

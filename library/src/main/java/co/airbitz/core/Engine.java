@@ -101,7 +101,7 @@ public class Engine {
     private Map<String, Thread> mWatcherTasks = new ConcurrentHashMap<String, Thread>();
 
     public void startWatchers() {
-        List<String> wallets = mAccount.getWalletIds();
+        List<String> wallets = mAccount.walletIds();
         for (final String uuid : wallets) {
             startWatcher(uuid);
         }
@@ -138,7 +138,7 @@ public class Engine {
     }
 
     public void connectWatchers() {
-        List<String> wallets = mAccount.getWalletIds();
+        List<String> wallets = mAccount.walletIds();
         for (final String uuid : wallets) {
             connectWatcher(uuid);
         }
@@ -228,7 +228,7 @@ public class Engine {
 
     public void deleteWatcherCache() {
         tABC_Error error = new tABC_Error();
-        List<String> uuids = mAccount.getWalletIds();
+        List<String> uuids = mAccount.walletIds();
         for (String uuid : uuids) {
             core.ABC_WatcherDeleteCache(uuid, error);
         }
@@ -250,7 +250,7 @@ public class Engine {
         @Override
         protected List<Wallet> doInBackground(Void... params) {
             List<Wallet> wallets = new ArrayList<Wallet>();
-            List<String> uuids = mAccount.getWalletIds();
+            List<String> uuids = mAccount.walletIds();
             for (String uuid : uuids) {
                 wallets.add(getWalletFromCore(uuid));
             }
@@ -270,7 +270,7 @@ public class Engine {
     final Runnable mNotifyBitcoinLoaded = new Runnable() {
         public void run() {
             if (mAccount.mCallbacks != null) {
-                mAccount.mCallbacks.userBitcoinLoaded();
+                mAccount.mCallbacks.bitcoinLoaded();
             }
         }
     };
@@ -281,9 +281,9 @@ public class Engine {
     final Runnable mIncomingBitcoinUpdater = new Runnable() {
         public void run() {
             if (mAccount.mCallbacks != null) {
-                Wallet wallet = mAccount.getWallet(mIncomingWallet);
-                Transaction tx = wallet.getTransaction(mIncomingTxId);
-                mAccount.mCallbacks.userIncomingBitcoin(wallet, tx);
+                Wallet wallet = mAccount.wallet(mIncomingWallet);
+                Transaction tx = wallet.transaction(mIncomingTxId);
+                mAccount.mCallbacks.incomingBitcoin(wallet, tx);
             }
             mIncomingWallet = null;
             mIncomingTxId = null;
@@ -293,7 +293,7 @@ public class Engine {
     final Runnable mBalanceUpdated = new Runnable() {
         public void run() {
             if (mAccount.mCallbacks != null) {
-                mAccount.mCallbacks.userBalanceUpdate();
+                mAccount.mCallbacks.balanceUpdate();
             }
         }
     };
@@ -302,7 +302,7 @@ public class Engine {
         public void run() {
             mAccount.mSettings = null;
             if (mAccount.mCallbacks != null) {
-                mAccount.mCallbacks.userBlockHeightChanged();
+                mAccount.mCallbacks.blockHeightChanged();
             }
         }
     };
@@ -342,7 +342,7 @@ public class Engine {
         ht.start();
         mWatcherHandler = new Handler(ht.getLooper());
 
-        final List<String> uuids = mAccount.getWalletIds();
+        final List<String> uuids = mAccount.walletIds();
         final int walletCount = uuids.size();
         if (mAccount.mCallbacks != null) {
             mMainHandler.post(new Runnable() {
@@ -524,12 +524,10 @@ public class Engine {
         if (mAccount.mCallbacks != null) {
             mMainHandler.post(new Runnable() {
                 public void run() {
-                    mAccount.mCallbacks.userBitcoinLoading();
+                    mAccount.mCallbacks.bitcoinLoading();
                 }
             });
         }
-        mMainHandler.removeCallbacks(mNotifyBitcoinLoaded);
-        mMainHandler.postDelayed(mNotifyBitcoinLoaded, TX_LOADED_DELAY);
     }
 
     public void startExchangeRateUpdates() {
@@ -543,7 +541,7 @@ public class Engine {
             return;
         }
 
-        List<Wallet> wallets = mAccount.getWallets();
+        List<Wallet> wallets = mAccount.wallets();
         if (mAccount.isLoggedIn()
                 && null != mAccount.settings()
                 && null != wallets) {
@@ -556,7 +554,7 @@ public class Engine {
             if (mAccount.mCallbacks != null) {
                 mMainHandler.post(new Runnable() {
                     public void run() {
-                        mAccount.mCallbacks.userExchangeRateChanged();
+                        mAccount.mCallbacks.exchangeRateChanged();
                     }
                 });
             }
@@ -605,10 +603,16 @@ public class Engine {
 
                 core.ABC_DataSyncAccount(mAccount.username(), mAccount.password(), dirty, passwordChange, error);
                 if (error.getCode() == tABC_CC.ABC_CC_InvalidOTP) {
+                    final AirbitzException e = new AirbitzException(null, error.getCode(), error);
                     if (mAccount.isLoggedIn() && mAccount.mCallbacks != null) {
                         mMainHandler.post(new Runnable() {
                             public void run() {
-                                mAccount.mCallbacks.userOTPRequired(mAccount.otpSecret());
+                                // if the account has an OTP token, then its probably a skew problem
+                                if (mAccount.otpSecret() != null) {
+                                    mAccount.mCallbacks.otpSkew();
+                                } else {
+                                    mAccount.mCallbacks.otpRequired(e.otpResetDate());
+                                }
                             }
                         });
                     }
@@ -627,7 +631,7 @@ public class Engine {
             }
         });
 
-        List<String> uuids = mAccount.getWalletIds();
+        List<String> uuids = mAccount.walletIds();
         for (String uuid : uuids) {
             requestWalletDataSync(uuid);
         }
@@ -648,7 +652,7 @@ public class Engine {
                             connectWatchers();
                         }
                         if (isPending && mAccount.mCallbacks != null) {
-                            mAccount.mCallbacks.userOtpResetPending();
+                            mAccount.mCallbacks.otpResetPending();
                         }
                     }
                 });
@@ -694,18 +698,13 @@ public class Engine {
             // Notify app of new tx
             mMainHandler.removeCallbacks(mIncomingBitcoinUpdater);
             mMainHandler.postDelayed(mIncomingBitcoinUpdater, BALANCE_CHANGE_DELAY);
-
-            // Notify progress bar more txs might be coming
-            mMainHandler.removeCallbacks(mNotifyBitcoinLoaded);
-            mMainHandler.postDelayed(mNotifyBitcoinLoaded, TX_LOADED_DELAY);
         } else if (type == tABC_AsyncEventType.ABC_AsyncEventType_BlockHeightChange) {
             mMainHandler.post(mBlockHeightUpdater);
+        } else if (type == tABC_AsyncEventType.ABC_AsyncEventType_AddressCheckDone) {
+            mMainHandler.post(mNotifyBitcoinLoaded);
         } else if (type == tABC_AsyncEventType.ABC_AsyncEventType_BalanceUpdate) {
             mMainHandler.removeCallbacks(mBalanceUpdated);
             mMainHandler.postDelayed(mBalanceUpdated, BALANCE_CHANGE_DELAY);
-
-            mMainHandler.removeCallbacks(mNotifyBitcoinLoaded);
-            mMainHandler.postDelayed(mNotifyBitcoinLoaded, TX_LOADED_DELAY);
         } else if (type == tABC_AsyncEventType.ABC_AsyncEventType_IncomingSweep) {
             final String uuid = info.getSzWalletUUID();
             final String txid = info.getSzTxID();
@@ -713,9 +712,9 @@ public class Engine {
             if (mAccount.mCallbacks != null) {
                 mMainHandler.postDelayed(new Runnable() {
                     public void run() {
-                        final Wallet wallet = mAccount.getWallet(uuid);
-                        final Transaction tx = wallet.getTransaction(txid);
-                        mAccount.mCallbacks.userSweep(wallet, tx, amount);
+                        final Wallet wallet = mAccount.wallet(uuid);
+                        final Transaction tx = wallet.transaction(txid);
+                        mAccount.mCallbacks.sweep(wallet, tx, amount);
                     }
                 }, BALANCE_CHANGE_DELAY);
             }
