@@ -46,17 +46,17 @@ import co.airbitz.internal.tABC_AccountSettings;
 import co.airbitz.internal.tABC_CC;
 import co.airbitz.internal.tABC_Error;
 
-public class AccountSettings {
+public class Settings {
     private static String TAG = AirbitzCore.class.getSimpleName();
 
     private Account mAccount;
     private tABC_AccountSettings mSettings;
 
-    protected AccountSettings(Account account) {
+    protected Settings(Account account) {
         mAccount = account;
     }
 
-    protected AccountSettings load() throws AirbitzException {
+    protected Settings load() throws AirbitzException {
         tABC_Error error = new tABC_Error();
 
         SWIGTYPE_p_long lp = core.new_longp();

@@ -96,7 +96,7 @@ class Utils {
     }
 
     static String userBtcSymbol(Account account) {
-        AccountSettings settings = account.settings();
+        Settings settings = account.settings();
         if (settings == null) {
             return "";
         }
@@ -111,7 +111,7 @@ class Utils {
 
     static int userDecimalPlaces(Account account) {
         int decimalPlaces = 8; // for BitcoinDenomination.BTC
-        AccountSettings settings = account.settings();
+        Settings settings = account.settings();
         if (settings == null) {
             return 2;
         }

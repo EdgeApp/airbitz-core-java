@@ -67,7 +67,7 @@ public class Account {
     private Categories mCategories;
     List<Wallet> mCachedWallets = null;
     Engine mEngine;
-    AccountSettings mSettings;
+    Settings mSettings;
 
     /**
      * Callbacks are used to handle asynchronous events.
@@ -235,12 +235,12 @@ public class Account {
      * This provides access to the account's settings.
      * @return the settings
      */
-    public AccountSettings settings() {
+    public Settings settings() {
         if (mSettings != null) {
             return mSettings;
         }
         try {
-            mSettings = new AccountSettings(this).load();
+            mSettings = new Settings(this).load();
             return mSettings;
         } catch (AirbitzException e) {
             AirbitzCore.debugLevel(1, "settings error:");
