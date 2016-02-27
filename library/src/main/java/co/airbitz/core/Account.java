@@ -243,7 +243,7 @@ public class Account {
             mSettings = new Settings(this).load();
             return mSettings;
         } catch (AirbitzException e) {
-            AirbitzCore.debugLevel(1, "settings error:");
+            AirbitzCore.loge("settings error:");
             return null;
         }
     }
@@ -266,7 +266,7 @@ public class Account {
             if (error.getCode() == tABC_CC.ABC_CC_Ok) {
                 check = Jni.getBytesAtPtr(Jni.getCPtr(lp), 1)[0] != 0;
             } else {
-                AirbitzCore.debugLevel(1, "Password OK error:"+ error.getSzDescription());
+                AirbitzCore.loge("Password OK error:"+ error.getSzDescription());
             }
         }
         return check;
@@ -285,21 +285,23 @@ public class Account {
         if(pError.getCode().equals(tABC_CC.ABC_CC_Ok)) {
             return Jni.getBytesAtPtr(Jni.getCPtr(lp), 1)[0] != 0;
         } else {
-            AirbitzCore.debugLevel(1, "Password Exists error:"+pError.getSzDescription());
+            AirbitzCore.loge("Password Exists error:"+pError.getSzDescription());
             return true;
         }
+    }
+
+    String pin() throws AirbitzException {
+        return settings().settings().getSzPIN();
     }
 
     /**
      * Setup the account PIN. If the account settings allow PIN login, then
      * this will setup the account PIN package as well.
      */
-    public void pinSetup(String pin) throws AirbitzException {
-        tABC_Error error = new tABC_Error();
-        core.ABC_PinSetup(mUsername, mPassword, pin, error);
-        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            throw new AirbitzException(null, error.getCode(), error);
-        }
+    public void pin(String pin) throws AirbitzException {
+        Settings settings = settings();
+        settings.settings().setSzPIN(pin);
+        settings.save();
     }
 
     /**
@@ -316,6 +318,26 @@ public class Account {
             return Jni.getBytesAtPtr(Jni.getCPtr(lp), 1)[0] != 0;
         }
         return false;
+    }
+
+    /**
+     * Setup the account PIN. If the account settings allow PIN login, then
+     * this will setup the account PIN package as well.
+     */
+    public void pinLoginSetup() throws AirbitzException {
+        Settings settings = settings();
+        settings.settings().setBDisablePINLogin(false);
+        settings.save();
+    }
+
+    /**
+     * Setup the account PIN. If the account settings allow PIN login, then
+     * this will setup the account PIN package as well.
+     */
+    public void pinLoginDisable() throws AirbitzException {
+        Settings settings = settings();
+        settings.settings().setBDisablePINLogin(true);
+        settings.save();
     }
 
     /**
@@ -400,7 +422,7 @@ public class Account {
      * @return true if wallet was successfully created
      */
     public boolean createWallet(String walletName, String currency) {
-        AirbitzCore.debugLevel(1, "createWallet(" + walletName + "," + currency + ")");
+        AirbitzCore.logi("createWallet(" + walletName + "," + currency + ")");
         tABC_Error pError = new tABC_Error();
 
         SWIGTYPE_p_long lp = core.new_longp();
@@ -414,7 +436,7 @@ public class Account {
             mEngine.startWatchers();
             return true;
         } else {
-            AirbitzCore.debugLevel(1, "Create wallet failed - "+pError.getSzDescription()+", at "+pError.getSzSourceFunc());
+            AirbitzCore.loge("Create wallet failed - "+pError.getSzDescription()+", at "+pError.getSzSourceFunc());
             return result == tABC_CC.ABC_CC_Ok;
         }
     }
@@ -431,19 +453,9 @@ public class Account {
             throw new AirbitzException(mApi.getContext(), error.getCode(), error);
         }
         mPassword = password;
-    }
-
-    /**
-     * This is used to login with recovery answers.
-     * @param recoveryAnswers a newline concatenated string of recovery answers
-     */
-    public void recoverySetup(String recoveryAnswers) throws AirbitzException {
-        tABC_Error error = new tABC_Error();
-        tABC_CC cc = core.ABC_ChangePasswordWithRecoveryAnswers(
-                        mUsername, recoveryAnswers, mPassword, error);
-        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            throw new AirbitzException(mApi.getContext(), error.getCode(), error);
-        }
+        // Set the pin again
+        // This sets up the pin package again.
+        pin(pin());
     }
 
     /**
@@ -451,10 +463,10 @@ public class Account {
      * @param questions a newline concatenated string of recovery questions
      * @param recoveryAnswers a newline concatenated string of recovery answers
      */
-    public void saveRecoveryAnswers(String questions, String answers) throws AirbitzException {
+    public void recoverySetup(String[] questions, String[] answers) throws AirbitzException {
         tABC_Error error = new tABC_Error();
-        core.ABC_SetAccountRecoveryQuestions(mUsername,
-                mPassword, questions, answers, error);
+        core.ABC_SetAccountRecoveryQuestions(mUsername, mPassword,
+                Utils.arrayToString(questions), Utils.arrayToString(answers), error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
             throw new AirbitzException(mApi.getContext(), error.getCode(), error);
         }
@@ -498,7 +510,7 @@ public class Account {
             mUsername, mPassword,
             uuids.toString().trim(), error);
         if (result != tABC_CC.ABC_CC_Ok) {
-            AirbitzCore.debugLevel(1, "Error: CoreBridge.setWalletOrder" + error.getSzDescription());
+            AirbitzCore.loge("Error: CoreBridge.setWalletOrder" + error.getSzDescription());
         }
     }
 
@@ -615,10 +627,6 @@ public class Account {
      */
     public void updateExchangeRates() {
         mEngine.updateExchangeRates();
-    }
-
-    private void requestExchangeRateUpdate(final String currency) {
-        mEngine.requestExchangeRateUpdate(currency);
     }
 
     /**
@@ -790,29 +798,6 @@ public class Account {
             }
             return pretext + df.format(bd.doubleValue());
         }
-    }
-
-    public double satoshiToCurrency(long satoshi, String currency) {
-        tABC_Error error = new tABC_Error();
-        SWIGTYPE_p_double amountFiat = core.new_doublep();
-
-        int currencyNum = Currencies.instance().map(currency);
-        long out = Jni.satoshiToCurrency(mUsername, mPassword,
-                satoshi, Jni.getCPtr(amountFiat), currencyNum, Jni.getCPtr(error));
-        return core.doublep_value(amountFiat);
-    }
-
-    public long currencyToSatoshi(double amount, String currency) {
-        tABC_Error error = new tABC_Error();
-        tABC_CC result;
-        SWIGTYPE_p_int64_t satoshi = core.new_int64_tp();
-        SWIGTYPE_p_long l = core.p64_t_to_long_ptr(satoshi);
-
-        int currencyNum = Currencies.instance().map(currency);
-        result = core.ABC_CurrencyToSatoshi(mUsername, mPassword,
-            amount, currencyNum, satoshi, error);
-
-        return Jni.get64BitLongAtPtr(Jni.getCPtr(l));
     }
 
     public long denominationToSatoshi(String amount) {

@@ -94,7 +94,7 @@ public class Engine {
         mAccount = account;
 
         if (registerAsyncCallback()) {
-            AirbitzCore.debugLevel(1, "Registered for core callbacks");
+            AirbitzCore.logi("Registered for core callbacks");
         }
     }
 
@@ -117,7 +117,7 @@ public class Engine {
                     tABC_Error error = new tABC_Error();
                     core.ABC_WatcherStart(mAccount.username(), mAccount.password(), uuid, error);
                     Utils.printABCError(error);
-                    AirbitzCore.debugLevel(1, "Started watcher for " + uuid);
+                    AirbitzCore.logi("Started watcher for " + uuid);
 
                     Thread thread = new Thread(new WatcherRunnable(uuid));
                     thread.start();
@@ -178,7 +178,7 @@ public class Engine {
             try {
                 Thread.sleep(1000);
             } catch (Exception e) {
-                AirbitzCore.debugLevel(1, e.getMessage());
+                AirbitzCore.loge(e.getMessage());
             }
         }
     }
@@ -210,7 +210,7 @@ public class Engine {
             try {
                 thread.join();
             } catch (InterruptedException e) {
-                AirbitzCore.debugLevel(1, e.getMessage());
+                AirbitzCore.loge(e.getMessage());
             }
         }
         for (String uuid : mWatcherTasks.keySet()) {
@@ -397,9 +397,9 @@ public class Engine {
                 try {
                     a.get(1000, TimeUnit.MILLISECONDS);
                 } catch (java.util.concurrent.CancellationException e) {
-                    AirbitzCore.debugLevel(1, "task cancelled");
+                    AirbitzCore.loge("task cancelled");
                 } catch (Exception e) {
-                    AirbitzCore.debugLevel(1, e.getMessage());
+                    AirbitzCore.loge(e.getMessage());
                 }
             }
         }
@@ -428,7 +428,7 @@ public class Engine {
                 || mExchangeHandler.hasMessages(LAST)
                 || mMainHandler.hasMessages(LAST)) {
             try {
-                AirbitzCore.debugLevel(1,
+                AirbitzCore.logi(
                     "Data: " + mDataHandler.hasMessages(LAST) + ", " +
                     "Core: " + mCoreHandler.hasMessages(LAST) + ", " +
                     "Watcher: " + mWatcherHandler.hasMessages(LAST) + ", " +
@@ -436,7 +436,7 @@ public class Engine {
                     "Main: " + mMainHandler.hasMessages(LAST));
                 Thread.sleep(200);
             } catch (Exception e) {
-                AirbitzCore.debugLevel(1, e.getMessage());
+                AirbitzCore.loge(e.getMessage());
             }
         }
 
@@ -545,10 +545,11 @@ public class Engine {
         if (mAccount.isLoggedIn()
                 && null != mAccount.settings()
                 && null != wallets) {
-            requestExchangeRateUpdate(mAccount.settings().currencyCode());
+
+            requestExchangeRateUpdate(mAccount, mAccount.settings().currencyCode());
             for (Wallet wallet : wallets) {
                 if (wallet.isSynced()) {
-                    requestExchangeRateUpdate(wallet.currencyCode());
+                    requestExchangeRateUpdate(mAccount, wallet.currencyCode());
                 }
             }
             if (mAccount.mCallbacks != null) {
@@ -562,13 +563,10 @@ public class Engine {
         mExchangeHandler.sendEmptyMessage(REPEAT);
     }
 
-    void requestExchangeRateUpdate(final String currency) {
+    void requestExchangeRateUpdate(final Account account, final String currency) {
         mExchangeHandler.post(new Runnable() {
             public void run() {
-                int num = Currencies.instance().map(currency);
-                tABC_Error error = new tABC_Error();
-                core.ABC_RequestExchangeRateUpdate(mAccount.username(),
-                    mAccount.password(), num, error);
+                AirbitzCore.getApi().exchangeCache().update(account, currency);
             }
         });
     }
@@ -642,7 +640,7 @@ public class Engine {
                 try {
                     pending = mApi.isOtpResetPending(mAccount.username());
                 } catch (AirbitzException e) {
-                    AirbitzCore.debugLevel(1, "mDataHandler.post error:");
+                    AirbitzCore.loge("mDataHandler.post error:");
                 }
                 final boolean isPending = pending;
                 mMainHandler.post(new Runnable() {
@@ -690,7 +688,7 @@ public class Engine {
         tABC_AsyncBitCoinInfo info = Jni.newAsyncBitcoinInfo(asyncBitCoinInfo_ptr);
         tABC_AsyncEventType type = info.getEventType();
 
-        AirbitzCore.debugLevel(1, "asyncBitCoinInfo callback type = "+type.toString());
+        AirbitzCore.logi("asyncBitCoinInfo callback type = "+type.toString());
         if (type==tABC_AsyncEventType.ABC_AsyncEventType_IncomingBitCoin) {
             mIncomingWallet = info.getSzWalletUUID();
             mIncomingTxId = info.getSzTxID();

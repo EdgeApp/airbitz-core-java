@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import co.airbitz.internal.SWIGTYPE_p_int;
@@ -56,7 +57,7 @@ public class Transaction {
     long mAmountFeesMinersSatoshi;
     private String mId;
     private String mMalId;
-    private long mDate;
+    private Date mDate;
     private TxOutput[] mOutputs;
     private boolean mConfirmed;
     private boolean mSyncing;
@@ -86,7 +87,7 @@ public class Transaction {
         mMeta.bizid(mTxInfo.getDetails().getBizId());
         mMeta.fiat(mTxInfo.getDetails().getmAmountCurrency());
 
-        mDate = mTxInfo.getCreationTime();
+        mDate = new Date(mTxInfo.getCreationTime() * 1000);
         amount(mTxInfo.getDetails().getmAmountSatoshi());
 
         setABFees(mTxInfo.getDetails().getmAmountFeesAirbitzSatoshi());
@@ -172,7 +173,7 @@ public class Transaction {
         return mMeta;
     }
 
-    public long date() {
+    public Date date() {
         return mDate;
     }
 

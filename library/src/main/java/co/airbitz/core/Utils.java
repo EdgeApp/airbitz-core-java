@@ -85,7 +85,7 @@ class Utils {
 
     static void printABCError(tABC_Error pError) {
         if (pError.getCode() != tABC_CC.ABC_CC_Ok) {
-            AirbitzCore.debugLevel(1,
+            AirbitzCore.loge(
                 String.format("Code: %s, Desc: %s, Func: %s, File: %s, Line: %d\n",
                     pError.getCode().toString(),
                     pError.getSzDescription(),
@@ -103,7 +103,7 @@ class Utils {
         BitcoinDenomination bitcoinDenomination =
             settings.bitcoinDenomination();
         if (bitcoinDenomination == null) {
-            AirbitzCore.debugLevel(1, "Bad bitcoin denomination from core settings");
+            AirbitzCore.logw("Bad bitcoin denomination from core settings");
             return "";
         }
         return bitcoinDenomination.btcSymbol();
@@ -125,5 +125,13 @@ class Utils {
                 decimalPlaces = 5;
         }
         return decimalPlaces;
+    }
+
+    static String arrayToString(String[] arr) {
+        StringBuffer buf = new StringBuffer("");
+        for (String s : arr) {
+            buf.append(s).append("\n");
+        }
+        return buf.toString();
     }
 }

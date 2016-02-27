@@ -45,61 +45,6 @@ import co.airbitz.internal.tABC_TxDetails;
 public class ReceiveAddress {
     private static String TAG = ReceiveAddress.class.getSimpleName();
 
-    public static class Builder {
-        private Account mAccount;
-        private Wallet mWallet;
-        private String mUriPayee;
-        private String mUriLabel;
-        private String mUriNotes;
-        private MetadataSet mMeta;
-        private String mAddress;
-        private long mSatoshi;
-        private long mBizId;
-
-        public Builder(Account account, Wallet wallet) {
-            mAccount = account;
-            mWallet = wallet;
-            mMeta = new MetadataSet();
-        }
-
-        public MetadataSet meta() {
-            return mMeta;
-        }
-
-        public Builder uriPayee(String payee) {
-            mUriPayee = payee;
-            return this;
-        }
-
-        public Builder uriLabel(String label) {
-            mUriLabel = label;
-            return this;
-        }
-
-        public Builder uriNotes(String notes) {
-            mUriNotes = notes;
-            return this;
-        }
-
-        public Builder amount(long amountSatoshi) {
-            mSatoshi = amountSatoshi;
-            return this;
-        }
-
-        public ReceiveAddress build() {
-            ReceiveAddress receiveAddress = new ReceiveAddress(mAccount, mWallet);
-            receiveAddress.mAddress = mAddress;
-            receiveAddress.mSatoshi = mSatoshi;
-            receiveAddress.mMeta = mMeta;
-            if (receiveAddress.update()) {
-                return receiveAddress;
-            } else {
-                return null;
-            }
-        }
-
-    }
-
     private Account mAccount;
     private Wallet mWallet;
     private String mAddress;
@@ -109,17 +54,35 @@ public class ReceiveAddress {
     private String mUri;
     private byte[] mQrCode;
 
-    private ReceiveAddress(Account account, Wallet wallet) {
+    private String mUriPayee;
+    private String mUriLabel;
+    private String mUriNotes;
+    private long mBizId;
+
+    ReceiveAddress(Account account, Wallet wallet) {
+        init(account, wallet, null);
+    }
+
+    ReceiveAddress(Account account, Wallet wallet, String address) {
+        init(account, wallet, address);
+    }
+
+    void init(Account account, Wallet wallet, String address) {
         this.mAccount = account;
         this.mWallet = wallet;
         this.mDetails = new tABC_TxDetails();
+        this.mMeta = new MetadataSet();
+        this.mAddress = address;
+        start();
     }
 
     public byte[] qrcode() {
+        update();
         return mQrCode;
     }
 
     public String uri() {
+        update();
         return mUri;
     }
 
@@ -131,7 +94,12 @@ public class ReceiveAddress {
         return mMeta;
     }
 
-    public long amountSatoshi() {
+    public ReceiveAddress amount(long amount) {
+        mSatoshi = amount;
+        return this;
+    }
+
+    public long amount() {
         return mSatoshi;
     }
 
@@ -155,6 +123,20 @@ public class ReceiveAddress {
     public void cancel() {
     }
 
+    private void start() {
+        tABC_Error error = new tABC_Error();
+        if (null == mAddress) {
+            SWIGTYPE_p_long lp = core.new_longp();
+            SWIGTYPE_p_p_char pRequestID = core.longp_to_ppChar(lp);
+            core.ABC_CreateReceiveRequest(
+                mAccount.username(), mAccount.password(),
+                mWallet.id(), pRequestID, error);
+            if (tABC_CC.ABC_CC_Ok == error.getCode()) {
+                mAddress = Jni.getStringAtPtr(core.longp_value(lp));
+            }
+        }
+    }
+
     private boolean update() {
         Jni.set64BitLongAtPtr(Jni.getCPtr(mDetails) + 0, mSatoshi);
         tABC_Error error = new tABC_Error();
@@ -169,21 +151,12 @@ public class ReceiveAddress {
             mDetails.setBizId(mMeta.bizid());
         }
 
-        SWIGTYPE_p_long lp = core.new_longp();
-        SWIGTYPE_p_p_char pRequestID = core.longp_to_ppChar(lp);
-        core.ABC_CreateReceiveRequest(
-            mAccount.username(), mAccount.password(),
-            mWallet.id(), mDetails, pRequestID, error);
-
+        core.ABC_ModifyReceiveRequest(
+                mAccount.username(), mAccount.password(),
+                mWallet.id(), mAddress, mDetails, error);
         if (tABC_CC.ABC_CC_Ok == error.getCode()) {
-            mAddress = Jni.getStringAtPtr(core.longp_value(lp));
-            core.ABC_ModifyReceiveRequest(
-                    mAccount.username(), mAccount.password(),
-                    mWallet.id(), mAddress, mDetails, error);
-            if (tABC_CC.ABC_CC_Ok == error.getCode()) {
-                setupQrCode();
-                return true;
-            }
+            setupQrCode();
+            return true;
         }
         return false;
     }

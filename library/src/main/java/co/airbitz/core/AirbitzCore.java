@@ -63,11 +63,24 @@ public class AirbitzCore {
 
     private static Object LOCK = new Object();
 
+    public enum LogLevel {
+        ERROR(0),
+        WARNING(1),
+        INFO(2),
+        DEBUG(3);
+
+        private final int value;
+        LogLevel(int value) {
+            this.value= value;
+        }
+    }
+
     private static AirbitzCore mInstance = null;
     private static boolean mInitialized = false;
     private static Context mContext;
     private List<Account> mAccounts;
     private boolean mConnectivity = true;
+    private ExchangeCache mExchangeCache;
 
     static {
         System.loadLibrary("abc");
@@ -76,6 +89,7 @@ public class AirbitzCore {
 
     private AirbitzCore() {
         mAccounts = new ArrayList<Account>();
+        mExchangeCache = new ExchangeCache();
     }
 
     public static AirbitzCore getApi(Context context) {
@@ -83,7 +97,7 @@ public class AirbitzCore {
         synchronized (LOCK) {
             if (mInstance == null) {
                 mInstance = new AirbitzCore();
-                mInstance.debugLevel(1, "New AirbitzCore");
+                mInstance.logi("New AirbitzCore");
             }
         }
         return mInstance;
@@ -93,7 +107,7 @@ public class AirbitzCore {
         synchronized (LOCK) {
             if (mInstance == null) {
                 mInstance = new AirbitzCore();
-                mInstance.debugLevel(1, "New AirbitzCore");
+                mInstance.logi("New AirbitzCore");
             }
         }
         return mInstance;
@@ -103,10 +117,11 @@ public class AirbitzCore {
         return mContext;
     }
 
-    public void init(Context context, String airbitzApiKey, String hiddenbitzKey, String seed) {
+    public void init(Context context, String airbitzApiKey, String hiddenbitzKey) {
         if (mInitialized) {
             return;
         }
+        String seed = seedData();
         tABC_Error error = new tABC_Error();
         File filesDir = context.getFilesDir();
         String certPath = Utils.setupCerts(context, filesDir);
@@ -121,6 +136,22 @@ public class AirbitzCore {
         }).start();
     }
 
+   public static String seedData() {
+        String strSeed = "";
+
+        long time = System.nanoTime();
+        ByteBuffer bb1 = ByteBuffer.allocate(8);
+        bb1.putLong(time);
+        strSeed += bb1.array();
+
+        Random r = new SecureRandom();
+        ByteBuffer bb2 = ByteBuffer.allocate(4);
+        bb2.putInt(r.nextInt());
+        strSeed += bb2.array();
+
+        return strSeed;
+    }
+
     boolean generalInfoUpdate() {
         tABC_Error error = new tABC_Error();
         core.ABC_GeneralInfoUpdate(error);
@@ -131,15 +162,31 @@ public class AirbitzCore {
         tABC_Error error = new tABC_Error();
         tABC_CC result = core.ABC_ClearKeyCache(error);
         if (result != tABC_CC.ABC_CC_Ok) {
-            AirbitzCore.debugLevel(1, error.toString());
+            AirbitzCore.loge(error.toString());
         }
     }
 
-    public static void debugLevel(int level, String debugString) {
-        int DEBUG_LEVEL = 1;
-        if (level <= DEBUG_LEVEL) {
+    private static final LogLevel MIN_LEVEL = LogLevel.INFO;
+    public static void log(LogLevel level, String debugString) {
+        if (level.value <= MIN_LEVEL.value) {
             core.ABC_Log(debugString);
         }
+    }
+
+    public static void loge(String debugString) {
+        log(LogLevel.ERROR, debugString);
+    }
+
+    public static void logw(String debugString) {
+        log(LogLevel.WARNING, debugString);
+    }
+
+    public static void logi(String debugString) {
+        log(LogLevel.INFO, debugString);
+    }
+
+    public static void logd(String debugString) {
+        log(LogLevel.DEBUG, debugString);
     }
 
     public String version() {
@@ -166,8 +213,8 @@ public class AirbitzCore {
         String deviceBrand = Build.BRAND;
         String deviceOS = Build.VERSION.RELEASE;
 
-        AirbitzCore.debugLevel(0, "Platform:" + deviceBrand + " " + deviceMan + " " + deviceName);
-        AirbitzCore.debugLevel(0, "Android Version:" + deviceOS);
+        AirbitzCore.logi("Platform:" + deviceBrand + " " + deviceMan + " " + deviceName);
+        AirbitzCore.logi("Android Version:" + deviceOS);
 
         core.ABC_UploadLogs(username, password, Error);
         return Error.getCode() == tABC_CC.ABC_CC_Ok;
@@ -227,9 +274,13 @@ public class AirbitzCore {
         if(result.equals(tABC_CC.ABC_CC_Ok)) {
             return Jni.getBytesAtPtr(Jni.getCPtr(lp), 1)[0] != 0;
         } else {
-            AirbitzCore.debugLevel(1, "isTestNet error:"+error.getSzDescription());
+            AirbitzCore.logi("isTestNet error:"+error.getSzDescription());
         }
         return false;
+    }
+
+    public ExchangeCache exchangeCache() {
+        return mExchangeCache;
     }
 
     public Bitmap qrEncode(byte[] array) {
@@ -342,7 +393,7 @@ public class AirbitzCore {
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
             Account account = new Account(this, username, password);
             if (null != pin) {
-                account.pinSetup(pin);
+                account.pin(pin);
             }
             mAccounts.add(account);
             return account;
@@ -366,7 +417,7 @@ public class AirbitzCore {
 
         core.ABC_CheckPassword(password, seconds, pppRules, puCount, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            AirbitzCore.debugLevel(1, "Error in passwordSecondsToCrack:  " + error.getSzDescription());
+            AirbitzCore.loge("Error in passwordSecondsToCrack:  " + error.getSzDescription());
             return 0;
         }
         return core.doublep_value(seconds);
@@ -393,7 +444,7 @@ public class AirbitzCore {
         core.ABC_CheckPassword(password, seconds, pppRules, puCount, error);
 
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            AirbitzCore.debugLevel(1, "Error in PasswordRule:  " + error.getSzDescription());
+            AirbitzCore.loge("Error in PasswordRule:  " + error.getSzDescription());
             return null;
         }
 
@@ -501,7 +552,7 @@ public class AirbitzCore {
                 }
             }
         } catch (AirbitzException e) {
-            AirbitzCore.debugLevel(1, "hasRecoveryQuestionsSet error:");
+            AirbitzCore.loge("hasRecoveryQuestionsSet error:");
         }
         return false;
     }
@@ -513,25 +564,19 @@ public class AirbitzCore {
      * @param otpToken
      * @return Account object of signed in user
      */
-    public Account recoveryLogin(String username, String answers, String otpToken) throws AirbitzException {
+    public Account recoveryLogin(String username, String[] answers, String otpToken) throws AirbitzException {
         tABC_Error error = new tABC_Error();
-        SWIGTYPE_p_int lp = core.new_intp();
-        SWIGTYPE_p_bool pbool = Jni.newBool(Jni.getCPtr(lp));
-
         if (otpToken != null) {
             otpKeySet(username, otpToken);
         }
-        core.ABC_CheckRecoveryAnswers(username, answers, pbool, error);
+        core.ABC_RecoveryLogin(username,
+                Utils.arrayToString(answers), error);
         if (tABC_CC.ABC_CC_Ok != error.getCode()) {
             throw new AirbitzException(mContext, error.getCode(), error);
         }
-        if (core.intp_value(lp) == 1) {
-            Account account = new Account(this, username, null);
-            mAccounts.add(account);
-            return account;
-        } else {
-            return null;
-        }
+        Account account = new Account(this, username, null);
+        mAccounts.add(account);
+        return account;
     }
 
     /**
@@ -550,7 +595,7 @@ public class AirbitzCore {
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
             return Jni.getBytesAtPtr(Jni.getCPtr(lp), 1)[0] != 0;
         } else {
-            AirbitzCore.debugLevel(1, "PinLoginExists error:"+error.getSzDescription());
+            AirbitzCore.loge("PinLoginExists error:"+error.getSzDescription());
             return false;
         }
     }

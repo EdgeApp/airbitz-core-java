@@ -71,7 +71,7 @@ public class Categories {
                 aszCategories, pUCount, Error);
 
         if (result!=tABC_CC.ABC_CC_Ok) {
-            AirbitzCore.debugLevel(1, "loadCategories failed:"+Error.getSzDescription());
+            AirbitzCore.loge("loadCategories failed:"+Error.getSzDescription());
         }
 
         int count = core.intp_value(pCount);
@@ -88,7 +88,7 @@ public class Categories {
         List<String> categories = list();
         if (categories != null && !categories.contains(strCategory)) {
             // add the category to the core
-            AirbitzCore.debugLevel(1, "Adding category: "+strCategory);
+            AirbitzCore.logi("Adding category: " + strCategory);
             tABC_Error Error = new tABC_Error();
             core.ABC_AddCategory(
                     mAccount.username(), mAccount.password(),
@@ -96,8 +96,14 @@ public class Categories {
         }
     }
 
+    public void insert(String[] categories) {
+        for (String c : categories) {
+            insert(c);
+        }
+    }
+
     public boolean remove(String strCategory) {
-        AirbitzCore.debugLevel(1, "Remove category: "+strCategory);
+        AirbitzCore.logi("Remove category: "+strCategory);
         tABC_Error Error = new tABC_Error();
         tABC_CC result = core.ABC_RemoveCategory(
                 mAccount.username(), mAccount.password(),

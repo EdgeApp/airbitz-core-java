@@ -195,7 +195,7 @@ public class Wallet {
         } else if (result == tABC_CC.ABC_CC_NoTransaction) {
             return "";
         } else {
-            AirbitzCore.debugLevel(1, pError.getSzDescription() +
+            AirbitzCore.loge(pError.getSzDescription() +
                             ";" + pError.getSzSourceFile() +
                             ";" + pError.getSzSourceFunc() +
                             ";" + pError.getNSourceLine());
@@ -203,14 +203,17 @@ public class Wallet {
         }
     }
 
-    public ReceiveAddress.Builder receiveRequestBuilders() {
-        return new ReceiveAddress.Builder(mAccount, this);
+    public ReceiveAddress receiveRequest() {
+        return new ReceiveAddress(mAccount, this);
+    }
+
+    public ReceiveAddress receiveRequest(String address) {
+        return new ReceiveAddress(mAccount, this, address);
     }
 
     public SpendTarget newSpendTarget() {
         return new SpendTarget(mAccount, this);
     }
-
 
     public Transaction transaction(String txid) {
         tABC_Error error = new tABC_Error();
@@ -227,16 +230,12 @@ public class Wallet {
             transaction = new Transaction(mAccount, this, txInfo);
             core.ABC_FreeTransaction(txInfo);
         } else {
-            AirbitzCore.debugLevel(1, "Error: Wallet.transaction: "+ error.getSzDescription());
+            AirbitzCore.loge("Error: Wallet.transaction: "+ error.getSzDescription());
         }
         return transaction;
     }
 
     public List<Transaction> transactions() {
-        return transactions(0, 0);
-    }
-
-    public List<Transaction> transactions(long start, long end) {
         List<Transaction> listTransactions = new ArrayList<Transaction>();
         tABC_Error error = new tABC_Error();
 
@@ -247,10 +246,10 @@ public class Wallet {
         SWIGTYPE_p_p_p_sABC_TxInfo paTxInfo = core.longp_to_pppTxInfo(lp);
 
         SWIGTYPE_p_int64_t startTime = core.new_int64_tp();
-        Jni.set64BitLongAtPtr(Jni.getCPtr(startTime), start); // 0 means all transactions
+        Jni.set64BitLongAtPtr(Jni.getCPtr(startTime), 0); // 0 means all transactions
 
         SWIGTYPE_p_int64_t endTime = core.new_int64_tp();
-        Jni.set64BitLongAtPtr(Jni.getCPtr(endTime), end); // 0 means all transactions
+        Jni.set64BitLongAtPtr(Jni.getCPtr(endTime), 0); // 0 means all transactions
 
         tABC_CC result = core.ABC_GetTransactions(
                 mAccount.username(), mAccount.password(),
@@ -272,7 +271,7 @@ public class Wallet {
             core.ABC_FreeTransactions(new Jni.ppTxInfo(ptrToInfo), count);
             mTransactions = listTransactions;
         } else {
-            AirbitzCore.debugLevel(1, "Error: CoreBridge.loadAllTransactions: "+ error.getSzDescription());
+            AirbitzCore.loge("Error: CoreBridge.loadAllTransactions: "+ error.getSzDescription());
         }
         return listTransactions;
     }
@@ -304,7 +303,7 @@ public class Wallet {
                 listTransactions.add(transaction);
             }
         } else {
-            AirbitzCore.debugLevel(1, "Error: CoreBridge.searchTransactionsIn: " + error.getSzDescription());
+            AirbitzCore.loge("Error: CoreBridge.searchTransactionsIn: " + error.getSzDescription());
         }
         return listTransactions;
     }

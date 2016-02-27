@@ -83,7 +83,7 @@ public class Settings {
         try {
             save();
         } catch (AirbitzException e) {
-            AirbitzCore.debugLevel(1, "setupDefaultCurrency error:");
+            AirbitzCore.loge("setupDefaultCurrency error:");
         }
     }
 
@@ -236,14 +236,6 @@ public class Settings {
     public long spendRequirePinSatoshis() {
         SWIGTYPE_p_int64_t satoshi = settings().getSpendRequirePinSatoshis();
         return Jni.get64BitLongAtPtr(Jni.getCPtr(satoshi));
-    }
-
-    public void disablePinLogin(boolean value) {
-        settings().setBDisablePINLogin(value);
-    }
-
-    public boolean disablePinLogin() {
-        return settings().getBDisablePINLogin();
     }
 
     public void pinLoginCount(int value) {

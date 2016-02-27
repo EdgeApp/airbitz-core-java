@@ -108,7 +108,7 @@ public class UnsentTransaction {
             try {
                 tx.save();
             } catch (AirbitzException e) {
-                AirbitzCore.debugLevel(1, "updateTransaction 1 error:");
+                AirbitzCore.loge("updateTransaction 1 error:");
             }
         }
 
@@ -121,7 +121,7 @@ public class UnsentTransaction {
                 try {
                     destTx.save();
                 } catch (AirbitzException e) {
-                    AirbitzCore.debugLevel(1, "updateTransaction 2 error:");
+                    AirbitzCore.loge("updateTransaction 2 error:");
                 }
             }
         }
