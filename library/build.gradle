@@ -62,13 +62,13 @@ publishing {
 		mainnetLibrary(MavenPublication) {
             groupId 'co.airbitz'
             artifactId 'airbitz-core-android'
-            version '0.0.13'
+            version '0.0.14'
 			artifact("$buildDir/outputs/aar/library-mainnet-release.aar")
         }
 		testnetLibrary(MavenPublication) {
             groupId 'co.airbitz'
             artifactId 'airbitz-core-android-testnet'
-            version '0.0.13'
+            version '0.0.14'
 			artifact("$buildDir/outputs/aar/library-nettest-release.aar")
         }
     }

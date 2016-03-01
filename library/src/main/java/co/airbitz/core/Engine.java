@@ -546,10 +546,10 @@ public class Engine {
                 && null != mAccount.settings()
                 && null != wallets) {
 
-            requestExchangeRateUpdate(mAccount, mAccount.settings().currencyCode());
+            requestExchangeRateUpdate(mAccount, mAccount.settings().currency().code);
             for (Wallet wallet : wallets) {
                 if (wallet.isSynced()) {
-                    requestExchangeRateUpdate(mAccount, wallet.currencyCode());
+                    requestExchangeRateUpdate(mAccount, wallet.currency().code);
                 }
             }
             if (mAccount.mCallbacks != null) {

@@ -56,7 +56,7 @@ public class Settings {
         mAccount = account;
     }
 
-    protected Settings load() throws AirbitzException {
+    public Settings load() throws AirbitzException {
         tABC_Error error = new tABC_Error();
 
         SWIGTYPE_p_long lp = core.new_longp();
@@ -79,7 +79,7 @@ public class Settings {
     }
 
     protected void setupDefaultCurrency() {
-        currencyCode(Currencies.instance().defaultCurrency().code);
+        currency(Currencies.instance().defaultCurrency().code);
         try {
             save();
         } catch (AirbitzException e) {
@@ -159,13 +159,14 @@ public class Settings {
         return settings().getSzLanguage();
     }
 
-    public void currencyCode(String value) {
+    public void currency(String currencyCode) {
         settings().setCurrencyNum(
-                Currencies.instance().map(value));
+                Currencies.instance().map(currencyCode));
     }
 
-    public String currencyCode() {
-        return Currencies.instance().map(settings().getCurrencyNum());
+    public Currencies.CurrencyEntry currency() {
+        return Currencies.instance().lookup(
+            Currencies.instance().map(settings().getCurrencyNum()));
     }
 
     public void exchangeRateSource(String value) {

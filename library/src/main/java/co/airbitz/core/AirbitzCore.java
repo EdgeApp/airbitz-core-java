@@ -366,9 +366,21 @@ public class AirbitzCore {
         return error.getCode() == tABC_CC.ABC_CC_Ok;
     }
 
-    public String usernameAvailable(String account) throws AirbitzException {
+    public String usernameFix(String username) throws AirbitzException {
         tABC_Error error = new tABC_Error();
-        core.ABC_AccountAvailable(account, error);
+        SWIGTYPE_p_long lp = core.new_longp();
+        SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
+        core.ABC_FixUsername(ppChar, username, error);
+        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
+            return Jni.getStringAtPtr(core.longp_value(lp));
+        } else {
+            throw new AirbitzException(mContext, error.getCode(), null);
+        }
+    }
+
+    public String usernameAvailable(String username) throws AirbitzException {
+        tABC_Error error = new tABC_Error();
+        core.ABC_AccountAvailable(username, error);
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
             return null;
         } else {

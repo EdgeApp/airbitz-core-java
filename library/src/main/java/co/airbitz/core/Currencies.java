@@ -114,6 +114,10 @@ public class Currencies {
         }
     }
 
+    CurrencyEntry lookup(String code) {
+        return mCodeIndex.get(code);
+    }
+
     protected int map(String code) {
         if (mCodeIndex.containsKey(code)) {
             return mCodeIndex.get(code).currencyNum;

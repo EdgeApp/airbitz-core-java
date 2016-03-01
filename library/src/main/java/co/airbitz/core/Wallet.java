@@ -145,11 +145,12 @@ public class Wallet {
         this.mName = name;
     }
 
-    public String currencyCode() {
-        return Currencies.instance().map(mCurrencyNum);
+    public Currencies.CurrencyEntry currency() {
+        return Currencies.instance().lookup(
+			Currencies.instance().map(mCurrencyNum));
     }
 
-    public void currencyCode(String code) {
+    public void currency(String code) {
         mCurrencyNum = Currencies.instance().map(code);
     }
 
