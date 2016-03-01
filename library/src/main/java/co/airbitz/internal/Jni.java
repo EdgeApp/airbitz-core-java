@@ -76,6 +76,10 @@ public class Jni  {
         }
     }
 
+    public static tABC_PasswordRule newPasswordRule(long cPtr) {
+        return new tABC_PasswordRule(cPtr, false);
+    }
+
     public static tABC_AccountSettings newAccountSettings(long cPtr) {
         return new tABC_AccountSettings(cPtr, false);
     }

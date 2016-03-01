@@ -64,6 +64,7 @@ public class Wallet {
         this.mTransactions = new ArrayList<Transaction>();
         this.mId = uuid;
         setup();
+        loadTransactions();
     }
 
     private void setup() {
@@ -235,7 +236,7 @@ public class Wallet {
         return transaction;
     }
 
-    public List<Transaction> transactions() {
+    private void loadTransactions() {
         List<Transaction> listTransactions = new ArrayList<Transaction>();
         tABC_Error error = new tABC_Error();
 
@@ -273,7 +274,10 @@ public class Wallet {
         } else {
             AirbitzCore.loge("Error: CoreBridge.loadAllTransactions: "+ error.getSzDescription());
         }
-        return listTransactions;
+    }
+
+    public List<Transaction> transactions() {
+        return mTransactions;
     }
 
     public List<Transaction> transactionsSearch(String searchText) {

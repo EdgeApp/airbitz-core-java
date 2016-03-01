@@ -55,8 +55,10 @@ import co.airbitz.internal.SWIGTYPE_p_p_p_sABC_PasswordRule;
 import co.airbitz.internal.SWIGTYPE_p_p_sABC_QuestionChoices;
 import co.airbitz.internal.SWIGTYPE_p_unsigned_int;
 import co.airbitz.internal.core;
+import co.airbitz.internal.coreConstants;
 import co.airbitz.internal.tABC_CC;
 import co.airbitz.internal.tABC_Error;
+import co.airbitz.internal.tABC_PasswordRule;
 
 public class AirbitzCore {
     private static String TAG = AirbitzCore.class.getSimpleName();
@@ -117,6 +119,10 @@ public class AirbitzCore {
         return mContext;
     }
 
+    public void init(Context context, String airbitzApiKey) {
+        init(context, airbitzApiKey, null);
+    }
+
     public void init(Context context, String airbitzApiKey, String hiddenbitzKey) {
         if (mInitialized) {
             return;
@@ -136,7 +142,7 @@ public class AirbitzCore {
         }).start();
     }
 
-   public static String seedData() {
+   private static String seedData() {
         String strSeed = "";
 
         long time = System.nanoTime();
@@ -402,37 +408,23 @@ public class AirbitzCore {
         }
     }
 
+    public static class PasswordRulesCheck {
+		public double secondsToCrack;
+		public boolean tooShort;
+		public boolean noNumber;
+		public boolean noUpperCase;
+		public boolean noLowerCase;
+		public int minPasswordLength;
+    }
+
     /**
      * Calculate the number of seconds it would take to crack the given password.
      * @param password
      * @return seconds to crack the password
      */
-    public double passwordSecondsToCrack(String password) {
-        tABC_Error error = new tABC_Error();
-        SWIGTYPE_p_double seconds = core.new_doublep();
-        SWIGTYPE_p_int pCount = core.new_intp();
-        SWIGTYPE_p_unsigned_int puCount = core.int_to_uint(pCount);
-        SWIGTYPE_p_long lp = core.new_longp();
-        SWIGTYPE_p_p_p_sABC_PasswordRule pppRules = core.longp_to_pppPasswordRule(lp);
-
-        core.ABC_CheckPassword(password, seconds, pppRules, puCount, error);
-        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            AirbitzCore.loge("Error in passwordSecondsToCrack:  " + error.getSzDescription());
-            return 0;
-        }
-        return core.doublep_value(seconds);
-    }
-
-    /**
-     * Checks a password for valid entropy looking for correct minimum
-     * requirements such as upper, lowercase letters, numbers, and # of digits.
-     * This should be used by app to give feedback to user before creating a
-     * new account.
-     * @param password password to check
-     */
-    public List<PasswordRule> passwordRules(String password) {
-        List<PasswordRule> list = new ArrayList<PasswordRule>();
-        boolean bNewPasswordFieldsAreValid = true;
+    public PasswordRulesCheck passwordRulesCheck(String password) {
+		PasswordRulesCheck check = new PasswordRulesCheck();
+		check.minPasswordLength = coreConstants.ABC_MIN_PIN_LENGTH;
 
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_double seconds = core.new_doublep();
@@ -448,15 +440,25 @@ public class AirbitzCore {
             return null;
         }
 
+        check.secondsToCrack = core.doublep_value(seconds);
+
         int count = core.intp_value(pCount);
         long base = core.longp_value(lp);
         for (int i = 0; i < count; i++) {
             Jni.pLong temp = new Jni.pLong(base + i * 4);
             long start = core.longp_value(temp);
-            PasswordRule pRule = new PasswordRule(start, false);
-            list.add(pRule);
+            tABC_PasswordRule rule = Jni.newPasswordRule(start);
+			if (rule.getSzDescription().contains("Must have at least one upper case letter")) {
+				check.noUpperCase = !rule.getBPassed();
+			} else if (rule.getSzDescription().contains("Must have at least one lower case letter")) {
+				check.noLowerCase = !rule.getBPassed();
+			} else if (rule.getSzDescription().contains("Must have at least one number")) {
+				check.noNumber = !rule.getBPassed();
+			} else if (rule.getSzDescription().contains("Must have at least")) {
+				check.tooShort = !rule.getBPassed();
+			}
         }
-        return list;
+        return check;
     }
 
     /**
