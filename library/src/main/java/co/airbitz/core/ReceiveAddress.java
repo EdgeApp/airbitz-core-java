@@ -120,7 +120,12 @@ public class ReceiveAddress {
         return error.getCode() == tABC_CC.ABC_CC_Ok;
     }
 
-    public void cancel() {
+    public boolean cancel() {
+        tABC_Error error = new tABC_Error();
+        core.ABC_CancelReceiveRequest(
+                mAccount.username(), mAccount.password(),
+                mWallet.id(), mAddress, error);
+        return error.getCode() == tABC_CC.ABC_CC_Ok;
     }
 
     private void start() {
