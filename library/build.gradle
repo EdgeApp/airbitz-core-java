@@ -71,5 +71,11 @@ publishing {
             version '0.0.15'
 			artifact("$buildDir/outputs/aar/library-nettest-release.aar")
         }
+		developLibrary(MavenPublication) {
+            groupId 'co.airbitz'
+            artifactId 'airbitz-core-android-develop'
+            version '0.0.15'
+			artifact("$buildDir/outputs/aar/library-develop-release.aar")
+        }
     }
 }
