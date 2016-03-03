@@ -282,8 +282,8 @@ public class Engine {
         public void run() {
             if (mAccount.mCallbacks != null) {
                 Wallet wallet = mAccount.wallet(mIncomingWallet);
-                Transaction tx = wallet.transaction(mIncomingTxId);
-                mAccount.mCallbacks.incomingBitcoin(wallet, tx);
+                // Transaction tx = wallet.transaction(mIncomingTxId);
+                mAccount.mCallbacks.incomingBitcoin(wallet, mIncomingTxId);
             }
             mIncomingWallet = null;
             mIncomingTxId = null;
@@ -682,7 +682,7 @@ public class Engine {
         });
     }
 
-    private static final int BALANCE_CHANGE_DELAY = 300;
+    private static final int BALANCE_CHANGE_DELAY = 1000;
 
     private void callbackAsyncBitcoinInfo(long asyncBitCoinInfo_ptr) {
         tABC_AsyncBitCoinInfo info = Jni.newAsyncBitcoinInfo(asyncBitCoinInfo_ptr);
@@ -711,8 +711,8 @@ public class Engine {
                 mMainHandler.postDelayed(new Runnable() {
                     public void run() {
                         final Wallet wallet = mAccount.wallet(uuid);
-                        final Transaction tx = wallet.transaction(txid);
-                        mAccount.mCallbacks.sweep(wallet, tx, amount);
+                        // final Transaction tx = wallet.transaction(txid);
+                        mAccount.mCallbacks.sweep(wallet, txid, amount);
                     }
                 }, BALANCE_CHANGE_DELAY);
             }

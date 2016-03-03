@@ -230,7 +230,6 @@ public class Wallet {
         if (result == tABC_CC.ABC_CC_Ok) {
             TxInfo txInfo = new TxInfo(core.longp_value(lp));
             transaction = new Transaction(mAccount, this, txInfo);
-            core.ABC_FreeTransaction(txInfo);
         } else {
             AirbitzCore.loge("Error: Wallet.transaction: "+ error.getSzDescription());
         }

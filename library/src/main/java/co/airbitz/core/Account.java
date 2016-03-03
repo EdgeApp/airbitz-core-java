@@ -147,12 +147,14 @@ public class Account {
         /**
          * Called when new bitcoin has been received.
          */
-        public void incomingBitcoin(Wallet wallet, Transaction transaction);
+        // public void incomingBitcoin(Wallet wallet, Transaction transaction);
+        public void incomingBitcoin(Wallet wallet, String txid);
 
         /**
          * Called when a private key sweep finishes.
          */
-        public void sweep(Wallet wallet, Transaction transaction, long amountSwept);
+        // public void sweep(Wallet wallet, Transaction transaction, long amountSwept);
+        public void sweep(Wallet wallet, String txid, long amountSwept);
 
         /**
          * Called when connecting to the bitcoin network is initialized.
