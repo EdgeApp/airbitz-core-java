@@ -309,6 +309,8 @@ public class AirbitzCore {
     public List<String> exchangeRateSources() {
         List<String> sources = new ArrayList<>();
         sources.add("Bitstamp");
+        sources.add("Bitfinex");
+        sources.add("BitcoinAverage");
         sources.add("BraveNewCoin");
         sources.add("Coinbase");
         sources.add("CleverCoin");
