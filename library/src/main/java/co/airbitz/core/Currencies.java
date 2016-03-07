@@ -44,20 +44,8 @@ import co.airbitz.internal.core;
 
 public class Currencies {
 
-    public static class CurrencyEntry {
-        public String description;
-        public String code;
-        public String symbol;
-        int currencyNum;
-
-        @Override
-        public String toString() {
-            return code + " - " + description;
-        }
-    }
-
-    static Map<String, CurrencyEntry> mNumberIndex;
-    static Map<String, CurrencyEntry> mCodeIndex;
+    static Map<String, CoreCurrency> mNumberIndex;
+    static Map<String, CoreCurrency> mCodeIndex;
 
     private int[] mCurrencyNumbers;
     private Map<Integer, String> mCurrencySymbolCache = new HashMap<>();
@@ -74,10 +62,10 @@ public class Currencies {
 
     protected Currencies() {
         int[] nums = Jni.getCoreCurrencyNumbers();
-        mCodeIndex = new LinkedHashMap<String, CurrencyEntry>();
-        mNumberIndex = new LinkedHashMap<String, CurrencyEntry>();
+        mCodeIndex = new LinkedHashMap<String, CoreCurrency>();
+        mNumberIndex = new LinkedHashMap<String, CoreCurrency>();
         for (Integer number : nums) {
-            CurrencyEntry c = new CurrencyEntry();
+            CoreCurrency c = new CoreCurrency();
             c.currencyNum = number;
             c.code = Jni.getCurrencyCode(number);
             c.description = Jni.getCurrencyDescription(number);
@@ -91,11 +79,11 @@ public class Currencies {
         }
     }
 
-    public List<CurrencyEntry> getCurrencies() {
-        return new ArrayList<CurrencyEntry>(mCodeIndex.values());
+    List<CoreCurrency> currencies() {
+        return new ArrayList<CoreCurrency>(mCodeIndex.values());
     }
 
-    public CurrencyEntry defaultCurrency() {
+    CoreCurrency defaultCurrency() {
         Locale locale = Locale.getDefault();
         Currency currency = Currency.getInstance(locale);
         if (mCodeIndex.containsValue(currency.getCurrencyCode())) {
@@ -106,7 +94,7 @@ public class Currencies {
     }
 
     public String currencySymbol(String code) {
-        CurrencyEntry e = mCodeIndex.get(code);
+        CoreCurrency e = mCodeIndex.get(code);
         if (e != null) {
             return e.symbol;
         } else {
@@ -114,7 +102,7 @@ public class Currencies {
         }
     }
 
-    CurrencyEntry lookup(String code) {
+    CoreCurrency lookup(String code) {
         return mCodeIndex.get(code);
     }
 

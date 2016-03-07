@@ -145,7 +145,7 @@ public class Wallet {
         this.mName = name;
     }
 
-    public Currencies.CurrencyEntry currency() {
+    public CoreCurrency currency() {
         return Currencies.instance().lookup(
 			Currencies.instance().map(mCurrencyNum));
     }

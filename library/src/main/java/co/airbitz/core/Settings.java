@@ -164,9 +164,13 @@ public class Settings {
                 Currencies.instance().map(currencyCode));
     }
 
-    public Currencies.CurrencyEntry currency() {
-        return Currencies.instance().lookup(
-            Currencies.instance().map(settings().getCurrencyNum()));
+    public CoreCurrency currency() {
+        if (settings() != null) {
+            return Currencies.instance().lookup(
+                Currencies.instance().map(settings().getCurrencyNum()));
+        } else {
+            return Currencies.instance().defaultCurrency();
+        }
     }
 
     public void exchangeRateSource(String value) {

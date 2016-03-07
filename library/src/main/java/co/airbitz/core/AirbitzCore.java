@@ -306,6 +306,14 @@ public class AirbitzCore {
         return resizedBitmap;
     }
 
+    public List<CoreCurrency> currencies() {
+        return Currencies.instance().currencies();
+    }
+
+    public List<BitcoinDenomination> denominations() {
+        return BitcoinDenomination.denominations();
+    }
+
     public List<String> exchangeRateSources() {
         List<String> sources = new ArrayList<>();
         sources.add("Bitstamp");

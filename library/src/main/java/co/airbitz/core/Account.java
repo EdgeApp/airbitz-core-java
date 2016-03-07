@@ -737,7 +737,7 @@ public class Account {
 
     public String formatCurrency(double in, String currency, boolean withSymbol, int decimalPlaces) {
         String pre;
-        String denom = Currencies.instance().currencySymbol(currency) + " ";
+        String denom = Currencies.instance().lookup(currency).symbol + " ";
         if (in < 0) {
             in = Math.abs(in);
             pre = withSymbol ? "-" + denom : "-";

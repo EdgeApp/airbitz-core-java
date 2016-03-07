@@ -118,7 +118,7 @@ class Utils {
         BitcoinDenomination bitcoinDenomination =
             settings.bitcoinDenomination();
         if (bitcoinDenomination != null) {
-            int label = bitcoinDenomination.getDenominationType();
+            int label = bitcoinDenomination.type();
             if (label == BitcoinDenomination.UBTC)
                 decimalPlaces = 2;
             else if (label == BitcoinDenomination.MBTC)
