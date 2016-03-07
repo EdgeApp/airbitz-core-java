@@ -37,6 +37,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -58,7 +59,8 @@ public class Transaction {
     private String mId;
     private String mMalId;
     private Date mDate;
-    private TxOutput[] mOutputs;
+    private List<TxOutput> mOutputs;
+    private List<TxOutput> mInputs;
     private boolean mConfirmed;
     private boolean mSyncing;
     private int mConfirmations;
@@ -90,8 +92,8 @@ public class Transaction {
         mDate = new Date(mTxInfo.getCreationTime() * 1000);
         amount(mTxInfo.getDetails().getmAmountSatoshi());
 
-        setABFees(mTxInfo.getDetails().getmAmountFeesAirbitzSatoshi());
-        setMinerFees(mTxInfo.getDetails().getmAmountFeesMinersSatoshi());
+        mABFees = mTxInfo.getDetails().getmAmountFeesAirbitzSatoshi();
+        mMinerFees = mTxInfo.getDetails().getmAmountFeesMinersSatoshi();
 
         if (mTxInfo.getSzMalleableTxId() != null) {
             mMalId = mTxInfo.getSzMalleableTxId();
@@ -99,10 +101,18 @@ public class Transaction {
 
         mConfirmations = height();
         mConfirmed = mConfirmations >= CONFIRMED_CONFIRMATION_COUNT;
+        mInputs = new ArrayList<TxOutput>();
+        mOutputs = new ArrayList<TxOutput>();
 
         TxOutput[] txo = mTxInfo.getOutputs();
         if (txo != null) {
-            mOutputs = txo;
+            for (TxOutput t : txo) {
+                if (t.isInput()) {
+                    mInputs.add(t);
+                } else {
+                    mOutputs.add(t);
+                }
+            }
         }
     }
 
@@ -177,8 +187,12 @@ public class Transaction {
         return mDate;
     }
 
-    public TxOutput[] outputs() {
+    public List<TxOutput> outputs() {
         return mOutputs;
+    }
+
+    public List<TxOutput> inputs() {
+        return mInputs;
     }
 
     public boolean isConfirmed() {
@@ -205,35 +219,11 @@ public class Transaction {
         this.mAmountSatoshi = mAmountSatoshi;
     }
 
-    public long getMinerFees() {
+    public long minerFees() {
         return mMinerFees;
     }
 
-    public void setMinerFees(long mMinerFees) {
-        this.mMinerFees = mMinerFees;
-    }
-
-    public long getABFees() {
+    public long providerFees() {
         return mABFees;
-    }
-
-    public void setABFees(long mABFees) {
-        this.mABFees = mABFees;
-    }
-
-    public long getmAmountFeesAirbitzSatoshi() {
-        return mAmountFeesAirbitzSatoshi;
-    }
-
-    public void setmAmountFeesAirbitzSatoshi(long mAmountFeesAirbitzSatoshi) {
-        this.mAmountFeesAirbitzSatoshi = mAmountFeesAirbitzSatoshi;
-    }
-
-    public long getmAmountFeesMinersSatoshi() {
-        return mAmountFeesMinersSatoshi;
-    }
-
-    public void setmAmountFeesMinersSatoshi(long mAmountFeesMinersSatoshi) {
-        this.mAmountFeesMinersSatoshi = mAmountFeesMinersSatoshi;
     }
 }

@@ -8,12 +8,12 @@ android {
     sourceSets.main.jni.srcDirs = []
 
     productFlavors {
-		nettest {
-		}
-		mainnet {
-		}
-		develop {
-		}
+        nettest {
+        }
+        mainnet {
+        }
+        develop {
+        }
     }
 }
 
@@ -61,23 +61,23 @@ task copyAirbitzTestnet(type:Exec) {
 
 publishing {
     publications {
-		mainnetLibrary(MavenPublication) {
+        mainnetLibrary(MavenPublication) {
             groupId 'co.airbitz'
             artifactId 'airbitz-core-android'
-            version '0.0.15'
-			artifact("$buildDir/outputs/aar/library-mainnet-release.aar")
+            version '0.0.16'
+            artifact("$buildDir/outputs/aar/library-mainnet-release.aar")
         }
-		testnetLibrary(MavenPublication) {
+        testnetLibrary(MavenPublication) {
             groupId 'co.airbitz'
             artifactId 'airbitz-core-android-testnet'
-            version '0.0.15'
-			artifact("$buildDir/outputs/aar/library-nettest-release.aar")
+            version '0.0.16'
+            artifact("$buildDir/outputs/aar/library-nettest-release.aar")
         }
-		developLibrary(MavenPublication) {
+        developLibrary(MavenPublication) {
             groupId 'co.airbitz'
             artifactId 'airbitz-core-android-develop'
-            version '0.0.15'
-			artifact("$buildDir/outputs/aar/library-develop-release.aar")
+            version '0.0.16'
+            artifact("$buildDir/outputs/aar/library-develop-release.aar")
         }
     }
 }
