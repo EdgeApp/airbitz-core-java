@@ -74,15 +74,19 @@ public class ReceiveAddress {
         this.mMeta = new MetadataSet();
         this.mAddress = address;
         start();
+        mMeta.mChangeListener = new MetadataSet.OnChangeListener() {
+            public void onChange() {
+                update();
+            }
+        };
     }
 
+
     public byte[] qrcode() {
-        update();
         return mQrCode;
     }
 
     public String uri() {
-        update();
         return mUri;
     }
 

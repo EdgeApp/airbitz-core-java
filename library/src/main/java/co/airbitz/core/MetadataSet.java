@@ -40,11 +40,19 @@ public class MetadataSet {
     private long mBizid;
     private String mCategory;
 
+    OnChangeListener mChangeListener;
+    interface OnChangeListener {
+        public void onChange();
+    };
+
     /**
      * Setter for payee name.
      */
     public void name(String name) {
         mName = name;
+        if (mChangeListener != null) {
+            mChangeListener.onChange();
+        }
     }
 
     /**
@@ -59,6 +67,9 @@ public class MetadataSet {
      */
     public void fiat(double fiat) {
         mFiat = fiat;
+        if (mChangeListener != null) {
+            mChangeListener.onChange();
+        }
     }
 
     /**
@@ -73,6 +84,9 @@ public class MetadataSet {
      */
     public void notes(String notes) {
         mNotes = notes;
+        if (mChangeListener != null) {
+            mChangeListener.onChange();
+        }
     }
 
     /**
@@ -87,6 +101,9 @@ public class MetadataSet {
      */
     public void bizid(long bizid) {
         mBizid = bizid;
+        if (mChangeListener != null) {
+            mChangeListener.onChange();
+        }
     }
 
     /**
@@ -101,6 +118,9 @@ public class MetadataSet {
      */
     public void category(String category) {
         mCategory = category;
+        if (mChangeListener != null) {
+            mChangeListener.onChange();
+        }
     }
 
     /**
