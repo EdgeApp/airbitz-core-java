@@ -52,7 +52,6 @@ import co.airbitz.internal.tABC_TxDetails;
 
 public class Transaction {
     private static String TAG = Transaction.class.getSimpleName();
-    private static int CONFIRMED_CONFIRMATION_COUNT = 3;
 
     long mAmountFeesAirbitzSatoshi;
     long mAmountFeesMinersSatoshi;
@@ -61,9 +60,7 @@ public class Transaction {
     private Date mDate;
     private List<TxOutput> mOutputs;
     private List<TxOutput> mInputs;
-    private boolean mConfirmed;
     private boolean mSyncing;
-    private int mConfirmations;
     private long mAmountSatoshi;
     private long mMinerFees;
     private long mABFees;
@@ -99,8 +96,6 @@ public class Transaction {
             mMalId = mTxInfo.getSzMalleableTxId();
         }
 
-        mConfirmations = height();
-        mConfirmed = mConfirmations >= CONFIRMED_CONFIRMATION_COUNT;
         mInputs = new ArrayList<TxOutput>();
         mOutputs = new ArrayList<TxOutput>();
 
@@ -195,20 +190,12 @@ public class Transaction {
         return mInputs;
     }
 
-    public boolean isConfirmed() {
-        return mConfirmed;
-    }
-
     public boolean isSyncing() {
         return mSyncing;
     }
 
     private void setSyncing(boolean syncing) {
         this.mSyncing = syncing;
-    }
-
-    public int confirmations() {
-        return mConfirmations;
     }
 
     public long amount() {
@@ -225,5 +212,13 @@ public class Transaction {
 
     public long providerFees() {
         return mABFees;
+    }
+
+    public boolean isDoubleSpend() {
+        return false;
+    }
+
+    public boolean isReplaceByFee() {
+        return false;
     }
 }

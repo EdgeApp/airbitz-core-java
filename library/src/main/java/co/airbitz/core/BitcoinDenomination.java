@@ -11,6 +11,8 @@ public class BitcoinDenomination {
 
     tABC_BitcoinDenomination mDenomination;
 
+    private int mMultiplier;
+
     public static final int BTC = 0;
     public static final int MBTC = 1;
     public static final int UBTC = 2;
@@ -36,19 +38,22 @@ public class BitcoinDenomination {
         return mDenomination;
     }
 
-    void setDenominationType(int value) {
+    public void setDenominationType(int value) {
         mDenomination.setDenominationType(value);
         if (MBTC == value) {
+            mMultiplier = 100000;
             SWIGTYPE_p_int64_t amt = core.new_int64_tp();
             core.longp_assign(core.p64_t_to_long_ptr(amt), 100000);
             mDenomination.setSatoshi(amt);
         } else if (UBTC == value) {
+            mMultiplier = 100;
             SWIGTYPE_p_int64_t amt = core.new_int64_tp();
             core.longp_assign(core.p64_t_to_long_ptr(amt), 100);
             mDenomination.setSatoshi(amt);
         } else if (BTC == value) {
+            mMultiplier = 100000000;
             SWIGTYPE_p_int64_t amt = core.new_int64_tp();
-            core.longp_assign(core.p64_t_to_long_ptr(amt), 100000000);
+            core.longp_assign(core.p64_t_to_long_ptr(amt), mMultiplier);
             mDenomination.setSatoshi(amt);
         }
     }
@@ -63,6 +68,10 @@ public class BitcoinDenomination {
 
     public String btcLabel() {
         return mBtcDenominations[type()];
+    }
+
+    public int multiplier() {
+        return mMultiplier;
     }
 
     private String[] mBtcSymbols = {"Ƀ ", "mɃ ", "ƀ "};

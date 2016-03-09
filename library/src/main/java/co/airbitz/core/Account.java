@@ -322,6 +322,10 @@ public class Account {
         return false;
     }
 
+    public boolean accountHasPin() {
+        return mApi.accountHasPin(username());
+    }
+
     /**
      * Setup the account PIN. If the account settings allow PIN login, then
      * this will setup the account PIN package as well.

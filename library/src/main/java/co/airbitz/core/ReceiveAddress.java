@@ -79,6 +79,7 @@ public class ReceiveAddress {
                 update();
             }
         };
+        update();
     }
 
 
@@ -100,6 +101,7 @@ public class ReceiveAddress {
 
     public ReceiveAddress amount(long amount) {
         mSatoshi = amount;
+        update();
         return this;
     }
 
@@ -115,8 +117,6 @@ public class ReceiveAddress {
     }
 
     public boolean finalizeRequest() {
-        update(); // Record any changes to meta data
-
         tABC_Error error = new tABC_Error();
         core.ABC_FinalizeReceiveRequest(
                 mAccount.username(), mAccount.password(),
