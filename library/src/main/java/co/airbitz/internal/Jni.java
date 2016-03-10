@@ -37,6 +37,7 @@ import co.airbitz.internal.SWIGTYPE_p_int64_t;
 import co.airbitz.internal.SWIGTYPE_p_int;
 import co.airbitz.internal.SWIGTYPE_p_long;
 import co.airbitz.internal.SWIGTYPE_p_p_char;
+import co.airbitz.internal.SWIGTYPE_p_p_sABC_ParsedUri;
 import co.airbitz.internal.SWIGTYPE_p_p_sABC_TxInfo;
 import co.airbitz.internal.SWIGTYPE_p_p_sABC_TxOutput;
 import co.airbitz.internal.SWIGTYPE_p_uint64_t;
@@ -86,6 +87,10 @@ public class Jni  {
 
     public static tABC_TxOutput newTxOutput(long cPtr) {
         return new tABC_TxOutput(cPtr, false);
+    }
+
+    public static tABC_ParsedUri newParsedUri(long cPtr) {
+        return new tABC_ParsedUri(cPtr, false);
     }
 
     public static SWIGTYPE_p_bool newBool(long cPtr) {

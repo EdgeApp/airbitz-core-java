@@ -431,12 +431,12 @@ public class AirbitzCore {
     }
 
     public static class PasswordRulesCheck {
-		public double secondsToCrack;
-		public boolean tooShort;
-		public boolean noNumber;
-		public boolean noUpperCase;
-		public boolean noLowerCase;
-		public int minPasswordLength;
+        public double secondsToCrack;
+        public boolean tooShort;
+        public boolean noNumber;
+        public boolean noUpperCase;
+        public boolean noLowerCase;
+        public int minPasswordLength;
     }
 
     /**
@@ -445,8 +445,8 @@ public class AirbitzCore {
      * @return seconds to crack the password
      */
     public PasswordRulesCheck passwordRulesCheck(String password) {
-		PasswordRulesCheck check = new PasswordRulesCheck();
-		check.minPasswordLength = coreConstants.ABC_MIN_PIN_LENGTH;
+        PasswordRulesCheck check = new PasswordRulesCheck();
+        check.minPasswordLength = coreConstants.ABC_MIN_PIN_LENGTH;
 
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_double seconds = core.new_doublep();
@@ -470,15 +470,15 @@ public class AirbitzCore {
             Jni.pLong temp = new Jni.pLong(base + i * 4);
             long start = core.longp_value(temp);
             tABC_PasswordRule rule = Jni.newPasswordRule(start);
-			if (rule.getSzDescription().contains("Must have at least one upper case letter")) {
-				check.noUpperCase = !rule.getBPassed();
-			} else if (rule.getSzDescription().contains("Must have at least one lower case letter")) {
-				check.noLowerCase = !rule.getBPassed();
-			} else if (rule.getSzDescription().contains("Must have at least one number")) {
-				check.noNumber = !rule.getBPassed();
-			} else if (rule.getSzDescription().contains("Must have at least")) {
-				check.tooShort = !rule.getBPassed();
-			}
+            if (rule.getSzDescription().contains("Must have at least one upper case letter")) {
+                check.noUpperCase = !rule.getBPassed();
+            } else if (rule.getSzDescription().contains("Must have at least one lower case letter")) {
+                check.noLowerCase = !rule.getBPassed();
+            } else if (rule.getSzDescription().contains("Must have at least one number")) {
+                check.noNumber = !rule.getBPassed();
+            } else if (rule.getSzDescription().contains("Must have at least")) {
+                check.tooShort = !rule.getBPassed();
+            }
         }
         return check;
     }
@@ -657,6 +657,10 @@ public class AirbitzCore {
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
             throw new AirbitzException(mContext, error.getCode(), error);
         }
+    }
+
+    public ParsedUri parseUri(String text) throws AirbitzException {
+        return new ParsedUri(text);
     }
 
     private void otpKeySet(String username, String secret) throws AirbitzException {
