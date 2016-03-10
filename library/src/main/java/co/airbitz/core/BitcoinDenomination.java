@@ -17,6 +17,10 @@ public class BitcoinDenomination {
     public static final int MBTC = 1;
     public static final int UBTC = 2;
 
+    public static final int BTC_MULTIPLIER = 100000000;
+    public static final int MBTC_MULTIPLIER = 100000;
+    public static final int UBTC_MULTIPLIER = 100;
+
     static List<BitcoinDenomination> denominations() {
         List<BitcoinDenomination> list = new ArrayList<BitcoinDenomination>();
         list.add(new BitcoinDenomination(BTC));

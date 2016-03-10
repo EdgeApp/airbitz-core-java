@@ -147,7 +147,7 @@ public class Wallet {
 
     public CoreCurrency currency() {
         return Currencies.instance().lookup(
-			Currencies.instance().map(mCurrencyNum));
+            Currencies.instance().map(mCurrencyNum));
     }
 
     public void currency(String code) {

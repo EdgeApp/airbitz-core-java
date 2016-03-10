@@ -127,6 +127,15 @@ class Utils {
         return decimalPlaces;
     }
 
+    static int userDecimalPlaces(int multiplier) {
+        int decimalPlaces = 8; // for BitcoinDenomination.BTC_MULTIPLIER
+        if (multiplier == BitcoinDenomination.UBTC_MULTIPLIER)
+            decimalPlaces = 2;
+        else if (multiplier == BitcoinDenomination.MBTC_MULTIPLIER)
+            decimalPlaces = 5;
+        return decimalPlaces;
+    }
+
     static String arrayToString(String[] arr) {
         StringBuffer buf = new StringBuffer("");
         for (String s : arr) {
