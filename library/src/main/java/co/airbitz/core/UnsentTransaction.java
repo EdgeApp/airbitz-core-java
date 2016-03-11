@@ -43,13 +43,13 @@ public class UnsentTransaction {
     private Wallet mWallet;
     private String mRawTx;
     private String mTxId;
-    private SpendTarget mSpendTarget;
+    private Spend mSpend;
 
-    UnsentTransaction(Account account, Wallet wallet, String rawtx, SpendTarget spendTarget) {
+    UnsentTransaction(Account account, Wallet wallet, String rawtx, Spend spendTarget) {
         mAccount = account;
         mWallet = wallet;
         mRawTx = rawtx;
-        mSpendTarget = spendTarget;
+        mSpend = spendTarget;
     }
 
     public String base16Tx() {
@@ -58,7 +58,7 @@ public class UnsentTransaction {
 
     public boolean broadcast() {
         tABC_Error error = new tABC_Error();
-        core.ABC_SpendBroadcastTx(mSpendTarget.mSpend, mRawTx, error);
+        core.ABC_SpendBroadcastTx(mSpend.mSpend, mRawTx, error);
         return error.getCode() == tABC_CC.ABC_CC_Ok;
     }
 
@@ -67,7 +67,7 @@ public class UnsentTransaction {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_long txid = core.new_longp();
         SWIGTYPE_p_p_char pTxId = core.longp_to_ppChar(txid);
-        core.ABC_SpendSaveTx(mSpendTarget.mSpend, mRawTx, pTxId, error);
+        core.ABC_SpendSaveTx(mSpend.mSpend, mRawTx, pTxId, error);
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
             mTxId = Jni.getStringAtPtr(core.longp_value(txid));
             return mWallet.transaction(mTxId);

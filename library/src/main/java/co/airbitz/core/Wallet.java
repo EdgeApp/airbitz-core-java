@@ -213,8 +213,8 @@ public class Wallet {
         return new ReceiveAddress(mAccount, this, address);
     }
 
-    public SpendTarget newSpendTarget() throws AirbitzException {
-        return new SpendTarget(mAccount, this);
+    public Spend newSpend() throws AirbitzException {
+        return new Spend(mAccount, this);
     }
 
     public Transaction transaction(String txid) {

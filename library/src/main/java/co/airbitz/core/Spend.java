@@ -43,7 +43,7 @@ import co.airbitz.internal.tABC_Error;
 import co.airbitz.internal.SWIGTYPE_p_void;
 import co.airbitz.internal.SWIGTYPE_p_p_void;
 
-public class SpendTarget {
+public class Spend {
     SWIGTYPE_p_void mSpend;
     SWIGTYPE_p_long _pl;
     SWIGTYPE_p_p_void _ppv;
@@ -53,7 +53,7 @@ public class SpendTarget {
     private MetadataSet mMeta;
     private boolean mIsTransfer;
 
-    SpendTarget(Account account, Wallet wallet) throws AirbitzException {
+    Spend(Account account, Wallet wallet) throws AirbitzException {
         mAccount = account;
         mWallet = wallet;
         mMeta = new MetadataSet();
