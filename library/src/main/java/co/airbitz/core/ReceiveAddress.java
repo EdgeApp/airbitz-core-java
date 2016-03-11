@@ -58,7 +58,7 @@ public class ReceiveAddress {
     private String mUriLabel;
     private String mUriCategory;
     private String mUriRet;
-    private String mUriNotes;
+    private String mUriMessage;
     private long mBizId;
 
     ReceiveAddress(Account account, Wallet wallet) {
@@ -105,8 +105,8 @@ public class ReceiveAddress {
         return this;
     }
 
-    public ReceiveAddress uriNotes(String notes) {
-        mUriNotes = notes;
+    public ReceiveAddress uriMessage(String message) {
+        mUriMessage = message;
         update();
         return this;
     }
@@ -205,7 +205,7 @@ public class ReceiveAddress {
         Jni.set64BitLongAtPtr(Jni.getCPtr(ua), mSatoshi);
 
         core.ABC_AddressUriEncode(mAddress, ua,
-                mUriLabel, mUriNotes, mUriCategory, mUriRet, ppURI, error);
+                mUriLabel, mUriMessage, mUriCategory, mUriRet, ppURI, error);
         mUri = Jni.getStringAtPtr(core.longp_value(lp));
         mQrCode = AirbitzCore.getApi().qrEncode(mUri);
     }
