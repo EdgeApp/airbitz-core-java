@@ -53,6 +53,7 @@ import co.airbitz.internal.SWIGTYPE_p_long;
 import co.airbitz.internal.SWIGTYPE_p_p_char;
 import co.airbitz.internal.SWIGTYPE_p_p_p_sABC_PasswordRule;
 import co.airbitz.internal.SWIGTYPE_p_p_sABC_QuestionChoices;
+import co.airbitz.internal.SWIGTYPE_p_p_unsigned_char;
 import co.airbitz.internal.SWIGTYPE_p_unsigned_int;
 import co.airbitz.internal.core;
 import co.airbitz.internal.coreConstants;
@@ -287,6 +288,20 @@ public class AirbitzCore {
 
     public ExchangeCache exchangeCache() {
         return mExchangeCache;
+    }
+
+    public byte[] qrEncode(String text) {
+        tABC_Error error = new tABC_Error();
+        SWIGTYPE_p_long lp = core.new_longp();
+        SWIGTYPE_p_p_unsigned_char ppChar = core.longp_to_unsigned_ppChar(lp);
+
+        SWIGTYPE_p_int pWidth = core.new_intp();
+        SWIGTYPE_p_unsigned_int pUCount = core.int_to_uint(pWidth);
+
+        core.ABC_QrEncode(text, ppChar, pUCount, error);
+
+        int width = core.intp_value(pWidth);
+        return Jni.getBytesAtPtr(core.longp_value(lp), width * width);
     }
 
     public Bitmap qrEncode(byte[] array) {

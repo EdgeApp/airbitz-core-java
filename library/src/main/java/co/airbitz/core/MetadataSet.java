@@ -31,6 +31,8 @@
 
 package co.airbitz.core;
 
+import co.airbitz.internal.tABC_TxDetails;
+
 public class MetadataSet {
     private static String TAG = MetadataSet.class.getSimpleName();
 
@@ -48,11 +50,12 @@ public class MetadataSet {
     /**
      * Setter for payee name.
      */
-    public void name(String name) {
+    public MetadataSet name(String name) {
         mName = name;
         if (mChangeListener != null) {
             mChangeListener.onChange();
         }
+        return this;
     }
 
     /**
@@ -65,11 +68,12 @@ public class MetadataSet {
     /**
      * Setter for fiat amount.
      */
-    public void fiat(double fiat) {
+    public MetadataSet fiat(double fiat) {
         mFiat = fiat;
         if (mChangeListener != null) {
             mChangeListener.onChange();
         }
+        return this;
     }
 
     /**
@@ -82,11 +86,12 @@ public class MetadataSet {
     /**
      * Setter for the notes.
      */
-    public void notes(String notes) {
+    public MetadataSet notes(String notes) {
         mNotes = notes;
         if (mChangeListener != null) {
             mChangeListener.onChange();
         }
+        return this;
     }
 
     /**
@@ -99,11 +104,12 @@ public class MetadataSet {
     /**
      * Setter for the Airbitz business id.
      */
-    public void bizid(long bizid) {
+    public MetadataSet bizid(long bizid) {
         mBizid = bizid;
         if (mChangeListener != null) {
             mChangeListener.onChange();
         }
+        return this;
     }
 
     /**
@@ -116,11 +122,12 @@ public class MetadataSet {
     /**
      * Setter for the category.
      */
-    public void category(String category) {
+    public MetadataSet category(String category) {
         mCategory = category;
         if (mChangeListener != null) {
             mChangeListener.onChange();
         }
+        return this;
     }
 
     /**
@@ -128,5 +135,15 @@ public class MetadataSet {
      */
     public String category() {
         return mCategory;
+    }
+
+    tABC_TxDetails toTxDetails() {
+        tABC_TxDetails details = new tABC_TxDetails();
+        details.setSzName(name());
+        details.setSzNotes(notes());
+        details.setSzCategory(category());
+        details.setBizId(bizid());
+        details.setAmountCurrency(fiat());
+        return details;
     }
 }

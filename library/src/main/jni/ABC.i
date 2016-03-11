@@ -36,6 +36,7 @@
 %pointer_cast(long *, char ***, longp_to_pppChar);
 %pointer_cast(long *, tABC_QuestionChoices **, longp_to_ppQuestionChoices);
 %pointer_cast(long *, unsigned char **, longp_to_unsigned_ppChar);
+%pointer_cast(long *, void **, longp_to_ppvoid);
 %pointer_cast(char **, long *, charpp_to_longp);
-%pointer_cast(long *, tABC_SpendTarget **, longPtr_to_ppSpendTarget);
 %pointer_cast(long *, tABC_ParsedUri **, longPtr_to_ppParsedUri);
+%pointer_cast(long *, tABC_PaymentRequest **, longPtr_to_ppPaymentRequest);
