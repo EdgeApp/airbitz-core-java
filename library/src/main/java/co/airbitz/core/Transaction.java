@@ -143,7 +143,6 @@ public class Transaction {
     public int height() {
         tABC_Error Error = new tABC_Error();
         SWIGTYPE_p_int th = core.new_intp();
-        SWIGTYPE_p_int bh = core.new_intp();
 
         setSyncing(false);
         if (mWallet.id().length() == 0 || getID().length() == 0) {
@@ -153,17 +152,9 @@ public class Transaction {
             setSyncing(true);
             return 0;
         }
-        if (core.ABC_BlockHeight(mWallet.id(), bh, Error) != tABC_CC.ABC_CC_Ok) {
-            setSyncing(true);
-            return 0;
-        }
 
         int txHeight = core.intp_value(th);
-        int blockHeight = core.intp_value(bh);
-        if (txHeight == 0 || blockHeight == 0) {
-            return 0;
-        }
-        return (blockHeight - txHeight) + 1;
+        return txHeight;
     }
 
     public String getID() {

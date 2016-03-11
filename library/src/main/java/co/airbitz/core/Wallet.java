@@ -331,4 +331,13 @@ public class Wallet {
                 id(), address, error);
         return error.getCode() == tABC_CC.ABC_CC_Ok;
     }
+
+    public int blockHeight() {
+        tABC_Error error = new tABC_Error();
+        SWIGTYPE_p_int bh = core.new_intp();
+        if (core.ABC_BlockHeight(id(), bh, error) != tABC_CC.ABC_CC_Ok) {
+            return 0;
+        }
+        return core.intp_value(bh);
+    }
 }
