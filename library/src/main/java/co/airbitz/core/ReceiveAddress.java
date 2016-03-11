@@ -36,6 +36,7 @@ import co.airbitz.internal.SWIGTYPE_p_int;
 import co.airbitz.internal.SWIGTYPE_p_long;
 import co.airbitz.internal.SWIGTYPE_p_p_char;
 import co.airbitz.internal.SWIGTYPE_p_p_unsigned_char;
+import co.airbitz.internal.SWIGTYPE_p_uint64_t;
 import co.airbitz.internal.SWIGTYPE_p_unsigned_int;
 import co.airbitz.internal.core;
 import co.airbitz.internal.tABC_CC;
@@ -54,8 +55,9 @@ public class ReceiveAddress {
     private String mUri;
     private byte[] mQrCode;
 
-    private String mUriPayee;
     private String mUriLabel;
+    private String mUriCategory;
+    private String mUriRet;
     private String mUriNotes;
     private long mBizId;
 
@@ -89,6 +91,30 @@ public class ReceiveAddress {
 
     public String uri() {
         return mUri;
+    }
+
+    public ReceiveAddress uriLabel(String label) {
+        mUriLabel = label;
+        update();
+        return this;
+    }
+
+    public ReceiveAddress uriCategory(String category) {
+        mUriCategory = category;
+        update();
+        return this;
+    }
+
+    public ReceiveAddress uriNotes(String notes) {
+        mUriNotes = notes;
+        update();
+        return this;
+    }
+
+    public ReceiveAddress uriReturn(String ret) {
+        mUriRet = ret;
+        update();
+        return this;
     }
 
     public String address() {
@@ -172,21 +198,15 @@ public class ReceiveAddress {
 
     private void setupQrCode() {
         tABC_Error error = new tABC_Error();
-
         SWIGTYPE_p_long lp = core.new_longp();
-        SWIGTYPE_p_p_unsigned_char ppChar = core.longp_to_unsigned_ppChar(lp);
+        SWIGTYPE_p_p_char ppURI = core.longp_to_ppChar(lp);
 
-        SWIGTYPE_p_long lp2 = core.new_longp();
-        SWIGTYPE_p_p_char ppURI = core.longp_to_ppChar(lp2);
+        SWIGTYPE_p_uint64_t ua = core.new_uint64_tp();
+        Jni.set64BitLongAtPtr(Jni.getCPtr(ua), mSatoshi);
 
-        SWIGTYPE_p_int pWidth = core.new_intp();
-        SWIGTYPE_p_unsigned_int pUCount = core.int_to_uint(pWidth);
-
-        core.ABC_GenerateRequestQRCode(
-                mAccount.username(), mAccount.password(),
-                mWallet.id(), mAddress, ppURI, ppChar, pUCount, error);
-        int width = core.intp_value(pWidth);
-        mUri = Jni.getStringAtPtr(core.longp_value(lp2));
-        mQrCode = Jni.getBytesAtPtr(core.longp_value(lp), width * width);
+        core.ABC_AddressUriEncode(mAddress, ua,
+                mUriLabel, mUriNotes, mUriCategory, mUriRet, ppURI, error);
+        mUri = Jni.getStringAtPtr(core.longp_value(lp));
+        mQrCode = AirbitzCore.getApi().qrEncode(mUri);
     }
 }

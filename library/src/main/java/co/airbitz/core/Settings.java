@@ -99,6 +99,33 @@ public class Settings {
         settings().setSzFirstName(value);
     }
 
+    private boolean empty(String s) {
+        return s == null || s.length() == 0;
+    }
+
+    public String displayName() {
+        if (settings().getBNameOnPayments()) {
+            StringBuffer buf = new StringBuffer("");
+            if (!empty(firstName())) {
+                buf.append(firstName());
+            }
+            if (buf.length() != 0) {
+                buf.append(" ");
+            }
+            if (!empty(lastName())) {
+                buf.append(lastName());
+            }
+            if (!empty(nickName())) {
+                if (buf.length() != 0) {
+                    buf.append(" - ");
+                }
+                buf.append(nickName());
+            }
+            return buf.toString().trim();
+        }
+        return "";
+    }
+
     public String firstName() {
         return settings().getSzFirstName();
     }
@@ -115,7 +142,7 @@ public class Settings {
         settings().setSzNickname(value);
     }
 
-    public String nickname() {
+    public String nickName() {
         return settings().getSzNickname();
     }
 

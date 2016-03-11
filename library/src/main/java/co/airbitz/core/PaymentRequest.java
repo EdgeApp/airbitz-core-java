@@ -28,56 +28,38 @@
  * of the authors and should not be interpreted as representing official policies,
  * either expressed or implied, of the Airbitz Project.
  */
-
 package co.airbitz.core;
 
 import co.airbitz.internal.Jni;
 import co.airbitz.internal.core;
-import co.airbitz.internal.tABC_Error;
 import co.airbitz.internal.tABC_CC;
-import co.airbitz.internal.SWIGTYPE_p_long;
-import co.airbitz.internal.SWIGTYPE_p_p_char;
+import co.airbitz.internal.tABC_PaymentRequest;
 
-public class UnsentTransaction {
-    private Account mAccount;
-    private Wallet mWallet;
-    private String mRawTx;
-    private String mTxId;
-    private SpendTarget mSpendTarget;
+public class PaymentRequest {
+    private tABC_PaymentRequest mPaymentRequest;
 
-    UnsentTransaction(Account account, Wallet wallet, String rawtx, SpendTarget spendTarget) {
-        mAccount = account;
-        mWallet = wallet;
-        mRawTx = rawtx;
-        mSpendTarget = spendTarget;
+    PaymentRequest(tABC_PaymentRequest request) throws AirbitzException {
+        mPaymentRequest = request;
     }
 
-    public String base16Tx() {
-        return mRawTx;
+    tABC_PaymentRequest coreRequest() {
+        return mPaymentRequest;
     }
 
-    public boolean broadcast() {
-        tABC_Error error = new tABC_Error();
-        core.ABC_SpendBroadcastTx(mSpendTarget.mSpend, mRawTx, error);
-        return error.getCode() == tABC_CC.ABC_CC_Ok;
+    public String domain() {
+        return mPaymentRequest.getSzDomain();
     }
 
-    public Transaction save() {
-        String id = null;
-        tABC_Error error = new tABC_Error();
-        SWIGTYPE_p_long txid = core.new_longp();
-        SWIGTYPE_p_p_char pTxId = core.longp_to_ppChar(txid);
-        core.ABC_SpendSaveTx(mSpendTarget.mSpend, mRawTx, pTxId, error);
-        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
-            mTxId = Jni.getStringAtPtr(core.longp_value(txid));
-            return mWallet.transaction(mTxId);
-        } else {
-            mTxId = null;
-            return null;
-        }
+    public long amount() {
+        return Jni.get64BitLongAtPtr(
+            Jni.getCPtr(mPaymentRequest.getAmountSatoshi()));
     }
 
-    public String txId() {
-        return mTxId;
+    public String memo() {
+        return mPaymentRequest.getSzMemo();
+    }
+
+    public String merchant() {
+        return mPaymentRequest.getSzMerchant();
     }
 }

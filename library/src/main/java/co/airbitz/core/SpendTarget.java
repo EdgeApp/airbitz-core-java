@@ -36,100 +36,102 @@ import android.text.TextUtils;
 import co.airbitz.internal.Jni;
 import co.airbitz.internal.SWIGTYPE_p_long;
 import co.airbitz.internal.SWIGTYPE_p_p_char;
-import co.airbitz.internal.SWIGTYPE_p_p_sABC_SpendTarget;
 import co.airbitz.internal.SWIGTYPE_p_uint64_t;
 import co.airbitz.internal.core;
 import co.airbitz.internal.tABC_CC;
 import co.airbitz.internal.tABC_Error;
-import co.airbitz.internal.tABC_SpendTarget;
+import co.airbitz.internal.SWIGTYPE_p_void;
+import co.airbitz.internal.SWIGTYPE_p_p_void;
 
 public class SpendTarget {
-    SWIGTYPE_p_long _lpSpend;
-    SWIGTYPE_p_p_sABC_SpendTarget _pSpendSWIG;
-    tABC_SpendTarget _pSpend;
-    private tABC_Error pError;
-    private long bizId;
-    private double mAmountFiat;
+    SWIGTYPE_p_void mSpend;
+    SWIGTYPE_p_long _pl;
+    SWIGTYPE_p_p_void _ppv;
 
     private Account mAccount;
     private Wallet mWallet;
+    private MetadataSet mMeta;
+    private boolean mIsTransfer;
 
-    SpendTarget(Account account, Wallet wallet) {
-        _lpSpend = core.new_longp();
-        _pSpendSWIG = core.longPtr_to_ppSpendTarget(_lpSpend);
-        _pSpend = null;
-        pError = new tABC_Error();
+    SpendTarget(Account account, Wallet wallet) throws AirbitzException {
         mAccount = account;
         mWallet = wallet;
+        mMeta = new MetadataSet();
+        mMeta.mChangeListener = new MetadataSet.OnChangeListener() {
+            public void onChange() {
+                updateMeta();
+            }
+        };
+
+        tABC_Error error = new tABC_Error();
+        _pl = core.new_longp();
+        _ppv = core.longp_to_ppvoid(_pl);
+        core.ABC_SpendNew(mAccount.username(), mWallet.id(), _ppv, error);
+        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
+            throw new AirbitzException(null, error.getCode(), error);
+        }
+        mSpend = Jni.newSWIGTYPE_p_void(core.longp_value(_pl));
+        mIsTransfer = false;
     }
 
     public void dealloc() {
-        if (_pSpend != null) {
-            _pSpend = null;
-            pError = null;
+        if (mSpend != null) {
+            core.ABC_SpendFree(mSpend);
         }
     }
 
-    public tABC_SpendTarget getSpend() {
-        return _pSpend;
-    }
-
-    public long getSpendAmount() {
-        return Jni.get64BitLongAtPtr(Jni.getCPtr(_pSpend.getAmount()));
+    public MetadataSet meta() {
+        return mMeta;
     }
 
     public boolean isTransfer() {
-        return !TextUtils.isEmpty(_pSpend.getSzDestUUID());
+        return mIsTransfer;
     }
 
-    public void setSpendAmount(long amount) {
+    public void addAddress(String address, long amount) throws AirbitzException {
         SWIGTYPE_p_uint64_t ua = core.new_uint64_tp();
         Jni.set64BitLongAtPtr(Jni.getCPtr(ua), amount);
-        _pSpend.setAmount(ua);
+
+        tABC_Error error = new tABC_Error();
+        core.ABC_SpendAddAddress(mSpend, address, ua, error);
+        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
+            throw new AirbitzException(null, error.getCode(), error);
+        }
     }
 
-    public boolean newSpend(String text) {
-        tABC_Error pError = new tABC_Error();
-        core.ABC_SpendNewDecode(text, _pSpendSWIG, pError);
-        _pSpend = new Spend(core.longp_value(_lpSpend));
-        return pError.getCode() == tABC_CC.ABC_CC_Ok;
+    public void addPaymentRequest(PaymentRequest request) throws AirbitzException {
+        tABC_Error error = new tABC_Error();
+        core.ABC_SpendAddPaymentRequest(mSpend, request.coreRequest(), error);
+        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
+            throw new AirbitzException(null, error.getCode(), error);
+        }
     }
 
-    public boolean newTransfer(String walletUUID) {
-        SWIGTYPE_p_uint64_t amount = core.new_uint64_tp();
-        Jni.set64BitLongAtPtr(Jni.getCPtr(amount), 0);
-        core.ABC_SpendNewTransfer(
-                mAccount.username(), walletUUID,
-                amount, _pSpendSWIG, pError);
-        _pSpend = new Spend(core.longp_value(_lpSpend));
-        return pError.getCode() == tABC_CC.ABC_CC_Ok;
-    }
+    public void addTransfer(Wallet destWallet, long amount, MetadataSet destMeta) throws AirbitzException {
+        SWIGTYPE_p_uint64_t ua = core.new_uint64_tp();
+        Jni.set64BitLongAtPtr(Jni.getCPtr(ua), amount);
 
-    public boolean spendNewInternal(String address, String label, String category,
-                                    String notes, long amountSatoshi) {
-        SWIGTYPE_p_uint64_t amountS = core.new_uint64_tp();
-        Jni.set64BitLongAtPtr(Jni.getCPtr(amountS), amountSatoshi);
+        String categoryText = "Transfer:Wallet:";
+        if (meta().name() == null) {
+            meta().name(destWallet.name());
+        }
+        if (meta().category() == null) {
+            meta().category(categoryText + destWallet.name());
+        }
+        if (destMeta.name() == null) {
+            destMeta.name(mWallet.name());
+        }
+        if (destMeta.category() == null) {
+            destMeta.category(categoryText + mWallet.name());
+        }
 
-        core.ABC_SpendNewInternal(address, label,
-                category, notes, amountS, _pSpendSWIG, pError);
-        _pSpend = new Spend(core.longp_value(_lpSpend));
-        return pError.getCode() == tABC_CC.ABC_CC_Ok;
-    }
-
-    public void setBizId(long bizId) {
-        this.bizId = bizId;
-    }
-
-    public long getBizId() {
-        return this.bizId;
-    }
-
-    public void setAmountFiat(double amountFiat) {
-        this.mAmountFiat = amountFiat;
-    }
-
-    public double getAmountFiat() {
-        return mAmountFiat;
+        tABC_Error error = new tABC_Error();
+        core.ABC_SpendAddTransfer(mSpend, destWallet.id(),
+            ua, destMeta.toTxDetails(), error);
+        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
+            throw new AirbitzException(null, error.getCode(), error);
+        }
+        mIsTransfer = true;
     }
 
     public UnsentTransaction sign() throws AirbitzException {
@@ -138,10 +140,8 @@ public class SpendTarget {
         SWIGTYPE_p_long tx = core.new_longp();
         SWIGTYPE_p_p_char pRawTx = core.longp_to_ppChar(tx);
 
-        core.ABC_SpendSignTx(
-                mAccount.username(), mWallet.id(),
-                _pSpend, pRawTx, error);
-        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
+        core.ABC_SpendSignTx(mSpend, pRawTx, error);
+        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
             rawTx = Jni.getStringAtPtr(core.longp_value(tx));
         } else {
             throw new AirbitzException(null, error.getCode(), error);
@@ -161,10 +161,7 @@ public class SpendTarget {
     public long maxSpendable() {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_uint64_t result = core.new_uint64_tp();
-
-        core.ABC_SpendGetMax(
-                mAccount.username(), mWallet.id(),
-                _pSpend, result, pError);
+        core.ABC_SpendGetMax(mSpend, result, error);
         long actual = Jni.get64BitLongAtPtr(Jni.getCPtr(result));
         return actual;
     }
@@ -172,10 +169,7 @@ public class SpendTarget {
     public long calcSendFees() throws AirbitzException {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_uint64_t total = core.new_uint64_tp();
-        core.ABC_SpendGetFee(
-                mAccount.username(), mWallet.id(),
-                _pSpend, total, error);
-
+        core.ABC_SpendGetFee(mSpend, total, error);
         long fees = Jni.get64BitLongAtPtr(Jni.getCPtr(total));
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
             throw new AirbitzException(null, error.getCode(), error);
@@ -183,12 +177,15 @@ public class SpendTarget {
         return fees;
     }
 
-    public class Spend extends tABC_SpendTarget {
-        public Spend(long pv) {
-            super(pv, false);
-        }
-        public long getPtr(tABC_SpendTarget p) {
-            return getCPtr(p);
+    private void updateMeta() {
+        try {
+            tABC_Error error = new tABC_Error();
+            core.ABC_SpendSetMetadata(mSpend, mMeta.toTxDetails(), error);
+            if (error.getCode() != tABC_CC.ABC_CC_Ok) {
+                throw new AirbitzException(null, error.getCode(), error);
+            }
+        } catch (AirbitzException e) {
+            AirbitzCore.loge(e.getMessage());
         }
     }
 }

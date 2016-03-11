@@ -36,7 +36,7 @@ import co.airbitz.internal.core;
 import co.airbitz.internal.tABC_TxDetails;
 import co.airbitz.internal.Jni;
 
-public class TxDetails extends tABC_TxDetails {
+class TxDetails extends tABC_TxDetails {
     long mAmountSatoshi; /** amount of bitcoins in satoshi (including fees if any) */
     long mAmountFeesAirbitzSatoshi;   /** airbitz fees in satoshi */
     long mAmountFeesMinersSatoshi;  /** miners fees in satoshi */

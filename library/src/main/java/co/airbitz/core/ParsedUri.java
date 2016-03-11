@@ -37,6 +37,7 @@ import co.airbitz.internal.core;
 import co.airbitz.internal.tABC_CC;
 import co.airbitz.internal.tABC_Error;
 import co.airbitz.internal.tABC_ParsedUri;
+import co.airbitz.internal.SWIGTYPE_p_p_sABC_PaymentRequest;
 
 public class ParsedUri {
     public enum UriType {
@@ -91,6 +92,10 @@ public class ParsedUri {
         return mAddress;
     }
 
+    public String privateKey() {
+        return mWif;
+    }
+
     public String paymentProto() {
         return mPaymentProto;
     }
@@ -99,7 +104,35 @@ public class ParsedUri {
         return mBitidUri;
     }
 
-    public void paymentProtoFetch() throws AirbitzException {
-        throw new AirbitzException(null, null, null);
+    public PaymentRequest fetchPaymentRequest() throws AirbitzException {
+        tABC_Error error = new tABC_Error();
+        SWIGTYPE_p_long lp = core.new_longp();
+        SWIGTYPE_p_p_sABC_PaymentRequest ppResult = core.longPtr_to_ppPaymentRequest(lp);
+        core.ABC_FetchPaymentRequest(mPaymentProto, ppResult, error);
+        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
+            throw new AirbitzException(null, error.getCode(), error);
+        }
+        return new PaymentRequest(Jni.newPaymentRequest(core.longp_value(lp)));
+    }
+
+    public long amount() {
+        return Jni.get64BitLongAtPtr(
+            Jni.getCPtr(mParsedUri.getAmountSatoshi()));
+    }
+
+    public String label() {
+        return mParsedUri.getSzLabel();
+    }
+
+    public String message() {
+        return mParsedUri.getSzMessage();
+    }
+
+    public String category() {
+        return mParsedUri.getSzCategory();
+    }
+
+    public String returnUri() {
+        return mParsedUri.getSzRet();
     }
 }

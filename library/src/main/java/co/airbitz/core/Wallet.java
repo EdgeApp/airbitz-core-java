@@ -213,7 +213,7 @@ public class Wallet {
         return new ReceiveAddress(mAccount, this, address);
     }
 
-    public SpendTarget newSpendTarget() {
+    public SpendTarget newSpendTarget() throws AirbitzException {
         return new SpendTarget(mAccount, this);
     }
 
@@ -312,17 +312,11 @@ public class Wallet {
         return listTransactions;
     }
 
-    public String sweepKey(String wif) throws AirbitzException {
+    public void sweepKey(String wif) throws AirbitzException {
         tABC_Error error = new tABC_Error();
-        SWIGTYPE_p_long lp = core.new_longp();
-        SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
-
-
-        core.ABC_SweepKey(mAccount.username(), mAccount.password(), id(), wif, ppChar, error);
+        core.ABC_SweepKey(mAccount.username(), mAccount.password(), id(), wif, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
             throw new AirbitzException(null, error.getCode(), error);
-        } else {
-            return Jni.getStringAtPtr(core.longp_value(lp));
         }
     }
 

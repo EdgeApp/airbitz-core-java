@@ -89,12 +89,24 @@ public class Jni  {
         return new tABC_TxOutput(cPtr, false);
     }
 
+    public static tABC_PaymentRequest newPaymentRequest(long cPtr) {
+        return new tABC_PaymentRequest(cPtr, false);
+    }
+
     public static tABC_ParsedUri newParsedUri(long cPtr) {
         return new tABC_ParsedUri(cPtr, false);
     }
 
     public static SWIGTYPE_p_bool newBool(long cPtr) {
         return new SWIGTYPE_p_bool(cPtr, false);
+    }
+
+    public static SWIGTYPE_p_void newSWIGTYPE_p_void(long cPtr) {
+        return new SWIGTYPE_p_void(cPtr, false);
+    }
+
+    public static SWIGTYPE_p_p_void newSWIGTYPE_p_p_void(long cPtr) {
+        return new SWIGTYPE_p_p_void(cPtr, false);
     }
 
     public static tABC_AsyncBitCoinInfo newAsyncBitcoinInfo(long cPtr) {
@@ -139,5 +151,17 @@ public class Jni  {
 
     public static long getCPtr(SWIGTYPE_p_uint64_t obj) {
         return SWIGTYPE_p_uint64_t.getCPtr(obj);
+    }
+
+    public static long getCPtr(SWIGTYPE_p_void obj) {
+        return SWIGTYPE_p_void.getCPtr(obj);
+    }
+
+    public static long getCPtr(SWIGTYPE_p_p_void obj) {
+        return SWIGTYPE_p_p_void.getCPtr(obj);
+    }
+
+    public static long getCPtr(SWIGTYPE_p_p_unsigned_char obj) {
+        return SWIGTYPE_p_p_unsigned_char.getCPtr(obj);
     }
 }
