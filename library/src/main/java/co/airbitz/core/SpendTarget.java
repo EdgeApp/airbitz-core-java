@@ -142,9 +142,9 @@ public class SpendTarget {
 
         core.ABC_SpendSignTx(mSpend, pRawTx, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            rawTx = Jni.getStringAtPtr(core.longp_value(tx));
-        } else {
             throw new AirbitzException(null, error.getCode(), error);
+        } else {
+            rawTx = Jni.getStringAtPtr(core.longp_value(tx));
         }
         return new UnsentTransaction(mAccount, mWallet, rawTx, this);
     }

@@ -69,14 +69,14 @@ public class ParsedUri {
         mWif = mParsedUri.getSzWif();
         mPaymentProto = mParsedUri.getSzPaymentProto();
         mBitidUri = mParsedUri.getSzBitidUri();
-        if (mAddress != null) {
-            mType = UriType.ADDRESS;
-        } else if (mWif != null) {
-            mType = UriType.PRIVATE_KEY;
-        } else if (mPaymentProto != null) {
+        if (mPaymentProto != null) {
             mType = UriType.PAYMENT_PROTO;
         } else if (mBitidUri != null) {
             mType = UriType.BITID;
+        } else if (mWif != null) {
+            mType = UriType.PRIVATE_KEY;
+        } else if (mAddress != null) {
+            mType = UriType.ADDRESS;
         }
     }
 
