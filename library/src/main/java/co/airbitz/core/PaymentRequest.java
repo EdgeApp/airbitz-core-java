@@ -62,4 +62,12 @@ public class PaymentRequest {
     public String merchant() {
         return mPaymentRequest.getSzMerchant();
     }
+
+    @Override
+    protected void finalize() throws Throwable {
+        if (mPaymentRequest != null) {
+            core.ABC_FreePaymentRequest(mPaymentRequest);
+        }
+        super.finalize();
+    }
 }

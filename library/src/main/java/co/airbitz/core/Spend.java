@@ -74,10 +74,12 @@ public class Spend {
         mIsTransfer = false;
     }
 
-    public void dealloc() {
+    @Override
+    protected void finalize() throws Throwable {
         if (mSpend != null) {
             core.ABC_SpendFree(mSpend);
         }
+        super.finalize();
     }
 
     public MetadataSet meta() {
