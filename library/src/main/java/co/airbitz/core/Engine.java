@@ -122,8 +122,6 @@ public class Engine {
                     Thread thread = new Thread(new WatcherRunnable(uuid));
                     thread.start();
 
-                    watchAddresses(uuid);
-
                     if (mDataFetched) {
                         connectWatcher(uuid);
                     }
@@ -150,7 +148,6 @@ public class Engine {
                 tABC_Error error = new tABC_Error();
                 core.ABC_WatcherConnect(uuid, error);
                 Utils.printABCError(error);
-                watchAddresses(uuid);
             }
         });
     }
@@ -164,12 +161,6 @@ public class Engine {
                 }
             }
         });
-    }
-
-    private void watchAddresses(final String uuid) {
-        tABC_Error error = new tABC_Error();
-        core.ABC_WatchAddresses(mAccount.username(), mAccount.password(), uuid, error);
-        Utils.printABCError(error);
     }
 
     public void waitOnWatchers() {
