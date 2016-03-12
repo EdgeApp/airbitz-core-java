@@ -217,15 +217,29 @@ public class Wallet {
     }
 
     public Transaction transaction(String txid) {
-        if (mTransactions == null) {
-            return null;
-        }
-        for (Transaction t : mTransactions) {
-            if (t.id().equals(txid)) {
-                return t;
+        if (mTransactions != null) {
+            for (Transaction t : mTransactions) {
+                if (t.id().equals(txid)) {
+                    return t;
+                }
             }
         }
-        return null;
+        tABC_Error error = new tABC_Error();
+        Transaction transaction = null;
+
+        SWIGTYPE_p_long lp = core.new_longp();
+        SWIGTYPE_p_p_sABC_TxInfo pTxInfo = core.longp_to_ppTxInfo(lp);
+
+        tABC_CC result = core.ABC_GetTransaction(
+                mAccount.username(), mAccount.password(),
+                id(), txid, pTxInfo, error);
+        if (result == tABC_CC.ABC_CC_Ok) {
+            TxInfo txInfo = new TxInfo(core.longp_value(lp));
+            transaction = new Transaction(mAccount, this, txInfo);
+        } else {
+            AirbitzCore.loge("Error: Wallet.transaction: "+ error.getSzDescription());
+        }
+        return transaction;
     }
 
     void loadTransactions() {
