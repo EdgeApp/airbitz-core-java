@@ -287,6 +287,7 @@ public class Engine {
             }
             mIncomingWallet = null;
             mIncomingTxId = null;
+            reloadWallets();
         }
     };
 
