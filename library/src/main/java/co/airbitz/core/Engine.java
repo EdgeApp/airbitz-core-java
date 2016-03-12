@@ -750,6 +750,7 @@ public class Engine {
             result = core.ABC_WalletBalance(mAccount.username(), uuid, l, error);
             if (result == tABC_CC.ABC_CC_Ok) {
                 wallet.balance(Jni.get64BitLongAtPtr(Jni.getCPtr(l)));
+                wallet.loadTransactions();
             } else {
                 wallet.balance(0);
             }

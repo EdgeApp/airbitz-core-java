@@ -118,7 +118,7 @@ public class Transaction {
 
         core.ABC_GetTransactionDetails(
                 mAccount.username(), mAccount.password(),
-                mWallet.id(), getID(), pDetails, error);
+                mWallet.id(), id(), pDetails, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
             throw new AirbitzException(null, error.getCode(), error);
         }
@@ -133,7 +133,7 @@ public class Transaction {
         error = new tABC_Error();
         core.ABC_SetTransactionDetails(
                 mAccount.username(), mAccount.password(),
-                mWallet.id(), getID(), details, error);
+                mWallet.id(), id(), details, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
             throw new AirbitzException(null, error.getCode(), error);
         }
@@ -145,10 +145,10 @@ public class Transaction {
         SWIGTYPE_p_int th = core.new_intp();
 
         setSyncing(false);
-        if (mWallet.id().length() == 0 || getID().length() == 0) {
+        if (mWallet.id().length() == 0 || id().length() == 0) {
             return 0;
         }
-        if (core.ABC_TxHeight(mWallet.id(), getID(), th, Error) != tABC_CC.ABC_CC_Ok) {
+        if (core.ABC_TxHeight(mWallet.id(), id(), th, Error) != tABC_CC.ABC_CC_Ok) {
             setSyncing(true);
             return 0;
         }
@@ -157,7 +157,7 @@ public class Transaction {
         return txHeight;
     }
 
-    public String getID() {
+    public String id() {
         return mId;
     }
 
