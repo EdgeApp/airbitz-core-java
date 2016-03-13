@@ -12,15 +12,14 @@ import co.airbitz.internal.tABC_Error;
 public class AirbitzException extends Exception {
     private tABC_CC mCode;
     private tABC_Error mError;
-    private String mOtpResetDate;
+    String mOtpResetToken;
+    String mOtpResetDate;
+    int mWaitSeconds;
 
     protected AirbitzException(Context context, tABC_CC code, tABC_Error error) {
         super(errorMap(context, code, error));
         mCode = code;
         mError = error;
-
-        // if this is an otp error, set the reset date if available
-        setOtpResetDate();
     }
 
     public boolean isOkay() {
@@ -39,17 +38,12 @@ public class AirbitzException extends Exception {
         return mOtpResetDate;
     }
 
-    void setOtpResetDate() {
-        if (!isOtpError()) {
-            return;
-        }
-        tABC_Error error = new tABC_Error();
-        SWIGTYPE_p_long lp = core.new_longp();
-        SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
-        tABC_CC cc = core.ABC_OtpResetDate(ppChar, error);
-        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
-            mOtpResetDate = Jni.getStringAtPtr(core.longp_value(lp));
-        }
+    public String otpResetToken() {
+        return mOtpResetToken;
+    }
+
+    public int waitSeconds() {
+        return mWaitSeconds;
     }
 
     public String errorMap() {

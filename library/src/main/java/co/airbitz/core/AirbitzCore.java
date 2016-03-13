@@ -526,9 +526,18 @@ public class AirbitzCore {
         if (otpToken != null) {
             otpKeySet(username, otpToken);
         }
-        core.ABC_SignIn(username, password, error);
+        SWIGTYPE_p_long pToken = core.new_longp();
+        SWIGTYPE_p_p_char ppToken = core.longp_to_ppChar(pToken);
+
+        SWIGTYPE_p_long pTokenDate = core.new_longp();
+        SWIGTYPE_p_p_char ppDate = core.longp_to_ppChar(pTokenDate);
+
+        core.ABC_PasswordLogin(username, password, "", "", error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            throw new AirbitzException(mContext, error.getCode(), error);
+            AirbitzException exception = new AirbitzException(mContext, error.getCode(), error);
+            exception.mOtpResetToken = Jni.getStringAtPtr(core.longp_value(pToken));
+            exception.mOtpResetDate = Jni.getStringAtPtr(core.longp_value(pTokenDate));
+            throw exception;
         }
         Account account = new Account(this, username, password);
         mAccounts.add(account);
@@ -607,10 +616,20 @@ public class AirbitzCore {
         if (otpToken != null) {
             otpKeySet(username, otpToken);
         }
+
+        SWIGTYPE_p_long pToken = core.new_longp();
+        SWIGTYPE_p_p_char ppToken = core.longp_to_ppChar(pToken);
+
+        SWIGTYPE_p_long pTokenDate = core.new_longp();
+        SWIGTYPE_p_p_char ppDate = core.longp_to_ppChar(pTokenDate);
+
         core.ABC_RecoveryLogin(username,
-                Utils.arrayToString(answers), error);
+                Utils.arrayToString(answers), "", "", error);
         if (tABC_CC.ABC_CC_Ok != error.getCode()) {
-            throw new AirbitzException(mContext, error.getCode(), error);
+            AirbitzException exception = new AirbitzException(mContext, error.getCode(), error);
+            exception.mOtpResetToken = Jni.getStringAtPtr(core.longp_value(pToken));
+            exception.mOtpResetDate = Jni.getStringAtPtr(core.longp_value(pTokenDate));
+            throw exception;
         }
         Account account = new Account(this, username, null);
         mAccounts.add(account);
@@ -655,19 +674,23 @@ public class AirbitzCore {
         if (otpToken != null) {
             otpKeySet(username, otpToken);
         }
+        SWIGTYPE_p_int pWaitSeconds = core.new_intp();
+
         tABC_Error error = new tABC_Error();
-        core.ABC_PinLogin(username, pin, error);
+        core.ABC_PinLogin(username, pin, pWaitSeconds, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            throw new AirbitzException(mContext, error.getCode(), error);
+            AirbitzException exception = new AirbitzException(null, error.getCode(), error);
+            exception.mWaitSeconds = core.intp_value(pWaitSeconds);
+            throw exception;
         }
         Account account = new Account(this, username, null);
         mAccounts.add(account);
         return account;
     }
 
-    public void otpResetRequest(String username) throws AirbitzException {
+    public void otpResetRequest(String username, String token) throws AirbitzException {
         tABC_Error error = new tABC_Error();
-        core.ABC_OtpResetSet(username, error);
+        core.ABC_OtpResetSet(username, token, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
             throw new AirbitzException(mContext, error.getCode(), error);
         }
