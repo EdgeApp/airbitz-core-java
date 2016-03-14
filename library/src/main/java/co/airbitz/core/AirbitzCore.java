@@ -532,7 +532,7 @@ public class AirbitzCore {
         SWIGTYPE_p_long pTokenDate = core.new_longp();
         SWIGTYPE_p_p_char ppDate = core.longp_to_ppChar(pTokenDate);
 
-        core.ABC_PasswordLogin(username, password, "", "", error);
+        core.ABC_PasswordLogin(username, password, ppToken, ppDate, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
             AirbitzException exception = new AirbitzException(mContext, error.getCode(), error);
             exception.mOtpResetToken = Jni.getStringAtPtr(core.longp_value(pToken));
@@ -624,7 +624,7 @@ public class AirbitzCore {
         SWIGTYPE_p_p_char ppDate = core.longp_to_ppChar(pTokenDate);
 
         core.ABC_RecoveryLogin(username,
-                Utils.arrayToString(answers), "", "", error);
+                Utils.arrayToString(answers), ppToken, ppDate, error);
         if (tABC_CC.ABC_CC_Ok != error.getCode()) {
             AirbitzException exception = new AirbitzException(mContext, error.getCode(), error);
             exception.mOtpResetToken = Jni.getStringAtPtr(core.longp_value(pToken));
