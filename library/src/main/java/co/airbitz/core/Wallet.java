@@ -204,11 +204,11 @@ public class Wallet {
         }
     }
 
-    public ReceiveAddress receiveRequest() {
+    public ReceiveAddress newReceiveRequest() {
         return new ReceiveAddress(mAccount, this);
     }
 
-    public ReceiveAddress receiveRequest(String address) {
+    public ReceiveAddress newReceiveRequest(String address) {
         return new ReceiveAddress(mAccount, this, address);
     }
 
