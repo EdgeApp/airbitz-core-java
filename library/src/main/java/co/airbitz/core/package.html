@@ -21,51 +21,5 @@ Edge-Secured data on the user's account which is automatically encrypted,
 automatically backed up, and automatically synchronized between the user's
 authenticated devices.
 </p>
-
-<pre><code>
-    // Get an instance of the api and initialize with your API key
-    AirbitzCore api = AirbitzCore.getApi();
-    api.init(context, "YOUR-API-KEY");
-    
-    // Create an account
-    Account account = api.createAccount("username", "password", "pin");
-
-    // Use Airbitz Edge Security to write encrypted/backed up/synchronized data to the account
-    account.data("myAppUserInfo").put("user_email", "theuser@hisdomain.com");
-
-    // Read back the data
-    account.data("myAppUserInfo").get("user_email");
-
-    // Create a wallet in the user account
-    Wallet wallet = account.createWallet("My Awesome Wallet", "USD");
-
-    // Logout
-    account.logout();
-
-    // Log back in with full credentials
-    Account account = api.passwordLogin("myusername", "MyPa55w0rd");
-
-    // Or log back in with PIN 
-    Account account = api.pinLogin("myusername", "1111");
-    account.callbacks(new Callbacks {
-        public void incomingBitcoin(Wallet wallet, String txid) {
-            // Yay! Received bitcoin...
-        }
-    });
-
-    // Create a receive request
-    Wallet wallet = account.wallets()[0];
-    ReceiveAddress request = wallet.newReceiveRequest();
-
-    request.meta().label("William Swanson")
-                  .category("Income:Rent")
-                  .notes("Rent payment for Jan 2016");
-    request.amount(40000);
-
-    String address = request.address();
-    String uri     = request.uri();
-    Bitmap qrcode  = request.qrCode();
-
-</code></pre>
 </body>
 </html>

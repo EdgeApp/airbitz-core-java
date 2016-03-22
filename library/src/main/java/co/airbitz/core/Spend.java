@@ -43,6 +43,13 @@ import co.airbitz.internal.tABC_Error;
 import co.airbitz.internal.SWIGTYPE_p_void;
 import co.airbitz.internal.SWIGTYPE_p_p_void;
 
+/**
+ * Spend is used to build a Spend from the {@link Wallet}.  Caller can add
+ * multiple spend targets by calling either of {@link addAddress}, {@link
+ * addTransfer}, or {@link addPaymentRequest} repeated times. Use {@link
+ * signBroadcastSave} to send the transaction to the blockchain. This spend may
+ * also be signed without broadcast by calling {@link sign}.
+ */
 public class Spend {
     SWIGTYPE_p_void mSpend;
     SWIGTYPE_p_long _pl;
@@ -82,14 +89,27 @@ public class Spend {
         super.finalize();
     }
 
+    /**
+     * Access the meta data for this Spend
+     * @return the metadata object
+     */
     public MetadataSet meta() {
         return mMeta;
     }
 
+    /**
+     * Indicates if this is a transfer
+     * @return true if this is a transfer
+     */
     public boolean isTransfer() {
         return mIsTransfer;
     }
 
+    /**
+     * Adds an address and amount to this spend request
+     * @param address public address to send funds to
+     * @param amount amount of bitcoin to send in satoshis
+     */
     public void addAddress(String address, long amount) throws AirbitzException {
         SWIGTYPE_p_uint64_t ua = core.new_uint64_tp();
         Jni.set64BitLongAtPtr(Jni.getCPtr(ua), amount);
@@ -101,6 +121,13 @@ public class Spend {
         }
     }
 
+    /**
+     * Adds a BIP70 payment request to this Spend. No amount parameter is
+     * provided as the payment request always has the amount included. Generate
+     * an {@link PaymentRequest} object by calling {@link AirbitzCore.parseURI}
+     * then {@link ParsedUri.getPaymentRequest}
+     * @param request the payment request object include the BIP70 details
+     */
     public void addPaymentRequest(PaymentRequest request) throws AirbitzException {
         tABC_Error error = new tABC_Error();
         core.ABC_SpendAddPaymentRequest(mSpend, request.coreRequest(), error);
@@ -109,6 +136,15 @@ public class Spend {
         }
     }
 
+    /**
+     * Adds a transfer of funds between Wallets in an account. The source
+     * wallet is the wallet that created this Spend and once the transaction is
+     * sent, the source wallet is tagged with the metaData from this Spend
+     * object.
+     * @param destWallet the wallet to transfer funds to
+     * @param amount the amount to transfer to the destWallet
+     * @param destMeta the metadata for the transaction created for the destWallet
+     */
     public void addTransfer(Wallet destWallet, long amount, MetadataSet destMeta) throws AirbitzException {
         SWIGTYPE_p_uint64_t ua = core.new_uint64_tp();
         Jni.set64BitLongAtPtr(Jni.getCPtr(ua), amount);
@@ -151,6 +187,10 @@ public class Spend {
         return new UnsentTransaction(mAccount, mWallet, rawTx, this);
     }
 
+    /**
+     * Signs this send request and broadcasts it to the blockchain and saves it to the local database.
+     * @return a transaction object for the new transaction
+     */
     public Transaction signBroadcastSave() throws AirbitzException {
         UnsentTransaction utx = sign();
         Transaction tx = null;
@@ -160,6 +200,10 @@ public class Spend {
         return tx;
     }
 
+    /**
+     * Get the maximum amount spendable from this wallet using the currenct Spend object
+     * @return maximum spendable from this wallet in satoshis
+     */
     public long maxSpendable() {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_uint64_t result = core.new_uint64_tp();
@@ -168,6 +212,10 @@ public class Spend {
         return actual;
     }
 
+    /**
+     * Calculate the amount of fees needed to send this transaction
+     * @return the amount of fees needed in satoshis
+     */
     public long calcSendFees() throws AirbitzException {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_uint64_t total = core.new_uint64_tp();

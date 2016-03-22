@@ -56,6 +56,19 @@ import co.airbitz.internal.tABC_AsyncEventType;
 import co.airbitz.internal.tABC_CC;
 import co.airbitz.internal.tABC_Error;
 
+/**
+ * The Account object represents a fully logged in account. This is returned by
+ * various sign in  routines from {@link AirbitzCore}. It contains a {@link
+ * Settings} object which are account settings that carry over from device to
+ * device. Account also contains an array of {@link Wallet} object wallets and
+ * archived wallets which should be checked for the parameter loaded=YES before
+ * being accessed.
+ *
+ * The {@link DataStore} object allows reading/writing of encrypted and backed
+ * up key/value data to the user's account. This data is accessible from any
+ * device that the user authenticates into using an app running on the Airbitz
+ * SDK.
+ */
 public class Account {
     private static String TAG = Account.class.getSimpleName();
 
@@ -85,7 +98,7 @@ public class Account {
 
         /**
          * Called when the account has changed remotely. This includes a change
-         * in settings which ocurred on a different device.
+         * in settings which occurred on a different device.
          */
         public void userAccountChanged();
 
@@ -309,7 +322,7 @@ public class Account {
     /**
      * Check the input against the account's PIN.
      * @param pin the PIN to check
-     * @return true if the PIN matches the accoutn PIN
+     * @return true if the PIN matches the account PIN
      */
     public boolean checkPin(String pin) {
         tABC_Error error = new tABC_Error();
@@ -322,6 +335,10 @@ public class Account {
         return false;
     }
 
+    /**
+     * Checks whether the account has a pin.
+     * @return true if the account has a pin
+     */
     public boolean accountHasPin() {
         return mApi.accountHasPin(username());
     }
@@ -525,7 +542,7 @@ public class Account {
     }
 
     /**
-     * Request the the wallets be reloaded. This is an asynchronous call and will return immediately.
+     * Request the wallets be reloaded. This is an asynchronous call and will return immediately.
      */
     public void reloadWallets() {
         mEngine.reloadWallets();
@@ -559,15 +576,20 @@ public class Account {
         mEngine.stop();
     }
 
+    /**
+     * Small tuple class which holds the address and signature to use for a
+     * Bitid login. @see <a href="https://github.com/bitid/bitid">https://github.com/bitid/bitid</a>
+     * for me details on Bitid.
+     */
     public static class BitidSignature {
         public String address;
         public String signature;
     }
 
     /**
-     * Parse a bitid uri, and return the domain of the uri.
+     * Parse a Bitid URI, and return the domain of the URI.
      * @param uri
-     * @return the domain of the uri
+     * @return the domain of the URI
      */
     public String parseBitidUri(String uri) {
         tABC_Error error = new tABC_Error();
@@ -584,7 +606,7 @@ public class Account {
     }
 
     /**
-     * Sign the message using the bitid key requested by the uri
+     * Sign the message using the Bitid key requested by the URI
      * @param uri
      * @param message
      * @return the tuple of address and the signature
@@ -608,7 +630,7 @@ public class Account {
     }
 
     /**
-     * Login to the uri using bitid.
+     * Login to the URI using Bitid.
      * @param uri
      * @return true if the login was successful
      */
@@ -689,7 +711,7 @@ public class Account {
     }
 
     /**
-     * Retreived the OTP secret.
+     * Retrieved the OTP secret.
      */
     public String otpSecret() {
         tABC_Error error = new tABC_Error();

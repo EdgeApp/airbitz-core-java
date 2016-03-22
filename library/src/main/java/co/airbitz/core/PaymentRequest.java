@@ -35,6 +35,11 @@ import co.airbitz.internal.core;
 import co.airbitz.internal.tABC_CC;
 import co.airbitz.internal.tABC_PaymentRequest;
 
+/**
+ * PaymentRequest contains the details of a BIP70 request. The PaymentRequest
+ * is retrieved from {@link ParsedUri #fetchReceiveRequest} if the ParsedUri
+ * contains a valid BIP70 URL.
+ */
 public class PaymentRequest {
     private tABC_PaymentRequest mPaymentRequest;
 
@@ -46,19 +51,35 @@ public class PaymentRequest {
         return mPaymentRequest;
     }
 
+    /**
+     * Retrieve the domain of the BIP70 request.
+     * @return the domain of the BIP70 request
+     */
     public String domain() {
         return mPaymentRequest.getSzDomain();
     }
 
+    /**
+     * Retrieve the amount of the request.
+     * @return the amount of the request
+     */
     public long amount() {
         return Jni.get64BitLongAtPtr(
             Jni.getCPtr(mPaymentRequest.getAmountSatoshi()));
     }
 
+    /**
+     * Retrieve the memo of the request.
+     * @return the memo of the request
+     */
     public String memo() {
         return mPaymentRequest.getSzMemo();
     }
 
+    /**
+     * Retrieve the merchant of the request.
+     * @return the merchant of the request
+     */
     public String merchant() {
         return mPaymentRequest.getSzMerchant();
     }

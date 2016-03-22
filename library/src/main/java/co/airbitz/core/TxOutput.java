@@ -35,6 +35,11 @@ import co.airbitz.internal.Jni;
 import co.airbitz.internal.SWIGTYPE_p_int64_t;
 import co.airbitz.internal.tABC_TxOutput;
 
+/**
+ * TxOutput contains information about an input or output of a transaction. It
+ * is generally accessed from {@link Transaction #inputs()} or {@link
+ * Transaction #outputs()}.
+ */
 public class TxOutput {
     private boolean mInput;
     private long  mIndex;
@@ -52,22 +57,42 @@ public class TxOutput {
         }
     }
 
+    /**
+     * Retrieve whether this is an input or an output.
+     * @return true if this is an input, false otherwise
+     */
     public boolean isInput() {
         return mInput;
     }
 
+    /**
+     * Retrieve the amount of the input or output.
+     * @return the amount of the input or output
+     */
     public long amount() {
         return mValue;
     }
 
+    /**
+     * Retrieve the address of the input or output.
+     * @return the address of the input or output
+     */
     public String address() {
         return mAddress;
     }
 
+    /**
+     * Retrieve the txId of the input or output.
+     * @return the txId of the input or output
+     */
     public String txId() {
         return mTxId;
     }
 
+    /**
+     * Retrieve the index of the input
+     * @return the index of the input
+     */
     public long index() {
         return mIndex;
     }

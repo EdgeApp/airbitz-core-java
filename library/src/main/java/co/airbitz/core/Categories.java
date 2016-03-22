@@ -45,6 +45,10 @@ import co.airbitz.internal.core;
 import co.airbitz.internal.tABC_CC;
 import co.airbitz.internal.tABC_Error;
 
+/**
+ * Categories provides accessor functions into a user's category list. It can
+ * be access from {@link Account#categories categories()}.
+ */
 public class Categories {
     private static String TAG = Categories.class.getSimpleName();
 
@@ -54,6 +58,10 @@ public class Categories {
         this.mAccount = account;
     }
 
+    /**
+     * Retrieve a list of the user's categories
+     * @return a list of the user's categories
+     */
     public List<String> list() {
         List<String> categories = new ArrayList<String>();
 
@@ -84,30 +92,42 @@ public class Categories {
         return categories;
     }
 
-    public void insert(String strCategory) {
+    /**
+     * Insert a new category into the user's list
+     * @param category the new category to insert
+     */
+    public void insert(String category) {
         List<String> categories = list();
-        if (categories != null && !categories.contains(strCategory)) {
+        if (categories != null && !categories.contains(category)) {
             // add the category to the core
-            AirbitzCore.logi("Adding category: " + strCategory);
+            AirbitzCore.logi("Adding category: " + category);
             tABC_Error Error = new tABC_Error();
             core.ABC_AddCategory(
                     mAccount.username(), mAccount.password(),
-                    strCategory, Error);
+                    category, Error);
         }
     }
 
+    /**
+     * Insert an array of new categories into the user's list.
+     * @param categories the new categories to insert
+     */
     public void insert(String[] categories) {
         for (String c : categories) {
             insert(c);
         }
     }
 
-    public boolean remove(String strCategory) {
-        AirbitzCore.logi("Remove category: "+strCategory);
+    /**
+     * Remove a category from the user's categories.
+     * @param category the category to remote
+     */
+    public boolean remove(String category) {
+        AirbitzCore.logi("Remove category: " + category);
         tABC_Error Error = new tABC_Error();
         tABC_CC result = core.ABC_RemoveCategory(
                 mAccount.username(), mAccount.password(),
-                strCategory, Error);
-        return result==tABC_CC.ABC_CC_Ok;
+                category, Error);
+        return result == tABC_CC.ABC_CC_Ok;
     }
 }

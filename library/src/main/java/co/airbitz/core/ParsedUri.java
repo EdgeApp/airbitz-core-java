@@ -39,7 +39,18 @@ import co.airbitz.internal.tABC_Error;
 import co.airbitz.internal.tABC_ParsedUri;
 import co.airbitz.internal.SWIGTYPE_p_p_sABC_PaymentRequest;
 
+/**
+ * ParsedUri encapsulates the data of a URI. It understands bitcoin addresses,
+ * private keys in WIF format, bitid requests and BIP70 requests. If the parsed
+ * text is a BIP70 request, {@link ParsedUri.fetchPaymentRequest} must be
+ * called as well to fetch the details of the payment.
+ */
 public class ParsedUri {
+
+    /**
+     * The type of URI that was parsed such as bitcoin adddresses, private keys
+     * (WIFs), bitid URLs and BIP70 payment requests.
+     */
     public enum UriType {
         ADDRESS,
         PRIVATE_KEY,
@@ -80,30 +91,63 @@ public class ParsedUri {
         }
     }
 
+    /**
+     * Returns the type of text was parsed.
+     * @return the URI type
+     */
     public UriType type() {
         return mType;
     }
 
+    /**
+     * Returns the metadata for this request
+     * @return the metadata for this request
+     */
     public MetadataSet meta() {
         return mMeta;
     }
 
+    /**
+     * Returns the bitcoin address for this URI. If the URI is not a bitcoin
+     * address or WIF this will return null.
+     * @return the address for this URI
+     */
     public String address() {
         return mAddress;
     }
 
+    /**
+     * Returns the private key or WIF for this URI. If the URI is not a WIF
+     * this will return null.
+     * @return the WIF for this URI
+     */
     public String privateKey() {
         return mWif;
     }
 
+    /**
+     * Returns the BIP70 URL. If the URI is not a BIP70 request this will
+     * return null.
+     * @return the BIP70 URL
+     */
     public String paymentProto() {
         return mPaymentProto;
     }
 
+    /**
+     * Returns the Bitid URL. If the URI is not a Bitid request this will
+     * return null.
+     * @return the Bitid URL
+     */
     public String bitid() {
         return mBitidUri;
     }
 
+    /**
+     * Fetches the {@link PaymentRequest} details from a server. This will
+     * require network access.
+     * @return payment request details for this BIP70 request
+     */
     public PaymentRequest fetchPaymentRequest() throws AirbitzException {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_long lp = core.new_longp();
@@ -115,23 +159,43 @@ public class ParsedUri {
         return new PaymentRequest(Jni.newPaymentRequest(core.longp_value(lp)));
     }
 
+    /**
+     * Returns the amount parameter in the URI.
+     * @return the amount for this request in satoshis
+     */
     public long amount() {
         return Jni.get64BitLongAtPtr(
             Jni.getCPtr(mParsedUri.getAmountSatoshi()));
     }
 
+    /**
+     * Returns the label parameter specified in the URI.
+     * @return the label for this URI.
+     */
     public String label() {
         return mParsedUri.getSzLabel();
     }
 
+    /**
+     * Returns the message parameter specified in the URI.
+     * @return the message for this URI.
+     */
     public String message() {
         return mParsedUri.getSzMessage();
     }
 
+    /**
+     * Returns the category parameter specified in the URI.
+     * @return the category for this URI.
+     */
     public String category() {
         return mParsedUri.getSzCategory();
     }
 
+    /**
+     * Returns the return URI parameter specified in the URI.
+     * @return the return URI for this URI.
+     */
     public String returnUri() {
         return mParsedUri.getSzRet();
     }

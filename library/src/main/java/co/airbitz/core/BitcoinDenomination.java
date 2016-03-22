@@ -7,6 +7,11 @@ import co.airbitz.internal.tABC_BitcoinDenomination;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * BitcoinDenomination contains information associated with a particular
+ * bitcoin denomation. It inludes a label such as (BTC or mBTC or bits) and a
+ * symbol such as Ƀ, mɃ, ƀ.
+ */
 public class BitcoinDenomination {
 
     tABC_BitcoinDenomination mDenomination;

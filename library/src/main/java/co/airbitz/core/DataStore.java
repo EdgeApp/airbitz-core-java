@@ -47,6 +47,18 @@ import co.airbitz.internal.core;
 import co.airbitz.internal.tABC_CC;
 import co.airbitz.internal.tABC_Error;
 
+/**
+ * The DataStore object implements the Airbitz auto-encrypted, auto-backed up, and auto
+ * synchronized Edge Security data storage. DataStore is end-to-end encrypted with no access to the
+ * data by Airbitz, other users, or developers. Data is encrypted<br />
+ * <br />
+ * Data is saved as key/value pairs in named folders. Usage is as simple as calling
+ * {@link #set} to write data to this DataStore and calling {@link #get} to read the data back.<br />
+ * <br />
+ * DataStore will automatically
+ * backup all data and synchronize between all user's devices as long as the devices are
+ * online. If devices are offline, the data will sync as soon as the device comes back online
+ */
 public class DataStore  {
     private static String TAG = DataStore.class.getSimpleName();
 
@@ -58,6 +70,11 @@ public class DataStore  {
         mPluginId = pluginId;
     }
 
+    /**
+     * Retreive the value for a given key.
+     * @param key the key
+     * @return the value of the key
+     */
     public String get(String key) {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_long lp = core.new_longp();
@@ -73,6 +90,12 @@ public class DataStore  {
         }
     }
 
+    /**
+     * Set the value for a given key.
+     * @param key the key
+     * @param value the value
+     * @return true if successfully stored the key value pair, false otherwise
+     */
     public boolean set(String key, String value) {
         tABC_Error error = new tABC_Error();
         core.ABC_PluginDataSet(
@@ -81,6 +104,11 @@ public class DataStore  {
         return error.getCode() == tABC_CC.ABC_CC_Ok;
     }
 
+    /**
+     * Remove a given key.
+     * @param key the key
+     * @return true if successfully removed the key value pair, false otherwise
+     */
     public boolean remove(String key) {
         tABC_Error error = new tABC_Error();
         core.ABC_PluginDataRemove(
@@ -89,6 +117,10 @@ public class DataStore  {
         return error.getCode() == tABC_CC.ABC_CC_Ok;
     }
 
+    /**
+     * Clear the datastore of all its values
+     * @return true if successfully cleared the data store
+     */
     public boolean removeAll() {
         tABC_Error error = new tABC_Error();
         core.ABC_PluginDataClear(

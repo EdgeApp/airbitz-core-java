@@ -7,6 +7,11 @@ import co.airbitz.internal.core;
 import co.airbitz.internal.tABC_CC;
 import co.airbitz.internal.tABC_Error;
 
+/**
+ * AirbitzException is the generic exception thrown when interacting with
+ * AirbitzCore (ABC). It indicates a wide range of errors, from server issues
+ * to bad passwords.
+ */
 public class AirbitzException extends Exception {
     private tABC_CC mCode;
     private tABC_Error mError;
@@ -18,10 +23,6 @@ public class AirbitzException extends Exception {
         super(error.getSzDescription());
         mCode = code;
         mError = error;
-    }
-
-    public boolean isOkay() {
-        return mCode == tABC_CC.ABC_CC_Ok;
     }
 
     public boolean isBadPassword() {

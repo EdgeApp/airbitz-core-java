@@ -33,6 +33,11 @@ package co.airbitz.core;
 
 import co.airbitz.internal.tABC_TxDetails;
 
+/**
+ * MetadataSet is a bunch of getters and setters that change the metadata of a
+ * particular object. Those objects can be {@link ReceiveAddress}, {@link
+ * Transaction} and {@link Spend}.
+ */
 public class MetadataSet {
     private static String TAG = MetadataSet.class.getSimpleName();
 

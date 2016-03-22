@@ -42,8 +42,10 @@ import java.util.Map;
 import co.airbitz.internal.Jni;
 import co.airbitz.internal.core;
 
-public class Currencies {
-
+/**
+ * Used internally only.
+ */
+class Currencies {
     static Map<String, CoreCurrency> mNumberIndex;
     static Map<String, CoreCurrency> mCodeIndex;
 

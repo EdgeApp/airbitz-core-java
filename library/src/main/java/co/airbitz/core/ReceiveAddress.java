@@ -43,6 +43,11 @@ import co.airbitz.internal.tABC_CC;
 import co.airbitz.internal.tABC_Error;
 import co.airbitz.internal.tABC_TxDetails;
 
+/**
+ * ReceiveAddress is returned by {@link Wallet#newReceiveRequest} and {@link
+ * Wallet#fetchReceiveRequest}.  The properties amountSatoshi and metaData can
+ * be modified by the caller.
+ */
 public class ReceiveAddress {
     private static String TAG = ReceiveAddress.class.getSimpleName();
 
@@ -85,56 +90,96 @@ public class ReceiveAddress {
     }
 
 
+    /**
+     * @return the qrcode
+     */
     public byte[] qrcode() {
         return mQrCode;
     }
 
+    /**
+     * @return the URI
+     */
     public String uri() {
         return mUri;
     }
 
+    /**
+     * Set the label for this receive request.
+     * @return itself with the updated values
+     */
     public ReceiveAddress uriLabel(String label) {
         mUriLabel = label;
         update();
         return this;
     }
 
+    /**
+     * Set the category for this receive request.
+     * @return itself with the updated values
+     */
     public ReceiveAddress uriCategory(String category) {
         mUriCategory = category;
         update();
         return this;
     }
 
+    /**
+     * Set the message for this receive request.
+     * @return itself with the updated values
+     */
     public ReceiveAddress uriMessage(String message) {
         mUriMessage = message;
         update();
         return this;
     }
 
+    /**
+     * Set the return URI for this receive request.
+     * @return itself with the updated values
+     */
     public ReceiveAddress uriReturn(String ret) {
         mUriRet = ret;
         update();
         return this;
     }
 
+    /**
+     * @return the address for this request
+     */
     public String address() {
         return mAddress;
     }
 
+    /**
+     * @return the metadata for this request
+     */
     public MetadataSet meta() {
         return mMeta;
     }
 
+    /**
+     * Set the amount for this receive request.
+     * @return itself with the updated values
+     */
     public ReceiveAddress amount(long amount) {
         mSatoshi = amount;
         update();
         return this;
     }
 
+    /**
+     * @return itself with the updated values
+     */
     public long amount() {
         return mSatoshi;
     }
 
+    /**
+     * Indicates that this address is a priority and should be checked more
+     * frequently with the bitcoin network for any changes in its balance.
+     * @param prior true prioritizes and false deprioritizes
+     */
     public void prioritize(boolean prior) {
         tABC_Error error = new tABC_Error();
         core.ABC_PrioritizeAddress(
@@ -142,6 +187,13 @@ public class ReceiveAddress {
                 mWallet.id(), mAddress, error);
     }
 
+    /**
+     * Finalizing a request marks the address as used and it will not be used
+     * for future requests. The metadata will also be written for this address.
+     * This is useful so that when a future payment comes in, the metadata can
+     * be auto-populated.
+     * @return true if the request was successfully finalized.
+     */
     public boolean finalizeRequest() {
         tABC_Error error = new tABC_Error();
         core.ABC_FinalizeReceiveRequest(
@@ -150,6 +202,11 @@ public class ReceiveAddress {
         return error.getCode() == tABC_CC.ABC_CC_Ok;
     }
 
+    /**
+     * Canceling marks the address as reusable, so that future requests might
+     * use it.
+     * @return true if the request was successfully cancelled.
+     */
     public boolean cancel() {
         tABC_Error error = new tABC_Error();
         core.ABC_CancelReceiveRequest(

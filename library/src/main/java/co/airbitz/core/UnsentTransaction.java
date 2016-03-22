@@ -38,6 +38,13 @@ import co.airbitz.internal.tABC_CC;
 import co.airbitz.internal.SWIGTYPE_p_long;
 import co.airbitz.internal.SWIGTYPE_p_p_char;
 
+/**
+ * UnsentTransaction represents a signed transaction that has not been
+ * broadcast to the network yet. If calling {@link #broadcast broadcast} is
+ * successful, then {@link #save save} should be called, in order to store the
+ * transaction in the local database. If {@link #save save} is not called, the
+ * transaction will be saved locally when it is seen on the bitcoin network.
+ */
 public class UnsentTransaction {
     private Account mAccount;
     private Wallet mWallet;
@@ -52,16 +59,28 @@ public class UnsentTransaction {
         mSpend = spendTarget;
     }
 
+    /**
+     * Retrieve the raw signed bitcoin transaction.
+     * @return the base 16 encoded signed transaction
+     */
     public String base16Tx() {
         return mRawTx;
     }
 
+    /**
+     * Broadcast this signed transaction to the bitcoin network
+     * @return true if the transaction was successfully broadcasted
+     */
     public boolean broadcast() {
         tABC_Error error = new tABC_Error();
         core.ABC_SpendBroadcastTx(mSpend.mSpend, mRawTx, error);
         return error.getCode() == tABC_CC.ABC_CC_Ok;
     }
 
+    /**
+     * Save the transaction to the local database.
+     * @return a new Transaction object
+     */
     public Transaction save() {
         String id = null;
         tABC_Error error = new tABC_Error();
@@ -77,6 +96,10 @@ public class UnsentTransaction {
         }
     }
 
+    /**
+     * Retrieve the transaction id.
+     * @return the transaction id
+     */
     public String txId() {
         return mTxId;
     }

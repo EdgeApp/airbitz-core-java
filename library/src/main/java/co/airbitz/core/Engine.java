@@ -66,7 +66,7 @@ import co.airbitz.internal.tABC_AsyncEventType;
 import co.airbitz.internal.tABC_CC;
 import co.airbitz.internal.tABC_Error;
 
-public class Engine {
+class Engine {
     private static String TAG = Account.class.getSimpleName();
 
     private static int ABC_EXCHANGE_RATE_REFRESH_INTERVAL_SECONDS = 60;

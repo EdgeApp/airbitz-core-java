@@ -34,6 +34,12 @@ package co.airbitz.core;
 import co.airbitz.internal.SWIGTYPE_p_void;
 import co.airbitz.internal.tABC_QuestionChoice;
 
+/**
+ * QuestionChoice include a question as well as information regarding the
+ * format of the answer to that question. Questions should match the minimum
+ * length and developers are encouraged to ensure a user answers 2 questions
+ * from each question category.
+ */
 public class QuestionChoice extends tABC_QuestionChoice {
     String mQuestion = null;
     String mCategory = null;
@@ -48,11 +54,29 @@ public class QuestionChoice extends tABC_QuestionChoice {
         }
     }
 
-    public String getQuestion() { return mQuestion; }
+    /**
+     * Retrieve the question the user should answer
+     * @return the question
+     */
+    public String question() {
+        return mQuestion;
+    }
 
-    public long getMinLength() { return mMinLength; }
+    /**
+     * Indicates the minimum length for an answer.
+     * @return the minimum length for the answer.
+     */
+    public long minLength() {
+        return mMinLength;
+    }
 
-    public String getCategory() { return mCategory; }
+    /**
+     * Return the category of the question, will be either "string", "numeric" or "must".
+     * @return the category of the question
+     */
+    public String category() {
+        return mCategory;
+    }
 
     private static class PVoidStatic extends SWIGTYPE_p_void {
         public static long getPtr(SWIGTYPE_p_void p) { return getCPtr(p); }

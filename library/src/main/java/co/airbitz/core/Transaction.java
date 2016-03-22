@@ -50,6 +50,10 @@ import co.airbitz.internal.tABC_CC;
 import co.airbitz.internal.tABC_Error;
 import co.airbitz.internal.tABC_TxDetails;
 
+/**
+ * Transaction contains information about a bitcoin transaction. It contains
+ * the inputs/outputs and miner fees, but also metadata set by the user.
+ */
 public class Transaction {
     private static String TAG = Transaction.class.getSimpleName();
 
@@ -111,6 +115,9 @@ public class Transaction {
         }
     }
 
+    /**
+     * Save the transaction and write the meta data to disk.
+     */
     public void save() throws AirbitzException {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_long lp = core.new_longp();
@@ -140,6 +147,10 @@ public class Transaction {
         mAccount.sendReloadWallets();
     }
 
+    /**
+     * Retrieve the block height of the transaction. This is the block that the
+     * transaction was mined in.
+     */
     public int height() {
         tABC_Error Error = new tABC_Error();
         SWIGTYPE_p_int th = core.new_intp();
@@ -157,30 +168,58 @@ public class Transaction {
         return txHeight;
     }
 
+    /**
+     * Retrieve the transaction id.
+     * @return the transaction id
+     */
     public String id() {
         return mId;
     }
 
+    /**
+     * Retrieve the malleable transaction id. This is the ID on the blockchain.
+     * @return the malleable transaction id
+     */
     public String malId() {
         return mMalId;
     }
 
+    /**
+     * Retrieve the metadata object
+     * @return the metadata object
+     */
     public MetadataSet meta() {
         return mMeta;
     }
 
+    /**
+     * Retrieve the date of the transaction
+     * @return the date of the transaction
+     */
     public Date date() {
         return mDate;
     }
 
+    /**
+     * Retrieve the outputs of the transaction
+     * @return the outputs of the transaction
+     */
     public List<TxOutput> outputs() {
         return mOutputs;
     }
 
+    /**
+     * Retrieve the inputs of the transaction
+     * @return the inputs of the transaction
+     */
     public List<TxOutput> inputs() {
         return mInputs;
     }
 
+    /**
+     * Retrieve if this transaction is still syncing
+     * @return true if this transaction is still syncing
+     */
     public boolean isSyncing() {
         return mSyncing;
     }
@@ -189,26 +228,46 @@ public class Transaction {
         this.mSyncing = syncing;
     }
 
+    /**
+     * Retrieve the amount of this transaction
+     * @return the amount of this transaction in satoshis
+     */
     public long amount() {
         return mAmountSatoshi;
     }
 
-    public void amount(long mAmountSatoshi) {
+    private void amount(long mAmountSatoshi) {
         this.mAmountSatoshi = mAmountSatoshi;
     }
 
+    /**
+     * Retrieve the miner fees of this transaction
+     * @return the miner fees of this transaction in satoshis
+     */
     public long minerFees() {
         return mMinerFees;
     }
 
+    /**
+     * Retrieve the provider fees of this transaction.
+     * @return the provider fees of this transaction in satoshis
+     */
     public long providerFees() {
         return mABFees;
     }
 
+    /**
+     * Retrieve if this is a double spend
+     * @return true if this is a double spend
+     */
     public boolean isDoubleSpend() {
         return false;
     }
 
+    /**
+     * Retrieve if this is an RBF transaction
+     * @return true if this is an RBF transaction
+     */
     public boolean isReplaceByFee() {
         return false;
     }

@@ -36,6 +36,9 @@ import co.airbitz.internal.core;
 import co.airbitz.internal.tABC_TxDetails;
 import co.airbitz.internal.Jni;
 
+/**
+ * Used internally to map transaction details from core
+ */
 class TxDetails extends tABC_TxDetails {
     long mAmountSatoshi; /** amount of bitcoins in satoshi (including fees if any) */
     long mAmountFeesAirbitzSatoshi;   /** airbitz fees in satoshi */

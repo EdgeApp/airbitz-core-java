@@ -61,11 +61,81 @@ import co.airbitz.internal.tABC_CC;
 import co.airbitz.internal.tABC_Error;
 import co.airbitz.internal.tABC_PasswordRule;
 
+/**
+ *  AirbitzCore (ABC) is a client-side blockchain and Edge Security SDK
+ *  providing auto-encrypted and auto-backed up accounts and wallets with
+ *  zero-knowledge security and privacy.  All blockchain/bitcoin private and
+ *  public keys are fully encrypted by the users' credentials before being
+ *  backed up on to peer to peer servers. ABC allows developers to create new
+ *  Airbitz wallet accounts or login to pre-existing accounts. Account
+ *  encrypted data is automatically synchronized between all devices and apps
+ *  using the Airbitz SDK. This allows a third party application to generate
+ *  payment requests or send funds for the users' account that may have been
+ *  created on the Airbitz Mobile Bitcoin Wallet or any other Airbitz SDK
+ *  application.
+ *
+ *  In addition, the {@link DataStore} object in the Airbitz {@link Account}
+ *  object allows developers to store arbitrary Edge-Secured data on the user's
+ *  account which is automatically encrypted, automatically backed up, and
+ *  automatically synchronized between the user's authenticated devices.
+ *
+ *  <pre>
+ *  {@code
+ *
+ *   // Get an instance of the api and initialize with your API key
+ *   AirbitzCore api = AirbitzCore.getApi();
+ *   api.init(context, "YOUR-API-KEY");
+ *
+ *   // Create an account
+ *   Account account = api.createAccount("username", "password", "pin");
+ *
+ *   // Use Airbitz Edge Security to write encrypted/backed up/synchronized data to the account
+ *   account.data("myAppUserInfo").put("user_email", "theuser@hisdomain.com");
+ *
+ *   // Read back the data
+ *   account.data("myAppUserInfo").get("user_email");
+ *
+ *   // Create a wallet in the user account
+ *   Wallet wallet = account.createWallet("My Awesome Wallet", "USD");
+ *
+ *   // Logout
+ *   account.logout();
+ *
+ *   // Log back in with full credentials
+ *   Account account = api.passwordLogin("myusername", "MyPa55w0rd");
+ *
+ *   // Or log back in with PIN
+ *   Account account = api.pinLogin("myusername", "1111");
+ *   account.callbacks(new Callbacks {
+ *       public void incomingBitcoin(Wallet wallet, String txid) {
+ *           // Yay! Received bitcoin...
+ *       }
+ *   });
+
+ *   // Create a receive request
+ *   Wallet wallet = account.wallets()[0];
+ *   ReceiveAddress request = wallet.newReceiveRequest();
+
+ *   request.meta().label("William Swanson")
+ *                 .category("Income:Rent")
+ *                 .notes("Rent payment for Jan 2016");
+ *   request.amount(40000);
+
+ *   String address = request.address();
+ *   String uri     = request.uri();
+ *   Bitmap qrcode  = request.qrCode();
+ *  }
+ *  </pre>
+ */
 public class AirbitzCore {
     private static String TAG = AirbitzCore.class.getSimpleName();
-
     private static Object LOCK = new Object();
 
+    /**
+     * Log levels that can be supplied when using {@link AirbitzCore#log}. The
+     * values are implied when using {@link #logd}, {@link #logi}, {@link
+     * #logw} and {@link #loge}.
+     */
     public enum LogLevel {
         ERROR(0),
         WARNING(1),
@@ -74,7 +144,7 @@ public class AirbitzCore {
 
         private final int value;
         LogLevel(int value) {
-            this.value= value;
+            this.value = value;
         }
     }
 
@@ -232,14 +302,14 @@ public class AirbitzCore {
     }
 
     /*
-     * Uploads debug log to airbitz servers.
+     * Uploads debug log to Airbitz servers.
      */
     public boolean uploadLogs() {
         return uploadLogs(null, null);
     }
 
     /*
-     * Uploads debug log to airbitz servers.
+     * Uploads debug log to Airbitz servers.
      * @param text to send to support staff
      */
     public boolean uploadLogs(String username, String password) {
@@ -562,6 +632,12 @@ public class AirbitzCore {
         }
     }
 
+    /**
+     * This class contains how long cracking a password will take, as well as
+     * if the password passes the Airbitz password checks. Requiring that the
+     * user's password meets each of these criteria ensures that their data
+     * will be safer.
+     */
     public static class PasswordRulesCheck {
         public double secondsToCrack;
         public boolean tooShort;
@@ -810,7 +886,7 @@ public class AirbitzCore {
     * Launches an OTP reset timer on the server, which will disable the OTP
     * authentication requirement when it expires.
     * @param username
-    * @param token Reset token returned by the signIn... routines if sign in
+    * @param token Reset token returned by the passwordLogin... routines if sign in
     * fails due to missing or incorrect OTP.
     */
     public void otpResetRequest(String username, String token) throws AirbitzException {
@@ -822,9 +898,9 @@ public class AirbitzCore {
     }
 
     /**
-    * Parses a bitcoin BIP21 URI, Wif private key, or Airbitz hbits private key
+    * Parses a bitcoin BIP21 URI, WIF private key, or Airbitz hbits private key
     * @param uri to parse
-    * @return ParsedURI ABCParsedURI object
+    * @return ParsedUri object
     */
     public ParsedUri parseUri(String text) throws AirbitzException {
         return new ParsedUri(text);

@@ -31,10 +31,20 @@
 
 package co.airbitz.core;
 
+/**
+ * CoreCurrency contains information associated with a fiat currency. It
+ * includes a label, description and a symbol such as $ or €.
+ */
 public class CoreCurrency {
+    // A description of the currenty
     public String description;
+
+    // The currency code such as USD or EUR
     public String code;
+
+    // The currency symbol such as $ or €.
     public String symbol;
+
     int currencyNum;
 
     @Override

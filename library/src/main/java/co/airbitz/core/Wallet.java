@@ -48,6 +48,13 @@ import co.airbitz.internal.core;
 import co.airbitz.internal.tABC_CC;
 import co.airbitz.internal.tABC_Error;
 
+/**
+ * Wallet represents a single HD, multiple address, wallet within an {@link
+ * Account}.  This object is the basis for Sends and Requests. Initiate sends
+ * by calling {@link Wallet#newSpend newSpend} which returns an {@link Spend}
+ * object.  Use {@link Wallet#newReceiveRequest newReceiveRequest} to generate
+ * an {@link ReceiveAddress} which contains a bitcoin address to receive funds.
+ */
 public class Wallet {
     private Account mAccount;
     private String mName;
@@ -110,7 +117,7 @@ public class Wallet {
     }
 
     /**
-     * Archives or unarchives the wallet.
+     * Archives or un-archives the wallet.
      * @return true if the wallet was successfully archived.
      */
     public boolean walletArchived(boolean archived) {
@@ -176,8 +183,8 @@ public class Wallet {
     }
 
     /**
-     * Retreive the wallet currency.
-     * @return the {@link co.airbitz.core.CoreCurrency} object for the wallet's currency
+     * Retrieve the wallet currency.
+     * @return the {@link CoreCurrency} object for the wallet's currency
      */
     public CoreCurrency currency() {
         return Currencies.instance().lookup(
@@ -185,7 +192,7 @@ public class Wallet {
     }
 
     /**
-     * Retreive the wallet balance.
+     * Retrieve the wallet balance.
      * @return the wallet balance in satoshis.
      */
     public long balance() {
@@ -254,7 +261,7 @@ public class Wallet {
 
     /**
      * Create a receive request from the current wallet.
-     * @return the newly instantiated {@link co.airbitz.core.ReceiveAddress}
+     * @return the newly instantiated {@link ReceiveAddress}
      */
     public ReceiveAddress newReceiveRequest() {
         return new ReceiveAddress(mAccount, this);
@@ -262,7 +269,7 @@ public class Wallet {
 
     /**
      * Load an existing receive request from the current wallet.
-     * @return the newly instantiated {@link co.airbitz.core.ReceiveAddress}
+     * @return the newly instantiated {@link ReceiveAddress}
      * for an existing request.
      */
     public ReceiveAddress fetchReceiveRequest(String address) {
@@ -270,8 +277,8 @@ public class Wallet {
     }
 
     /**
-     * Create a new {@link co.airbitz.core.Spend} object.
-     * @return newly instantiated {@link co.airbitz.core.Spend} object.
+     * Create a new {@link Spend} object.
+     * @return newly instantiated {@link Spend} object.
      */
     public Spend newSpend() throws AirbitzException {
         return new Spend(mAccount, this);
@@ -350,7 +357,7 @@ public class Wallet {
 
     /**
      * Fetch all transactions for this wallet
-     * @return a list of {@link co.airbitz.core.Transaction} objects
+     * @return a list of {@link Transaction} objects
      */
     public List<Transaction> transactions() {
         return mTransactions;
@@ -358,7 +365,7 @@ public class Wallet {
 
     /**
      * Search all transactions for this wallet
-     * @return a list of {@link co.airbitz.core.Transaction} objects matching the query.
+     * @return a list of {@link Transaction} objects matching the query.
      */
     public List<Transaction> transactionsSearch(String searchText) {
         List<Transaction> listTransactions = new ArrayList<Transaction>();

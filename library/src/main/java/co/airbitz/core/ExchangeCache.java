@@ -39,7 +39,17 @@ import co.airbitz.internal.core;
 import co.airbitz.internal.tABC_Error;
 import co.airbitz.internal.tABC_CC;
 
+/**
+ * ExchangeCache provides functions to deal with converting satoshis to fiat
+ * and back. Currency exchange rate updates can also be requested from {@link
+ * ExchangeCache #update update}.
+ */
 public class ExchangeCache {
+    /**
+     * Request an update to a currency cache value.
+     * @param account the account whose exchange source will be used
+     * @param currency the fiat code such as USD or EUR.
+     */
     public void update(final Account account, final String currency) {
         int num = Currencies.instance().map(currency);
         tABC_Error error = new tABC_Error();
@@ -47,6 +57,12 @@ public class ExchangeCache {
             account.username(), account.password(), num, error);
     }
 
+    /**
+     * Convert a satoshis to a fiat currency value.
+     * @param satoshi the satoshis to be converted to fiat
+     * @param currency the fiat code such as USD or EUR.
+     * @return a fiat value in the given currency code.
+     */
     public double satoshiToCurrency(long satoshi, String currency) {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_double amountFiat = core.new_doublep();
@@ -57,6 +73,12 @@ public class ExchangeCache {
         return core.doublep_value(amountFiat);
     }
 
+    /**
+     * Convert a fiat value to satoshis.
+     * @param amount the fiat amount to be converted to satoshis
+     * @param currency the fiat code such as USD or EUR.
+     * @return the amount of satoshis
+     */
     public long currencyToSatoshi(double amount, String currency) {
         tABC_Error error = new tABC_Error();
         tABC_CC result;
