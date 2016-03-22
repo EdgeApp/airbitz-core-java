@@ -80,7 +80,6 @@ public class AirbitzCore {
 
     private static AirbitzCore mInstance = null;
     private static boolean mInitialized = false;
-    private static Context mContext;
     private List<Account> mAccounts;
     private boolean mConnectivity = true;
     private ExchangeCache mExchangeCache;
@@ -95,17 +94,6 @@ public class AirbitzCore {
         mExchangeCache = new ExchangeCache();
     }
 
-    public static AirbitzCore getApi(Context context) {
-        mContext = context;
-        synchronized (LOCK) {
-            if (mInstance == null) {
-                mInstance = new AirbitzCore();
-                mInstance.logi("New AirbitzCore");
-            }
-        }
-        return mInstance;
-    }
-
     public static AirbitzCore getApi() {
         synchronized (LOCK) {
             if (mInstance == null) {
@@ -116,14 +104,20 @@ public class AirbitzCore {
         return mInstance;
     }
 
-    protected Context getContext() {
-        return mContext;
-    }
-
+    /**
+     * Initialize the AirbitzCore object. Required for functionality of ABC SDK.
+     * @param airbitzApiKey API key obtained from Airbitz Inc.
+     */
     public void init(Context context, String airbitzApiKey) {
         init(context, airbitzApiKey, null);
     }
 
+    /**
+     * Initialize the AirbitzCore object. Required for functionality of ABC SDK.
+     * @param airbitzApiKey API key obtained from Airbitz Inc.
+     * @param hiddenbitzKey (Optional) unique key used to encrypt private keys for use as implementation
+     * specific "gift cards" that are only redeemable by applications using this implementation.
+     */
     public void init(Context context, String airbitzApiKey, String hiddenbitzKey) {
         if (mInitialized) {
             return;
@@ -165,6 +159,10 @@ public class AirbitzCore {
         return error.getCode() == tABC_CC.ABC_CC_Ok;
     }
 
+    /**
+     * Destroy the in memory user cache in the core. This is equivalent to
+     * logging all users out.
+     */
     public void destroy() {
         tABC_Error error = new tABC_Error();
         tABC_CC result = core.ABC_ClearKeyCache(error);
@@ -174,28 +172,54 @@ public class AirbitzCore {
     }
 
     private static final LogLevel MIN_LEVEL = LogLevel.INFO;
+
+    /**
+     * Log a message at a specified log level.
+     * @param level of the log message (DEBUG, INFO, WARING, ERROR)
+     * @param debugString to write to logs
+     */
     public static void log(LogLevel level, String debugString) {
         if (level.value <= MIN_LEVEL.value) {
             core.ABC_Log(debugString);
         }
     }
 
+    /**
+     * Log a message at the error level.
+     * @param debugString to write to logs
+     */
     public static void loge(String debugString) {
         log(LogLevel.ERROR, debugString);
     }
 
+    /**
+     * Log a message at the warning level.
+     * @param debugString to write to logs
+     */
     public static void logw(String debugString) {
         log(LogLevel.WARNING, debugString);
     }
 
+    /**
+     * Log a message at the info level.
+     * @param debugString to write to logs
+     */
     public static void logi(String debugString) {
         log(LogLevel.INFO, debugString);
     }
 
+    /**
+     * Log a message at the debug level.
+     * @param debugString to write to logs
+     */
     public static void logd(String debugString) {
         log(LogLevel.DEBUG, debugString);
     }
 
+    /**
+     * Gets the version of AirbitzCore compiled into this implementation
+     * @return version number
+     */
     public String version() {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_long lp = core.new_longp();
@@ -207,10 +231,17 @@ public class AirbitzCore {
         return "";
     }
 
+    /*
+     * Uploads debug log to airbitz servers.
+     */
     public boolean uploadLogs() {
         return uploadLogs(null, null);
     }
 
+    /*
+     * Uploads debug log to airbitz servers.
+     * @param text to send to support staff
+     */
     public boolean uploadLogs(String username, String password) {
         tABC_Error Error = new tABC_Error();
 
@@ -227,18 +258,29 @@ public class AirbitzCore {
         return Error.getCode() == tABC_CC.ABC_CC_Ok;
     }
 
+    /**
+     * Call this routine when backgrounding your application
+     */
     public void background() {
         for (Account account : mAccounts) {
             account.engine().stop();
         }
     }
 
+    /**
+     * Call this routine when foregrounding your application
+     */
     public void foreground() {
         for (Account account : mAccounts) {
             account.engine().start();
         }
     }
 
+    /**
+     * Change the connectivity for the library. This will cause network
+     * activity to stop or start if connectivity was lost or regained.
+     * @param hasConnectivity true if it has connectivity, false otherwise
+     */
     public void connectivity(boolean hasConnectivity) {
         mConnectivity = hasConnectivity;
         if (hasConnectivity) {
@@ -264,11 +306,19 @@ public class AirbitzCore {
         }
     }
 
+    /**
+     * Return whether the library has connectivity.
+     * @return true has connectivity
+     */
     public boolean hasConnectivity() {
         return mConnectivity;
     }
 
 
+    /**
+     * Determines if the core library was compiled for testnet or mainnet.
+     * @return true if the library is on testnet
+     */
     public boolean isTestNet() {
         tABC_CC result;
         tABC_Error error = new tABC_Error();
@@ -286,10 +336,18 @@ public class AirbitzCore {
         return false;
     }
 
+    /**
+     * Get the exchange cache system.
+     * @return the exchange cache.
+     */
     public ExchangeCache exchangeCache() {
         return mExchangeCache;
     }
 
+    /**
+     * Creates a QR encoded byte array from the given text.
+     * @return byte array of encoded text
+     */
     public byte[] qrEncode(String text) {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_long lp = core.new_longp();
@@ -303,10 +361,24 @@ public class AirbitzCore {
         return Jni.getBytesAtPtr(core.longp_value(lp), width * width);
     }
 
+    /**
+     * Encodes a QR code byte array into Bitmap.
+     * @param array byte array such as one produced by {@link
+     * co.airbitz.core.AirbitzCore.qrEncode}
+     * @return qrcode
+     */
     public Bitmap qrEncode(byte[] array) {
         return qrEncode(array, (int) Math.sqrt(array.length), 16);
     }
 
+    /**
+     * Encodes a QR code byte array into Bitmap
+     * @param array byte array such as one produced by {@link
+     * co.airbitz.core.AirbitzCore.qrEncode}
+     * @param width width of the bitmap
+     * @param scale scale of the bitmap
+     * @return qrcode
+     */
     public Bitmap qrEncode(byte[] bits, int width, int scale) {
         Bitmap bmpBinary = Bitmap.createBitmap(width*scale, width*scale, Bitmap.Config.ARGB_8888);
         for (int x = 0; x < width; x++) {
@@ -320,14 +392,26 @@ public class AirbitzCore {
         return resizedBitmap;
     }
 
+    /**
+     * Get a list of supported currencies
+     * @return list of supported currencies
+     */
     public List<CoreCurrency> currencies() {
         return Currencies.instance().currencies();
     }
 
+    /**
+     * Get a list of supported bitcoin denominations
+     * @return list of supported bitcoin denominations
+     */
     public List<BitcoinDenomination> denominations() {
         return BitcoinDenomination.denominations();
     }
 
+    /**
+     * Get a list of exchanges sources
+     * @return list of supported exchange sources
+     */
     public List<String> exchangeRateSources() {
         List<String> sources = new ArrayList<>();
         sources.add("Bitstamp");
@@ -339,6 +423,10 @@ public class AirbitzCore {
         return sources;
     }
 
+    /**
+     * Get a list of previously logged in usernames on this device
+     * @return list of previously logged in usernames
+     */
     public List<String> accountListLocal() {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_long lp = core.new_longp();
@@ -357,6 +445,12 @@ public class AirbitzCore {
         return null;
     }
 
+    /**
+     * Checks if an account with the specified username exists locally on the
+     * current device.
+     * @param username username of account to check
+     * @return true if account exists locally
+     */
     public boolean accountSyncExistsLocal(String username) {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_long lp = core.new_longp();
@@ -368,6 +462,11 @@ public class AirbitzCore {
         return false;
     }
 
+    /**
+     * Determines if an OTP reset is pending for an account
+     * @param username username of account to check
+     * @return true if the account has OTP pending
+     */
     public boolean isOtpResetPending(String username) throws AirbitzException {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_long lp = core.new_longp();
@@ -379,17 +478,31 @@ public class AirbitzCore {
                 return userNames.contains(username);
             }
         } else {
-            throw new AirbitzException(mContext, error.getCode(), error);
+            throw new AirbitzException(error.getCode(), error);
         }
         return false;
     }
 
-    public boolean accountDeleteLocal(String account) {
+    /**
+     * Deletes named account from local device. Account is recoverable if it
+     * contains a password.
+     * @param username username of account to delete
+     * @return true if the account was deleted
+     */
+    public boolean accountDeleteLocal(String username) {
         tABC_Error error = new tABC_Error();
-        core.ABC_AccountDelete(account, error);
+        core.ABC_AccountDelete(username, error);
         return error.getCode() == tABC_CC.ABC_CC_Ok;
     }
 
+    /**
+     * Transforms a username into the internal format used for hashing.  This
+     * collapses spaces, converts to lowercase, and checks for invalid
+     * characters.
+     * @param username username to fix
+     * @return fixed username with text lowercased, leading and trailing white
+     * space removed, and all whitespace condensed to one space.
+     */
     public String usernameFix(String username) throws AirbitzException {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_long lp = core.new_longp();
@@ -398,25 +511,30 @@ public class AirbitzCore {
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
             return Jni.getStringAtPtr(core.longp_value(lp));
         } else {
-            throw new AirbitzException(mContext, error.getCode(), null);
+            throw new AirbitzException(error.getCode(), null);
         }
     }
 
-    public String usernameAvailable(String username) throws AirbitzException {
+    /**
+     * Check on the server if a username is available
+     * @param username the username to check
+     * @return true if username is available
+     */
+    public boolean usernameAvailable(String username) throws AirbitzException {
         tABC_Error error = new tABC_Error();
         core.ABC_AccountAvailable(username, error);
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
-            return null;
+            return true;
         } else {
-            throw new AirbitzException(mContext, error.getCode(), null);
+            throw new AirbitzException(error.getCode(), null);
         }
     }
 
     /**
      * Create an Airbitz account with specified username and password.
-     * @param username
-     * @param password
-     * @return Account* Account object
+     * @param username the account username
+     * @param password the account password
+     * @return Account object
      */
     public Account createAccount(String username, String password) throws AirbitzException {
         return createAccount(username, password, null);
@@ -424,9 +542,9 @@ public class AirbitzCore {
 
     /**
      * Create an Airbitz account with specified username, password, and PIN.
-     * @param username
-     * @param password
-     * @param pin
+     * @param username the account username
+     * @param password the account password
+     * @param pin the account PIN
      * @return Account* Account object
      */
     public Account createAccount(String username, String password, String pin) throws AirbitzException {
@@ -440,7 +558,7 @@ public class AirbitzCore {
             mAccounts.add(account);
             return account;
         } else {
-            throw new AirbitzException(null, error.getCode(), error);
+            throw new AirbitzException(error.getCode(), error);
         }
     }
 
@@ -455,7 +573,7 @@ public class AirbitzCore {
 
     /**
      * Calculate the number of seconds it would take to crack the given password.
-     * @param password
+     * @param password the password to check
      * @return seconds to crack the password
      */
     public PasswordRulesCheck passwordRulesCheck(String password) {
@@ -500,7 +618,7 @@ public class AirbitzCore {
     /**
      * Checks if this account has a password set. Accounts without passwords
      * cannot be logged into from a different device.
-     * @param username
+     * @param username an account username
      * @return true is the account has a password set
      */
     public boolean accountHasPassword(String username) {
@@ -516,9 +634,9 @@ public class AirbitzCore {
 
     /**
      * Login into an account with a password.
-     * @param username
-     * @param password
-     * @param otpToken
+     * @param username an account username
+     * @param password the password for the account
+     * @param otpToken the OTP token, if applicable
      * @return Account object of signed in user
      */
     public Account passwordLogin(String username, String password, String otpToken) throws AirbitzException {
@@ -534,7 +652,7 @@ public class AirbitzCore {
 
         core.ABC_PasswordLogin(username, password, ppToken, ppDate, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            AirbitzException exception = new AirbitzException(mContext, error.getCode(), error);
+            AirbitzException exception = new AirbitzException(error.getCode(), error);
             exception.mOtpResetToken = Jni.getStringAtPtr(core.longp_value(pToken));
             exception.mOtpResetDate = Jni.getStringAtPtr(core.longp_value(pTokenDate));
             throw exception;
@@ -565,7 +683,7 @@ public class AirbitzCore {
 
     /**
      * Fetch the recovery questions for a user.
-     * @param username
+     * @param username an account username
      * @return new line delimited string of recovery questions
      */
     public String recoveryQuestions(String username) throws AirbitzException {
@@ -579,13 +697,13 @@ public class AirbitzCore {
         if (result == tABC_CC.ABC_CC_Ok) {
             return questionString;
         } else {
-            throw new AirbitzException(null, error.getCode(), error);
+            throw new AirbitzException(error.getCode(), error);
         }
     }
 
     /**
      * Checks whether a user has recovery as an option for login
-     * @param username
+     * @param username an account username
      * @return true if there are recovery questions for this user
      */
     public boolean accountHasRecovery(String username) {
@@ -606,9 +724,9 @@ public class AirbitzCore {
 
     /**
      * Login using recovery questions rather than a password
-     * @param username
-     * @param answers
-     * @param otpToken
+     * @param username the account username
+     * @param answers an array of recovery question answers
+     * @param otpToken the OTP token, if applicable
      * @return Account object of signed in user
      */
     public Account recoveryLogin(String username, String[] answers, String otpToken) throws AirbitzException {
@@ -626,7 +744,7 @@ public class AirbitzCore {
         core.ABC_RecoveryLogin(username,
                 Utils.arrayToString(answers), ppToken, ppDate, error);
         if (tABC_CC.ABC_CC_Ok != error.getCode()) {
-            AirbitzException exception = new AirbitzException(mContext, error.getCode(), error);
+            AirbitzException exception = new AirbitzException(error.getCode(), error);
             exception.mOtpResetToken = Jni.getStringAtPtr(core.longp_value(pToken));
             exception.mOtpResetDate = Jni.getStringAtPtr(core.longp_value(pTokenDate));
             throw exception;
@@ -669,7 +787,7 @@ public class AirbitzCore {
         if (username == null || pin == null) {
             tABC_Error error = new tABC_Error();
             error.setCode(tABC_CC.ABC_CC_Error);
-            throw new AirbitzException(mContext, error.getCode(), error);
+            throw new AirbitzException(error.getCode(), error);
         }
         if (otpToken != null) {
             otpKeySet(username, otpToken);
@@ -679,7 +797,7 @@ public class AirbitzCore {
         tABC_Error error = new tABC_Error();
         core.ABC_PinLogin(username, pin, pWaitSeconds, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            AirbitzException exception = new AirbitzException(null, error.getCode(), error);
+            AirbitzException exception = new AirbitzException(error.getCode(), error);
             exception.mWaitSeconds = core.intp_value(pWaitSeconds);
             throw exception;
         }
@@ -688,14 +806,26 @@ public class AirbitzCore {
         return account;
     }
 
+    /**
+    * Launches an OTP reset timer on the server, which will disable the OTP
+    * authentication requirement when it expires.
+    * @param username
+    * @param token Reset token returned by the signIn... routines if sign in
+    * fails due to missing or incorrect OTP.
+    */
     public void otpResetRequest(String username, String token) throws AirbitzException {
         tABC_Error error = new tABC_Error();
         core.ABC_OtpResetSet(username, token, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            throw new AirbitzException(mContext, error.getCode(), error);
+            throw new AirbitzException(error.getCode(), error);
         }
     }
 
+    /**
+    * Parses a bitcoin BIP21 URI, Wif private key, or Airbitz hbits private key
+    * @param uri to parse
+    * @return ParsedURI ABCParsedURI object
+    */
     public ParsedUri parseUri(String text) throws AirbitzException {
         return new ParsedUri(text);
     }
@@ -704,7 +834,7 @@ public class AirbitzCore {
         tABC_Error error = new tABC_Error();
         core.ABC_OtpKeySet(username, secret, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            throw new AirbitzException(mContext, error.getCode(), error);
+            throw new AirbitzException(error.getCode(), error);
         }
     }
 }

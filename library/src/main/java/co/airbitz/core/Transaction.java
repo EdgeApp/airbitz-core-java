@@ -120,7 +120,7 @@ public class Transaction {
                 mAccount.username(), mAccount.password(),
                 mWallet.id(), id(), pDetails, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            throw new AirbitzException(null, error.getCode(), error);
+            throw new AirbitzException(error.getCode(), error);
         }
 
         tABC_TxDetails details = new TxDetails(core.longp_value(lp));
@@ -135,7 +135,7 @@ public class Transaction {
                 mAccount.username(), mAccount.password(),
                 mWallet.id(), id(), details, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            throw new AirbitzException(null, error.getCode(), error);
+            throw new AirbitzException(error.getCode(), error);
         }
         mAccount.sendReloadWallets();
     }

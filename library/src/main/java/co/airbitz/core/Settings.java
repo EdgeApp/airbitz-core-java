@@ -69,7 +69,7 @@ public class Settings {
                 setupDefaultCurrency();
             }
         } else {
-            throw new AirbitzException(null, error.getCode(), error);
+            throw new AirbitzException(error.getCode(), error);
         }
         return this;
     }
@@ -91,7 +91,7 @@ public class Settings {
         tABC_Error error = new tABC_Error();
         core.ABC_UpdateAccountSettings(mAccount.username(), mAccount.password(), mSettings, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            throw new AirbitzException(null, error.getCode(), error);
+            throw new AirbitzException(error.getCode(), error);
         }
     }
 

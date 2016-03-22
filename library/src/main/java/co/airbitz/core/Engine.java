@@ -593,7 +593,7 @@ public class Engine {
 
                 core.ABC_DataSyncAccount(mAccount.username(), mAccount.password(), dirty, passwordChange, error);
                 if (error.getCode() == tABC_CC.ABC_CC_InvalidOTP) {
-                    final AirbitzException e = new AirbitzException(null, error.getCode(), error);
+                    final AirbitzException e = new AirbitzException(error.getCode(), error);
                     if (mAccount.isLoggedIn() && mAccount.mCallbacks != null) {
                         mMainHandler.post(new Runnable() {
                             public void run() {

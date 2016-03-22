@@ -38,7 +38,7 @@ public class BitcoinDenomination {
         mDenomination = denomination;
     }
 
-    protected tABC_BitcoinDenomination get() {
+    tABC_BitcoinDenomination get() {
         return mDenomination;
     }
 

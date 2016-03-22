@@ -68,7 +68,7 @@ public class Spend {
         _ppv = core.longp_to_ppvoid(_pl);
         core.ABC_SpendNew(mAccount.username(), mWallet.id(), _ppv, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            throw new AirbitzException(null, error.getCode(), error);
+            throw new AirbitzException(error.getCode(), error);
         }
         mSpend = Jni.newSWIGTYPE_p_void(core.longp_value(_pl));
         mIsTransfer = false;
@@ -97,7 +97,7 @@ public class Spend {
         tABC_Error error = new tABC_Error();
         core.ABC_SpendAddAddress(mSpend, address, ua, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            throw new AirbitzException(null, error.getCode(), error);
+            throw new AirbitzException(error.getCode(), error);
         }
     }
 
@@ -105,7 +105,7 @@ public class Spend {
         tABC_Error error = new tABC_Error();
         core.ABC_SpendAddPaymentRequest(mSpend, request.coreRequest(), error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            throw new AirbitzException(null, error.getCode(), error);
+            throw new AirbitzException(error.getCode(), error);
         }
     }
 
@@ -131,7 +131,7 @@ public class Spend {
         core.ABC_SpendAddTransfer(mSpend, destWallet.id(),
             ua, destMeta.toTxDetails(), error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            throw new AirbitzException(null, error.getCode(), error);
+            throw new AirbitzException(error.getCode(), error);
         }
         mIsTransfer = true;
     }
@@ -144,7 +144,7 @@ public class Spend {
 
         core.ABC_SpendSignTx(mSpend, pRawTx, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            throw new AirbitzException(null, error.getCode(), error);
+            throw new AirbitzException(error.getCode(), error);
         } else {
             rawTx = Jni.getStringAtPtr(core.longp_value(tx));
         }
@@ -174,7 +174,7 @@ public class Spend {
         core.ABC_SpendGetFee(mSpend, total, error);
         long fees = Jni.get64BitLongAtPtr(Jni.getCPtr(total));
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            throw new AirbitzException(null, error.getCode(), error);
+            throw new AirbitzException(error.getCode(), error);
         }
         return fees;
     }
@@ -184,7 +184,7 @@ public class Spend {
             tABC_Error error = new tABC_Error();
             core.ABC_SpendSetMetadata(mSpend, mMeta.toTxDetails(), error);
             if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-                throw new AirbitzException(null, error.getCode(), error);
+                throw new AirbitzException(error.getCode(), error);
             }
         } catch (AirbitzException e) {
             AirbitzCore.loge(e.getMessage());

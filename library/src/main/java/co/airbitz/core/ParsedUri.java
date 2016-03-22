@@ -61,7 +61,7 @@ public class ParsedUri {
         SWIGTYPE_p_p_sABC_ParsedUri ppResult = core.longPtr_to_ppParsedUri(lp);
         core.ABC_ParseUri(text, ppResult, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            throw new AirbitzException(null, error.getCode(), error);
+            throw new AirbitzException(error.getCode(), error);
         }
         mParsedUri = Jni.newParsedUri(core.longp_value(lp));
         mMeta = new MetadataSet();
@@ -110,7 +110,7 @@ public class ParsedUri {
         SWIGTYPE_p_p_sABC_PaymentRequest ppResult = core.longPtr_to_ppPaymentRequest(lp);
         core.ABC_FetchPaymentRequest(mPaymentProto, ppResult, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            throw new AirbitzException(null, error.getCode(), error);
+            throw new AirbitzException(error.getCode(), error);
         }
         return new PaymentRequest(Jni.newPaymentRequest(core.longp_value(lp)));
     }

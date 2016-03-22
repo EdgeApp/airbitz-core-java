@@ -1,7 +1,5 @@
 package co.airbitz.core;
 
-import android.content.Context;
-
 import co.airbitz.internal.Jni;
 import co.airbitz.internal.SWIGTYPE_p_long;
 import co.airbitz.internal.SWIGTYPE_p_p_char;
@@ -16,8 +14,8 @@ public class AirbitzException extends Exception {
     String mOtpResetDate;
     int mWaitSeconds;
 
-    protected AirbitzException(Context context, tABC_CC code, tABC_Error error) {
-        super(errorMap(context, code, error));
+    protected AirbitzException(tABC_CC code, tABC_Error error) {
+        super(error.getSzDescription());
         mCode = code;
         mError = error;
     }
@@ -34,6 +32,58 @@ public class AirbitzException extends Exception {
         return mCode == tABC_CC.ABC_CC_InvalidOTP;
     }
 
+    public boolean isAccountAlreadyExists() {
+        return mCode == tABC_CC.ABC_CC_AccountAlreadyExists;
+    }
+
+    public boolean isAccountDoesNotExist() {
+        return mCode == tABC_CC.ABC_CC_AccountDoesNotExist;
+    }
+
+    public boolean isWalletAlreadyExists() {
+        return mCode == tABC_CC.ABC_CC_WalletAlreadyExists;
+    }
+
+    public boolean isInvalidWalletId() {
+        return mCode == tABC_CC.ABC_CC_InvalidWalletID;
+    }
+
+    public boolean isUrlError() {
+        return mCode == tABC_CC.ABC_CC_URLError;
+    }
+
+    public boolean isServerError() {
+        return mCode == tABC_CC.ABC_CC_ServerError;
+    }
+
+    public boolean isNoRecoveryQuestions() {
+        return mCode == tABC_CC.ABC_CC_NoRecoveryQuestions;
+    }
+
+    public boolean isNotSupported() {
+        return mCode == tABC_CC.ABC_CC_NotSupported;
+    }
+
+    public boolean isInsufficientFunds() {
+        return mCode == tABC_CC.ABC_CC_InsufficientFunds;
+    }
+
+    public boolean isSpendDust() {
+        return mCode == tABC_CC.ABC_CC_SpendDust;
+    }
+
+    public boolean isSynchronizing() {
+        return mCode == tABC_CC.ABC_CC_Synchronizing;
+    }
+
+    public boolean isNonNumericPin() {
+        return mCode == tABC_CC.ABC_CC_NonNumericPin;
+    }
+
+    public boolean isInvalidPinWait() {
+        return mCode == tABC_CC.ABC_CC_InvalidPinWait;
+    }
+
     public String otpResetDate() {
         return mOtpResetDate;
     }
@@ -44,65 +94,5 @@ public class AirbitzException extends Exception {
 
     public int waitSeconds() {
         return mWaitSeconds;
-    }
-
-    public String errorMap() {
-        return AirbitzException.errorMap(null, mCode, mError);
-    }
-
-    static String errorMap(Context context, tABC_CC code, tABC_Error error) {
-        if (context == null) {
-            return error.getSzDescription();
-        } else if (code == tABC_CC.ABC_CC_AccountAlreadyExists) {
-            return context.getString(R.string.server_error_account_already_exists);
-        }
-        else if (code == tABC_CC.ABC_CC_AccountDoesNotExist) {
-            return context.getString(R.string.server_error_account_does_not_exists);
-        }
-        else if (code == tABC_CC.ABC_CC_BadPassword) {
-            return context.getString(R.string.server_error_bad_password);
-        }
-        else if (code == tABC_CC.ABC_CC_WalletAlreadyExists) {
-            return context.getString(R.string.server_error_wallet_exists);
-        }
-        else if (code == tABC_CC.ABC_CC_InvalidWalletID) {
-            return context.getString(R.string.server_error_invalid_wallet);
-        }
-        else if (code == tABC_CC.ABC_CC_URLError) {
-            return context.getString(R.string.string_connection_error_server);
-        }
-        else if (code == tABC_CC.ABC_CC_ServerError) {
-            return context.getString(R.string.server_error_no_connection);
-        }
-        else if (code == tABC_CC.ABC_CC_NoRecoveryQuestions) {
-            return context.getString(R.string.server_error_no_recovery_questions);
-        }
-        else if (code == tABC_CC.ABC_CC_NotSupported) {
-            return context.getString(R.string.server_error_not_supported);
-        }
-        else if (code == tABC_CC.ABC_CC_InsufficientFunds) {
-            return context.getString(R.string.server_error_insufficient_funds);
-        }
-        else if (code == tABC_CC.ABC_CC_SpendDust) {
-            return context.getString(R.string.insufficient_amount);
-        }
-        else if (code == tABC_CC.ABC_CC_Synchronizing) {
-            return context.getString(R.string.server_error_synchronizing);
-        }
-        else if (code == tABC_CC.ABC_CC_NonNumericPin) {
-            return context.getString(R.string.server_error_non_numeric_pin);
-        }
-        else if (code == tABC_CC.ABC_CC_InvalidPinWait) {
-            if (null != error) {
-                String description = error.getSzDescription();
-                if (!"0".equals(description)) {
-                    return context.getString(R.string.server_error_invalid_pin_wait, description);
-                }
-            }
-            return context.getString(R.string.server_error_bad_pin);
-        }
-        else {
-            return context.getString(R.string.server_error_other);
-        }
     }
 }

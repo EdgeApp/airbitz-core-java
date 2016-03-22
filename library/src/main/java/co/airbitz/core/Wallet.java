@@ -322,7 +322,7 @@ public class Wallet {
         tABC_Error error = new tABC_Error();
         core.ABC_SweepKey(mAccount.username(), mAccount.password(), id(), wif, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            throw new AirbitzException(null, error.getCode(), error);
+            throw new AirbitzException(error.getCode(), error);
         }
     }
 

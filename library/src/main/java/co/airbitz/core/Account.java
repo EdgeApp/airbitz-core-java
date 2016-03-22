@@ -456,7 +456,7 @@ public class Account {
         tABC_CC cc = core.ABC_ChangePassword(
             mUsername, password, password, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            throw new AirbitzException(mApi.getContext(), error.getCode(), error);
+            throw new AirbitzException(error.getCode(), error);
         }
         mPassword = password;
         // Set the pin again
@@ -466,15 +466,15 @@ public class Account {
 
     /**
      * Used to set the recovery questions and answers for an account.
-     * @param questions a newline concatenated string of recovery questions
-     * @param recoveryAnswers a newline concatenated string of recovery answers
+     * @param questions an of the selected recovery questions
+     * @param answers an array of recovery answers
      */
     public void recoverySetup(String[] questions, String[] answers) throws AirbitzException {
         tABC_Error error = new tABC_Error();
         core.ABC_SetAccountRecoveryQuestions(mUsername, mPassword,
                 Utils.arrayToString(questions), Utils.arrayToString(answers), error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            throw new AirbitzException(mApi.getContext(), error.getCode(), error);
+            throw new AirbitzException(error.getCode(), error);
         }
     }
 
@@ -526,7 +526,6 @@ public class Account {
 
     /**
      * Request the the wallets be reloaded. This is an asynchronous call and will return immediately.
-     * @param wallets
      */
     public void reloadWallets() {
         mEngine.reloadWallets();
@@ -637,7 +636,7 @@ public class Account {
 
     /**
      * Used to check if OTP is enabled for this account.
-     * @returns true if OTP is enabled
+     * @return true if OTP is enabled
      */
     public boolean otpAuthGet() throws AirbitzException {
         tABC_Error error = new tABC_Error();
@@ -649,7 +648,7 @@ public class Account {
             mUsername, mPassword,
             pbool, ptimeout, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            throw new AirbitzException(mApi.getContext(), error.getCode(), error);
+            throw new AirbitzException(error.getCode(), error);
         }
         return core.intp_value(lp) == 1;
     }
@@ -661,7 +660,7 @@ public class Account {
         tABC_Error error = new tABC_Error();
         core.ABC_OtpAuthSet(mUsername, mPassword, OTP_RESET_DELAY_SECS, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            throw new AirbitzException(null, error.getCode(), error);
+            throw new AirbitzException(error.getCode(), error);
         }
     }
 
@@ -674,7 +673,7 @@ public class Account {
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
             core.ABC_OtpKeyRemove(mUsername, error);
         } else {
-            throw new AirbitzException(mApi.getContext(), error.getCode(), error);
+            throw new AirbitzException(error.getCode(), error);
         }
     }
 
@@ -685,7 +684,7 @@ public class Account {
         tABC_Error error = new tABC_Error();
         core.ABC_OtpResetRemove(mUsername, mPassword, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-            throw new AirbitzException(mApi.getContext(), error.getCode(), error);
+            throw new AirbitzException(error.getCode(), error);
         }
     }
 
@@ -703,7 +702,7 @@ public class Account {
 
     /**
      * Generate an OTP QR code.
-     * @returns a byte-array for the two factor secret QR code
+     * @return a byte-array for the two factor secret QR code
      */
     public byte[] otpQrCode() {
         SWIGTYPE_p_long lp = core.new_longp();
@@ -724,7 +723,7 @@ public class Account {
 
     /**
      * Generate an OTP QR code.
-     * @returns a bitmap for the two factor secret QR code
+     * @return a bitmap for the two factor secret QR code
      */
     public Bitmap otpQrCodeBitmap() {
         byte[] array = otpQrCode();
