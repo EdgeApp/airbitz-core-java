@@ -78,14 +78,26 @@ public class Wallet {
         }
     }
 
+    /**
+     * Determines if the wallet has finished syncing
+     * @return true if the wallet has finished syncing
+     */
     public boolean isSynced() {
         return mSynced;
     }
 
+    /**
+     * Determines if the wallet is archived
+     * @return true if the wallet is archived
+     */
     public boolean isArchived() {
         return mArchived;
     }
 
+    /**
+     * Returns the wallet id
+     * @return the wallet id
+     */
     public String id() {
         return mId;
     }
@@ -93,10 +105,14 @@ public class Wallet {
     /**
      * Internally only...
      */
-    protected void setUUID(String uuid) {
+    void setUUID(String uuid) {
         mId = uuid;
     }
 
+    /**
+     * Archives or unarchives the wallet.
+     * @return true if the wallet was successfully archived.
+     */
     public boolean walletArchived(boolean archived) {
         long attr = archived ? 1 : 0;
         tABC_Error error = new tABC_Error();
@@ -110,6 +126,12 @@ public class Wallet {
         return false;
     }
 
+    /**
+     * Deletes wallet from user's account. This will render wallet completely
+     * inaccessible including any future funds that may be sent to any
+     * addresses in this wallet.
+     * @return true if the wallet was successfully removed.
+     */
     public boolean walletRemove() {
         tABC_Error error = new tABC_Error();
         tABC_CC result = core.ABC_WalletRemove(mAccount.username(), id(), error);
@@ -122,17 +144,26 @@ public class Wallet {
         }
     }
 
-    public boolean name(String name) {
+    /**
+     * Rename the wallet.
+     * @param newName new name of wallet
+     * @return true if the wallet was successfully renamed.
+     */
+    public boolean name(String newName) {
         tABC_Error error = new tABC_Error();
         tABC_CC result = core.ABC_RenameWallet(
                 mAccount.username(), mAccount.password(),
-                id(), name, error);
+                id(), newName, error);
         if (result == tABC_CC.ABC_CC_Ok) {
-            mName = name;
+            mName = newName;
         }
         return result == tABC_CC.ABC_CC_Ok;
     }
 
+    /**
+     * Retreive the wallet name.
+     * @return the wallet name
+     */
     public String name() {
         return mName;
     }
@@ -144,23 +175,34 @@ public class Wallet {
         this.mName = name;
     }
 
+    /**
+     * Retreive the wallet currency.
+     * @return the {@link co.airbitz.core.CoreCurrency} object for the wallet's currency
+     */
     public CoreCurrency currency() {
         return Currencies.instance().lookup(
             Currencies.instance().map(mCurrencyNum));
     }
 
-    public void currency(String code) {
-        mCurrencyNum = Currencies.instance().map(code);
-    }
-
+    /**
+     * Retreive the wallet balance.
+     * @return the wallet balance in satoshis.
+     */
     public long balance() {
         return mBalanceSatoshi;
     }
 
-    public void balance(long bal) {
+    /**
+     * Internal use only
+     */
+    void balance(long bal) {
         mBalanceSatoshi = bal;
     }
 
+    /**
+     * Export a wallet's private seed in raw entropy format.
+     * @return the hex encoded private seed
+     */
     public String seed() {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_long lp = core.new_longp();
@@ -176,6 +218,12 @@ public class Wallet {
         }
     }
 
+    /**
+     * Export a wallet's transactions to CSV format, for a given date range.
+     * @param start timestamp of start export
+     * @param long timestamp of end export
+     * @return csv file contents
+     */
     public String csvExport(long start, long end) {
         tABC_Error pError = new tABC_Error();
 
@@ -204,18 +252,36 @@ public class Wallet {
         }
     }
 
+    /**
+     * Create a receive request from the current wallet.
+     * @return the newly instantiated {@link co.airbitz.core.ReceiveAddress}
+     */
     public ReceiveAddress newReceiveRequest() {
         return new ReceiveAddress(mAccount, this);
     }
 
-    public ReceiveAddress newReceiveRequest(String address) {
+    /**
+     * Load an existing receive request from the current wallet.
+     * @return the newly instantiated {@link co.airbitz.core.ReceiveAddress}
+     * for an existing request.
+     */
+    public ReceiveAddress fetchReceiveRequest(String address) {
         return new ReceiveAddress(mAccount, this, address);
     }
 
+    /**
+     * Create a new {@link co.airbitz.core.Spend} object.
+     * @return newly instantiated {@link co.airbitz.core.Spend} object.
+     */
     public Spend newSpend() throws AirbitzException {
         return new Spend(mAccount, this);
     }
 
+    /**
+     * Fetch a transaction by txid.
+     * @param txid the id of the transaction
+     * @return the requested transaction or null if it cannot be found
+     */
     public Transaction transaction(String txid) {
         if (mTransactions != null) {
             for (Transaction t : mTransactions) {
@@ -282,10 +348,18 @@ public class Wallet {
         }
     }
 
+    /**
+     * Fetch all transactions for this wallet
+     * @return a list of {@link co.airbitz.core.Transaction} objects
+     */
     public List<Transaction> transactions() {
         return mTransactions;
     }
 
+    /**
+     * Search all transactions for this wallet
+     * @return a list of {@link co.airbitz.core.Transaction} objects matching the query.
+     */
     public List<Transaction> transactionsSearch(String searchText) {
         List<Transaction> listTransactions = new ArrayList<Transaction>();
         tABC_Error error = new tABC_Error();
@@ -318,6 +392,11 @@ public class Wallet {
         return listTransactions;
     }
 
+    /**
+     * Sweep a private key into this wallet. The method is asynchronous, and
+     * will begin processing in the background once the input is validated.
+     * @param wif the private key that will be swept.
+     */
     public void sweepKey(String wif) throws AirbitzException {
         tABC_Error error = new tABC_Error();
         core.ABC_SweepKey(mAccount.username(), mAccount.password(), id(), wif, error);
@@ -326,18 +405,19 @@ public class Wallet {
         }
     }
 
+    /**
+     * Requests that the wallet reconnects to new bitcoin servers. Useful
+     * during a pull-to-refresh type of behavior so the user can try other
+     * servers when waiting for data.
+     */
     public void walletReconnect() {
         mAccount.engine().connectWatcher(id());
     }
 
-    public boolean finalizeRequest(String address) {
-        tABC_Error error = new tABC_Error();
-        core.ABC_FinalizeReceiveRequest(
-                mAccount.username(), mAccount.password(),
-                id(), address, error);
-        return error.getCode() == tABC_CC.ABC_CC_Ok;
-    }
-
+    /**
+     * Returns the current block height.
+     * @return the current block height
+     */
     public int blockHeight() {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_int bh = core.new_intp();
