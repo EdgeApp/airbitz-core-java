@@ -82,7 +82,9 @@ public class Account {
     Settings mSettings;
 
     /**
-     * Callbacks are used to handle asynchronous events.
+     * Account callbacks are used to handle asynchronous events from the core
+     * for the current user.  This can include when data changes remotely or
+     * when new bitcoin is received.
      */
     public interface Callbacks {
         /**

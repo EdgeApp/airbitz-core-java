@@ -65,16 +65,16 @@ import co.airbitz.internal.tABC_PasswordRule;
  *  AirbitzCore is the main entry point to interact with ABC. Before calling
  *  any methods, {@link #init init} has to be called. After that, you can begin
  *  {@link #createAccount creating accounts}, {@link #passwordLogin signing in}
- *  and {@link Account#data encrypting} whatever data you'd like.
+ *  and {@link Account#data encrypting} your data.
  */
 public class AirbitzCore {
     private static String TAG = AirbitzCore.class.getSimpleName();
     private static Object LOCK = new Object();
 
     /**
-     * Log levels that can be supplied when using {@link AirbitzCore#log}. The
-     * values are implied when using {@link #logd}, {@link #logi}, {@link
-     * #logw} and {@link #loge}.
+     * These are log levels that can be supplied when using {@link
+     * AirbitzCore#log log}.  The values are implied when using {@link #logd
+     * logd}, {@link #logi logi}, {@link #logw logw} and {@link #loge loge}.
      */
     public enum LogLevel {
         ERROR(0),
@@ -573,17 +573,29 @@ public class AirbitzCore {
     }
 
     /**
-     * This class contains how long cracking a password will take, as well as
-     * if the password passes the Airbitz password checks. Requiring that the
-     * user's password meets each of these criteria ensures that their data
-     * will be safer.
+     * PasswordRulesCheck class contains information regarding the quality of a
+     * password.  Information includes how long cracking a password will take,
+     * as well as if the password passes the Airbitz password requirements.
+     * Requiring that the user's password meets each of these criteria ensures
+     * that their data will be safer.
      */
     public static class PasswordRulesCheck {
+        // How many seconds (approximately it will take to crack this password brute-forcing
         public double secondsToCrack;
+
+        // Indicates if the password is too short
         public boolean tooShort;
+
+        // Indicates if the password is missing a number
         public boolean noNumber;
+
+        // Indicates if the password is missing an uppercase letter
         public boolean noUpperCase;
+
+        // Indicates if the password is missing an lowercase letter
         public boolean noLowerCase;
+
+        // The minimum password length as recommended by Airbitz
         public int minPasswordLength;
     }
 
