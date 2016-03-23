@@ -33,6 +33,9 @@ android.libraryVariants.all { variant ->
     options.stylesheetFile = new File(projectDir, "assets/stylesheet.css");
     options.addStringOption "top", new File(projectDir, "assets/top.html").text;
     options.memberLevel = JavadocMemberLevel.PUBLIC
+    options.encoding = 'utf-8'
+    options.docEncoding = 'utf-8'
+    options.charSet = 'utf-8'
     exclude '**/BuildConfig.java' 
     exclude '**/R.java' 
     exclude '**/SWIG*' 
