@@ -200,7 +200,7 @@ public class Utils {
 
     /**
      * Utility function to format a BTC value. This includes the account's
-     * preferred denomination as is set in {@link Settings#denomination}.
+     * preferred denomination as is set in {@link Settings#bitcoinDenomination}.
      * @param account the user the value is being formatted for
      * @param amount the amount in satoshis
      * @return a formatted BTC string
@@ -211,7 +211,7 @@ public class Utils {
 
     /**
      * Utility function to format a BTC value. This includes the account's
-     * preferred denomination as is set in {@link Settings#denomination}.
+     * preferred denomination as is set in {@link Settings#bitcoinDenomination}.
      * @param account the user the value is being formatted for
      * @param amount the amount in satoshis
      * @param withSymbol include the BTC symbol in the result
@@ -223,7 +223,7 @@ public class Utils {
 
     /**
      * Utility function to format a BTC value. This includes the account's
-     * preferred denomination as is set in {@link Settings#denomination}.
+     * preferred denomination as is set in {@link Settings#bitcoinDenomination}.
      * @param account the user the value is being formatted for
      * @param amount the amount in satoshis
      * @param withSymbol include the BTC symbol in the result
@@ -269,7 +269,7 @@ public class Utils {
 
     /**
      * Utility function to convert a BTC string to satoshi's.  This uses the
-     * preferred denomination as is set in {@link Settings#denomination}.
+     * preferred denomination as is set in {@link Settings#bitcoinDenomination}.
      * @param account the user the value is being parsed for
      * @param amount the BTC string in the user's preferred denomination
      * @return the number of satoshis
