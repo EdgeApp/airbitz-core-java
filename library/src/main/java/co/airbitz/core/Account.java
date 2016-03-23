@@ -38,7 +38,6 @@ import java.text.DecimalFormatSymbols;
 import java.text.ParsePosition;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import co.airbitz.internal.Jni;
 import co.airbitz.internal.SWIGTYPE_p_bool;
@@ -756,96 +755,4 @@ public class Account {
         }
     }
 
-    public String formatCurrency(double in, String currency, boolean withSymbol) {
-        return formatCurrency(in, currency, withSymbol, 2);
-    }
-
-    public String formatCurrency(double in, String currency, boolean withSymbol, int decimalPlaces) {
-        String pre;
-        String denom = Currencies.instance().lookup(currency).symbol + " ";
-        if (in < 0) {
-            in = Math.abs(in);
-            pre = withSymbol ? "-" + denom : "-";
-        } else {
-            pre = withSymbol ? denom : "";
-        }
-        BigDecimal bd = new BigDecimal(in);
-        DecimalFormat df;
-        switch(decimalPlaces) {
-        case 3:
-            df = new DecimalFormat("#,##0.000", new DecimalFormatSymbols(Locale.getDefault()));
-            break;
-        default:
-            df = new DecimalFormat("#,##0.00", new DecimalFormatSymbols(Locale.getDefault()));
-            break;
-        }
-        return pre + df.format(bd.doubleValue());
-    }
-
-    public String formatSatoshi(long amount) {
-        return formatSatoshi(amount, true);
-    }
-
-    public String formatSatoshi(long amount, boolean withSymbol) {
-        return formatSatoshi(amount, withSymbol, Utils.userDecimalPlaces(this));
-    }
-
-    public String formatSatoshi(long amount, boolean withSymbol, int decimals) {
-        tABC_Error error = new tABC_Error();
-        SWIGTYPE_p_long lp = core.new_longp();
-        SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
-
-        int decimalPlaces = Utils.userDecimalPlaces(this);
-
-        boolean negative = amount < 0;
-        if(negative)
-            amount = -amount;
-        int result = Jni.FormatAmount(amount, Jni.getCPtr(ppChar), decimalPlaces, false, Jni.getCPtr(error));
-        if (result != 0) {
-            return "";
-        } else {
-            decimalPlaces = decimals > -1 ? decimals : decimalPlaces;
-            String pretext = "";
-            if (negative) {
-                pretext += "-";
-            }
-            if (withSymbol) {
-                pretext += Utils.userBtcSymbol(this);
-            }
-
-            BigDecimal bd = new BigDecimal(amount);
-            bd = bd.movePointLeft(decimalPlaces);
-
-            DecimalFormat df =
-                new DecimalFormat("#,##0.##", new DecimalFormatSymbols(Locale.getDefault()));
-            if (decimalPlaces == 5) {
-                df = new DecimalFormat("#,##0.#####", new DecimalFormatSymbols(Locale.getDefault()));
-            } else if(decimalPlaces == 8) {
-                df = new DecimalFormat("#,##0.########", new DecimalFormatSymbols(Locale.getDefault()));
-            }
-            return pretext + df.format(bd.doubleValue());
-        }
-    }
-
-    public long denominationToSatoshi(String amount) {
-        int decimalPlaces = Utils.userDecimalPlaces(this);
-        try {
-            // Parse using the current locale
-            Number cleanAmount =
-                new DecimalFormat().parse(amount, new ParsePosition(0));
-            if (null == cleanAmount) {
-                return 0L;
-            }
-            // Convert to BD so we don't lose precision
-            BigDecimal bd = BigDecimal.valueOf(cleanAmount.doubleValue());
-            DecimalFormat df = new DecimalFormat("###0.############", new DecimalFormatSymbols(Locale.getDefault()));
-            String bdstr = df.format(bd.doubleValue());
-            long parseamt = Jni.ParseAmount(bdstr, decimalPlaces);
-            long max = Math.max(parseamt, 0);
-            return max;
-        } catch (Exception e) {
-            // Shhhhh
-        }
-        return 0L;
-    }
 }

@@ -38,13 +38,26 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.ParsePosition;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
+import co.airbitz.internal.Jni;
+import co.airbitz.internal.SWIGTYPE_p_long;
+import co.airbitz.internal.SWIGTYPE_p_p_char;
+import co.airbitz.internal.core;
 import co.airbitz.internal.tABC_CC;
 import co.airbitz.internal.tABC_Error;
 
-class Utils {
+/**
+ * Utils providers various functions for working with fiat values and BTC
+ * values.
+ */
+public class Utils {
     private static final String CERT_FILENAME = "ca-certificates.crt";
 
     static String setupCerts(Context context, File filesDir) {
@@ -142,5 +155,144 @@ class Utils {
             buf.append(s).append("\n");
         }
         return buf.toString();
+    }
+
+    /**
+     * Utility function to format a fiat currency.
+     * @param value the fiat value
+     * @param currency the currency code i.e. USD or EUR
+     * @param withSymbol include the currency symbol when formatting
+     * @return a formatted fiat string
+     */
+    public static String formatCurrency(double value, String currency, boolean withSymbol) {
+        return formatCurrency(value, currency, withSymbol, 2);
+    }
+
+    /**
+     * Utility function to format a fiat currency.
+     * @param value the fiat value
+     * @param currency the currency code i.e. USD or EUR
+     * @param withSymbol include the currency symbol when formatting
+     * @param decimalPlaces the number of decimal places to include
+     * @return a formatted fiat string
+     */
+    public static String formatCurrency(double value, String currency, boolean withSymbol, int decimalPlaces) {
+        String pre;
+        String denom = Currencies.instance().lookup(currency).symbol + " ";
+        if (value < 0) {
+            value = Math.abs(value);
+            pre = withSymbol ? "-" + denom : "-";
+        } else {
+            pre = withSymbol ? denom : "";
+        }
+        BigDecimal bd = new BigDecimal(value);
+        DecimalFormat df;
+        switch(decimalPlaces) {
+        case 3:
+            df = new DecimalFormat("#,##0.000", new DecimalFormatSymbols(Locale.getDefault()));
+            break;
+        default:
+            df = new DecimalFormat("#,##0.00", new DecimalFormatSymbols(Locale.getDefault()));
+            break;
+        }
+        return pre + df.format(bd.doubleValue());
+    }
+
+    /**
+     * Utility function to format a BTC value. This includes the account's
+     * preferred denomination as is set in {@link Settings#denomination}.
+     * @param account the user the value is being formatted for
+     * @param amount the amount in satoshis
+     * @return a formatted BTC string
+     */
+    public static String formatSatoshi(Account account, long amount) {
+        return formatSatoshi(account, amount, true);
+    }
+
+    /**
+     * Utility function to format a BTC value. This includes the account's
+     * preferred denomination as is set in {@link Settings#denomination}.
+     * @param account the user the value is being formatted for
+     * @param amount the amount in satoshis
+     * @param withSymbol include the BTC symbol in the result
+     * @return a formatted BTC string
+     */
+    public static String formatSatoshi(Account account, long amount, boolean withSymbol) {
+        return formatSatoshi(account, amount, withSymbol, Utils.userDecimalPlaces(account));
+    }
+
+    /**
+     * Utility function to format a BTC value. This includes the account's
+     * preferred denomination as is set in {@link Settings#denomination}.
+     * @param account the user the value is being formatted for
+     * @param amount the amount in satoshis
+     * @param withSymbol include the BTC symbol in the result
+     * @param decimalPlaces the number of decimal places to includes
+     * @return a formatted BTC string
+     */
+    public static String formatSatoshi(Account account, long amount, boolean withSymbol, int decimalPlaces) {
+        tABC_Error error = new tABC_Error();
+        SWIGTYPE_p_long lp = core.new_longp();
+        SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
+
+        int dp = Utils.userDecimalPlaces(account);
+
+        boolean negative = amount < 0;
+        if(negative)
+            amount = -amount;
+        int result = Jni.FormatAmount(amount, Jni.getCPtr(ppChar), dp, false, Jni.getCPtr(error));
+        if (result != 0) {
+            return "";
+        } else {
+            dp = decimalPlaces > -1 ? decimalPlaces : dp;
+            String pretext = "";
+            if (negative) {
+                pretext += "-";
+            }
+            if (withSymbol) {
+                pretext += Utils.userBtcSymbol(account);
+            }
+
+            BigDecimal bd = new BigDecimal(amount);
+            bd = bd.movePointLeft(decimalPlaces);
+
+            DecimalFormat df =
+                new DecimalFormat("#,##0.##", new DecimalFormatSymbols(Locale.getDefault()));
+            if (decimalPlaces == 5) {
+                df = new DecimalFormat("#,##0.#####", new DecimalFormatSymbols(Locale.getDefault()));
+            } else if(decimalPlaces == 8) {
+                df = new DecimalFormat("#,##0.########", new DecimalFormatSymbols(Locale.getDefault()));
+            }
+            return pretext + df.format(bd.doubleValue());
+        }
+    }
+
+    /**
+     * Utility function to convert a BTC string to satoshi's.  This uses the
+     * preferred denomination as is set in {@link Settings#denomination}.
+     * @param account the user the value is being parsed for
+     * @param amount the BTC string in the user's preferred denomination
+     * @return the number of satoshis
+     */
+    public static long btcStringToSatoshi(Account account, String amount) {
+        int decimalPlaces = Utils.userDecimalPlaces(account);
+        try {
+            // Parse using the current locale
+            Number cleanAmount =
+                new DecimalFormat().parse(amount, new ParsePosition(0));
+            if (null == cleanAmount) {
+                return 0L;
+            }
+            // Convert to BD so we don't lose precision
+            BigDecimal bd = BigDecimal.valueOf(cleanAmount.doubleValue());
+            DecimalFormat df = new DecimalFormat("###0.############", new DecimalFormatSymbols(Locale.getDefault()));
+            String bdstr = df.format(bd.doubleValue());
+            long parseamt = Jni.ParseAmount(bdstr, decimalPlaces);
+            long max = Math.max(parseamt, 0);
+            return max;
+        } catch (Exception e) {
+            // Shhhhh
+        }
+        return 0L;
     }
 }
