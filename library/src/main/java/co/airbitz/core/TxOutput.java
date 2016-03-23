@@ -37,8 +37,8 @@ import co.airbitz.internal.tABC_TxOutput;
 
 /**
  * TxOutput contains information about an input or output of a transaction. It
- * is generally accessed from {@link Transaction #inputs()} or {@link
- * Transaction #outputs()}.
+ * is accessed from {@link Transaction #inputs()} or {@link Transaction
+ * #outputs()}.
  */
 public class TxOutput {
     private boolean mInput;

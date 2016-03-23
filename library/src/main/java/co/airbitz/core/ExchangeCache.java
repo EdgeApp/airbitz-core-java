@@ -42,7 +42,7 @@ import co.airbitz.internal.tABC_CC;
 /**
  * ExchangeCache provides functions to deal with converting satoshis to fiat
  * and back. Currency exchange rate updates can also be requested from {@link
- * ExchangeCache #update update}.
+ * ExchangeCache#update update}.
  */
 public class ExchangeCache {
     /**

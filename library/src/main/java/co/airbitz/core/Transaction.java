@@ -51,8 +51,8 @@ import co.airbitz.internal.tABC_Error;
 import co.airbitz.internal.tABC_TxDetails;
 
 /**
- * Transaction contains information about a bitcoin transaction. It contains
- * the inputs/outputs and miner fees, but also metadata set by the user.
+ * Transaction contains information about a bitcoin transaction. In addition to
+ * inputs/outputs and miner fees, but also metadata set by the user.
  */
 public class Transaction {
     private static String TAG = Transaction.class.getSimpleName();

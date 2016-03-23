@@ -44,10 +44,11 @@ import co.airbitz.internal.SWIGTYPE_p_void;
 import co.airbitz.internal.SWIGTYPE_p_p_void;
 
 /**
- * Spend is used to build a Spend from the {@link Wallet}.  Caller can add
- * multiple spend targets by calling either of {@link #addAddress addAddress}, {@link
- * #addTransfer addTransfer}, or {@link #addPaymentRequest addPaymentRequest} repeated times. Use {@link
- * #signBroadcastSave signBroadcastSave} to send the transaction to the blockchain. This spend may
+ * Spend is used to build a Spend from the {@link Wallet}. The caller can add
+ * multiple spend targets by calling either of {@link #addAddress addAddress},
+ * {@link #addTransfer addTransfer}, or {@link #addPaymentRequest
+ * addPaymentRequest} repeated times. Use {@link #signBroadcastSave
+ * signBroadcastSave} to send the transaction to the blockchain. This spend may
  * also be signed without broadcast by calling {@link #sign sign}.
  */
 public class Spend {

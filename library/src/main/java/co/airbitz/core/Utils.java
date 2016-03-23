@@ -55,7 +55,7 @@ import co.airbitz.internal.tABC_Error;
 
 /**
  * Utils providers various functions for working with fiat values and BTC
- * values.
+ * values as well as converting values from BTC strings to satoshis.
  */
 public class Utils {
     private static final String CERT_FILENAME = "ca-certificates.crt";

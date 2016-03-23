@@ -44,9 +44,10 @@ import co.airbitz.internal.tABC_Error;
 import co.airbitz.internal.tABC_TxDetails;
 
 /**
- * ReceiveAddress is returned by {@link Wallet#newReceiveRequest} and {@link
- * Wallet#fetchReceiveRequest}.  The properties amountSatoshi and metaData can
- * be modified by the caller.
+ * ReceiveAddress is returned by {@link Wallet#newReceiveRequest
+ * newReceiveRequest} and {@link Wallet#fetchReceiveRequest
+ * fetchReceiveRequest}. This class can be used to generate qrcodes and URIs
+ * to share with others to receive payments.
  */
 public class ReceiveAddress {
     private static String TAG = ReceiveAddress.class.getSimpleName();

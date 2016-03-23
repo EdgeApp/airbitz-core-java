@@ -37,8 +37,8 @@ import co.airbitz.internal.tABC_PaymentRequest;
 
 /**
  * PaymentRequest contains the details of a BIP70 request. The PaymentRequest
- * is retrieved from {@link ParsedUri #fetchReceiveRequest} if the ParsedUri
- * contains a valid BIP70 URL.
+ * is retrieved from {@link ParsedUri#fetchPaymentRequest fetchPaymentRequest}
+ * if the ParsedUri contains a valid BIP70 URL.
  */
 public class PaymentRequest {
     private tABC_PaymentRequest mPaymentRequest;

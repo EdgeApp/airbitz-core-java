@@ -50,11 +50,11 @@ import co.airbitz.internal.tABC_Error;
 /**
  * The DataStore object implements the Airbitz auto-encrypted, auto-backed up, and auto
  * synchronized Edge Security data storage. DataStore is end-to-end encrypted with no access to the
- * data by Airbitz, other users, or developers. Data is encrypted<br />
- * <br />
+ * data by Airbitz, other users, or developers. Data is encrypted<br>
+ * <br>
  * Data is saved as key/value pairs in named folders. Usage is as simple as calling
- * {@link #set} to write data to this DataStore and calling {@link #get} to read the data back.<br />
- * <br />
+ * {@link #set set} to write data to this DataStore and calling {@link #get get} to read the data back.<br>
+ * <br>
  * DataStore will automatically
  * backup all data and synchronize between all user's devices as long as the devices are
  * online. If devices are offline, the data will sync as soon as the device comes back online

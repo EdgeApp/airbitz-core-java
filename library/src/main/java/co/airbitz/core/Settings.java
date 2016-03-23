@@ -47,9 +47,9 @@ import co.airbitz.internal.tABC_CC;
 import co.airbitz.internal.tABC_Error;
 
 /**
- * Settings represent settings for the associated {@link Account}. Like all
- * other account info, these settings are locally encrypted and synchronized
- * between devices.
+ * Settings represent settings such as preferred currency or bitcoin
+ * denomination for the associated {@link Account}. Like all other account
+ * info, these settings are locally encrypted and synchronized between devices.
  */
 public class Settings {
     private static String TAG = AirbitzCore.class.getSimpleName();

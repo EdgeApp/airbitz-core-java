@@ -35,10 +35,10 @@ import co.airbitz.internal.SWIGTYPE_p_void;
 import co.airbitz.internal.tABC_QuestionChoice;
 
 /**
- * QuestionChoice include a question as well as information regarding the
- * format of the answer to that question. Questions should match the minimum
- * length and developers are encouraged to ensure a user answers 2 questions
- * from each question category.
+ * QuestionChoice includes a recovery question as well as information regarding
+ * the format of the answer to that question. Questions should match the
+ * minimum length and developers are encouraged to ensure a user answers 2
+ * questions from each question category.
  */
 public class QuestionChoice extends tABC_QuestionChoice {
     String mQuestion = null;
