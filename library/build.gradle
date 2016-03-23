@@ -24,16 +24,23 @@ dependencies {
 
 android.libraryVariants.all { variant -> 
   task("generate${variant.name.capitalize()}Javadoc", type: Javadoc) {
+    title = "Airbitz Core API"
     source = variant.javaCompile.source 
     classpath = files(variant.javaCompile.classpath.files, project.android.getBootClasspath()) 
-    options { 
-      links "http://docs.oracle.com/javase/7/docs/api/" 
-      linksOffline "http://d.android.com/reference","${android.sdkDirectory}/docs/reference" 
-    } 
+
+    options.links "http://docs.oracle.com/javase/7/docs/api/" 
+    options.linksOffline "http://d.android.com/reference","${android.sdkDirectory}/docs/reference" 
+    options.stylesheetFile = new File(projectDir, "assets/stylesheet.css");
+    options.addStringOption "top", new File(projectDir, "assets/top.html").text;
+    options.memberLevel = JavadocMemberLevel.PUBLIC
     exclude '**/BuildConfig.java' 
     exclude '**/R.java' 
     exclude '**/SWIG*' 
     exclude '**/internal/*.java' 
+  }
+  task("generate${variant.name.capitalize()}Userguide", type:Copy) {
+	from new File(projectDir, "assets/userguide/userguide.html")
+    into 'build/docs/'
   }
 }
 

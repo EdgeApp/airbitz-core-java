@@ -292,7 +292,7 @@ public class Settings {
 
     /**
      * Set the preferred exchange rate source. Choices can be found in {@link
-     * AirbitzCore.exchangeRateSources}.
+     * AirbitzCore#exchangeRateSources exchangeRateSources}.
      * @param value the name of the exchange rate source
      */
     public void exchangeRateSource(String value) {
@@ -350,9 +350,9 @@ public class Settings {
 
     /**
      * Set the daily spend limit. After the limit is exceed, the {@link
-     * Account.checkPassword} should be use to authenticate the user before a
+     * Account#checkPassword checkPassword} should be use to authenticate the user before a
      * spend.
-     * @param value the daily spend limit in satoshis
+     * @param spendLimit the daily spend limit in satoshis
      */
     public void dailySpendLimitSatoshis(long spendLimit) {
         SWIGTYPE_p_int64_t limit = core.new_int64_tp();
@@ -387,9 +387,9 @@ public class Settings {
 
     /**
      * Set the amount to require PIN check before a spend. After the limit is exceed, the {@link
-     * Account.checkPin} should be use to authenticate the user before a
+     * Account#checkPin checkPin} should be use to authenticate the user before a
      * spend.
-     * @param value the spend amount to require PIN authentication for.
+     * @param spendLimit the spend amount to require PIN authentication for.
      */
     public void spendRequirePinSatoshis(long spendLimit) {
         SWIGTYPE_p_int64_t limit = core.new_int64_tp();

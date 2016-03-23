@@ -1,0 +1,120 @@
+<!doctype>
+<html>
+<head>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.2.0/styles/color-brewer.min.css" rel="stylesheet">
+    <link href="javadoc/stylesheet.css" rel="stylesheet">
+	<title>Android User Guide</title>
+</head>
+<body>
+	<!-- TODO, convert this to markdown -->
+    <nav class="navbar navbar-fixed-top site-decorated">
+    <div class="container-fluid">
+        <div class="navbar-header">
+			<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#submenu-collapse" aria-expanded="false">
+				<span class="sr-only">Toggle navigation</span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+			</button>
+			<a href="https://developer.airbitz.co" class="navbar-brand" target="_top" alt="Airbitz"><img src="https://airbitz.co/static/airbitz-theme/img-custom/airbitz-logo-mono-blue-100.a5c039aae748.png" width="50px" height="26px" /></a>
+        </div>
+
+        <div class="collapse navbar-collapse" id="submenu-collapse">
+        <ul class="nav navbar-nav">
+            <li class="active"><a href="https://developer.airbitz.co/android/docs/userguide.html" target="_top">User Guide</a></li>
+            <li><a href="https://developer.airbitz.co/android/docs/co/airbitz/core/package-summary.html" target="_top">Javadoc</a></li>
+        </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+    </nav>
+
+    <div class="container">
+<h1>Android User Guide</h1>
+
+<h3>Get your API Keys</h3>
+<p>
+First thing is first, you need to initialize the core using your api key. If
+you don't have an API key, you can head over to <a
+href="https://developer.airbitz.co">developer.airbitz.co</a> and signup to get your key.
+</p>
+    
+<h3>Setting up your project</h3>
+<p>
+To get started with the airbitz-core-android API you can create a new android
+project. Once you have your new project ready to go, add the following to your
+build.gradle.
+</p>
+<pre><code class="groovy">allprojects {
+    repositories {
+        maven {
+            url "https://developer.airbitz.co/maven"
+        }
+    }
+}
+
+# Add the airbitz-core-android dependency to your project
+dependencies {
+    compile 'co.airbitz:airbitz-core-android:0.0.16@aar'
+}
+</pre></code>
+
+<p>
+Your are not ready to use ABC in your project. Let's write some code.
+</p>
+
+<pre><code class="java">
+AirbitzCore api = AirbitzCore.getApi();
+api.init(context, "YOUR-API-KEY");
+
+// Create an account
+Account account = api.createAccount("username", "password", "pin");
+
+// Use Airbitz Edge Security to write encrypted/backed up/synchronized data to the account
+account.data("myAppUserInfo").put("user_email", "theuser@hisdomain.com");
+
+// Read back the data
+account.data("myAppUserInfo").get("user_email");
+
+// Create a wallet in the user account
+Wallet wallet = account.createWallet("My Awesome Wallet", "USD");
+
+// And finally logout
+account.logout();
+</code></pre>
+
+<pre><code class="java">
+// Log back in with full credentials
+Account account = api.passwordLogin("myusername", "MyPa55w0rd");
+
+// Or log back in with PIN
+Account account = api.pinLogin("myusername", "1111");
+</code></pre>
+
+<pre><code class="java">
+account.callbacks(new Callbacks {
+    public void incomingBitcoin(Wallet wallet, String txid) {
+        // Yay! Received bitcoin...
+    }
+});
+
+// Create a receive request
+Wallet wallet = account.wallets()[0];
+ReceiveAddress request = wallet.newReceiveRequest();
+
+request.meta().label("William Swanson")
+            .category("Income:Rent")
+            .notes("Rent payment for Jan 2016");
+request.amount(40000);
+
+String address = request.address();
+String uri     = request.uri();
+Bitmap qrcode  = request.qrCode();
+</code></pre>
+
+    </div>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.2.0/highlight.min.js"></script>
+	<script>hljs.initHighlightingOnLoad();</script>
+</body>
+</html>

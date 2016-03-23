@@ -42,7 +42,7 @@ import co.airbitz.internal.SWIGTYPE_p_p_sABC_PaymentRequest;
 /**
  * ParsedUri encapsulates the data of a URI. It understands bitcoin addresses,
  * private keys in WIF format, bitid requests and BIP70 requests. If the parsed
- * text is a BIP70 request, {@link ParsedUri.fetchPaymentRequest} must be
+ * text is a BIP70 request, {@link ParsedUri#fetchPaymentRequest fetchPaymentRequest} must be
  * called as well to fetch the details of the payment.
  */
 public class ParsedUri {

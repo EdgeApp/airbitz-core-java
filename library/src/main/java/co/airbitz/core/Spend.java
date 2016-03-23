@@ -45,10 +45,10 @@ import co.airbitz.internal.SWIGTYPE_p_p_void;
 
 /**
  * Spend is used to build a Spend from the {@link Wallet}.  Caller can add
- * multiple spend targets by calling either of {@link addAddress}, {@link
- * addTransfer}, or {@link addPaymentRequest} repeated times. Use {@link
- * signBroadcastSave} to send the transaction to the blockchain. This spend may
- * also be signed without broadcast by calling {@link sign}.
+ * multiple spend targets by calling either of {@link #addAddress addAddress}, {@link
+ * #addTransfer addTransfer}, or {@link #addPaymentRequest addPaymentRequest} repeated times. Use {@link
+ * #signBroadcastSave signBroadcastSave} to send the transaction to the blockchain. This spend may
+ * also be signed without broadcast by calling {@link #sign sign}.
  */
 public class Spend {
     SWIGTYPE_p_void mSpend;
@@ -124,8 +124,8 @@ public class Spend {
     /**
      * Adds a BIP70 payment request to this Spend. No amount parameter is
      * provided as the payment request always has the amount included. Generate
-     * an {@link PaymentRequest} object by calling {@link AirbitzCore.parseURI}
-     * then {@link ParsedUri.getPaymentRequest}
+     * an {@link PaymentRequest} object by calling {@link AirbitzCore#parseUri parseUri}
+     * then {@link ParsedUri#fetchPaymentRequest fetchPaymentRequest}
      * @param request the payment request object include the BIP70 details
      */
     public void addPaymentRequest(PaymentRequest request) throws AirbitzException {

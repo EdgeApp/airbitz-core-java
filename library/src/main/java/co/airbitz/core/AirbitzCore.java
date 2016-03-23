@@ -434,7 +434,7 @@ public class AirbitzCore {
     /**
      * Encodes a QR code byte array into Bitmap.
      * @param array byte array such as one produced by {@link
-     * co.airbitz.core.AirbitzCore.qrEncode}
+     * AirbitzCore#qrEncode}
      * @return qrcode
      */
     public Bitmap qrEncode(byte[] array) {
@@ -444,16 +444,16 @@ public class AirbitzCore {
     /**
      * Encodes a QR code byte array into Bitmap
      * @param array byte array such as one produced by {@link
-     * co.airbitz.core.AirbitzCore.qrEncode}
+     * AirbitzCore#qrEncode}
      * @param width width of the bitmap
      * @param scale scale of the bitmap
      * @return qrcode
      */
-    public Bitmap qrEncode(byte[] bits, int width, int scale) {
+    public Bitmap qrEncode(byte[] array, int width, int scale) {
         Bitmap bmpBinary = Bitmap.createBitmap(width*scale, width*scale, Bitmap.Config.ARGB_8888);
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < width; y++) {
-                bmpBinary.setPixel(x, y, bits[y * width + x] != 0 ? Color.BLACK : Color.WHITE);
+                bmpBinary.setPixel(x, y, array[y * width + x] != 0 ? Color.BLACK : Color.WHITE);
             }
         }
         Matrix matrix = new Matrix();
@@ -899,7 +899,7 @@ public class AirbitzCore {
 
     /**
     * Parses a bitcoin BIP21 URI, WIF private key, or Airbitz hbits private key
-    * @param uri to parse
+    * @param text to parse
     * @return ParsedUri object
     */
     public ParsedUri parseUri(String text) throws AirbitzException {

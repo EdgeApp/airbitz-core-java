@@ -228,7 +228,7 @@ public class Wallet {
     /**
      * Export a wallet's transactions to CSV format, for a given date range.
      * @param start timestamp of start export
-     * @param long timestamp of end export
+     * @param end timestamp of end export
      * @return csv file contents
      */
     public String csvExport(long start, long end) {
