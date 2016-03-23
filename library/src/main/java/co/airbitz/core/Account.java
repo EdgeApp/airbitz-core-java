@@ -60,8 +60,8 @@ import co.airbitz.internal.tABC_Error;
  * various sign in  routines from {@link AirbitzCore}. It contains a {@link
  * Settings} object which are account settings that carry over from device to
  * device. Account also contains an array of {@link Wallet} object wallets and
- * archived wallets which should be checked for the parameter loaded=YES before
- * being accessed.
+ * archived wallets which should be checked for the {@link Wallet#isSynced
+ * isSynced} before being accessed.<br><br>
  *
  * The {@link DataStore} object allows reading/writing of encrypted and backed
  * up key/value data to the user's account. This data is accessible from any
@@ -548,37 +548,27 @@ public class Account {
     }
 
     /**
-     * TODO: remove this
+     * Starts the bitcoin, exchange rate and data sync backend engines. This
+     * should be called after a user logs into their account.
      */
-    public void startAllAsyncUpdates() {
+    public void startBackgroundTasks() {
         mEngine.start();
     }
 
     /**
-     * TODO: remove this
+     * Stop the bitcoin, exchange rate and data sync backend engines. This
+     * should not be needed to be called. If your application is entering the
+     * background and you wish to stop the background jobs call {@link AirbitzCore
+     * #background background}.
      */
-    public void waitOnWatchers() {
-        mEngine.waitOnWatchers();
-    }
-
-    /**
-     * TODO: remove this
-     */
-    public void deleteWatcherCache() {
-        mEngine.deleteWatcherCache();
-    }
-
-    /**
-     * TODO: remove this
-     */
-    public void stopAllAsyncUpdates() {
+    public void stopBackgroundTasks() {
         mEngine.stop();
     }
 
     /**
-     * Small tuple class which holds the address and signature to use for a
+     * BitidSignature is a small class which holds the address and signature to use for a
      * Bitid login. @see <a href="https://github.com/bitid/bitid">https://github.com/bitid/bitid</a>
-     * for me details on Bitid.
+     * for more details on Bitid.
      */
     public static class BitidSignature {
         public String address;
@@ -710,7 +700,8 @@ public class Account {
     }
 
     /**
-     * Retrieved the OTP secret.
+     * Retrieve the OTP secret.
+     * @return an OTP secret for the current account, null if one does not exist
      */
     public String otpSecret() {
         tABC_Error error = new tABC_Error();
@@ -755,4 +746,21 @@ public class Account {
         }
     }
 
+    /**
+     * This is a blocking function that
+     */
+    public void waitOnWatchers() {
+        mEngine.waitOnWatchers();
+    }
+
+    /**
+     * Deletes the bitcoin network cache. This can be used to reset the account
+     * if a user wishes to resync with the blockchain. {@link
+     * #stopBackgroundTasks stopBackgroundTasks} should be called first. When
+     * this is finished, {@link #startBackgroundTasks startBackgroundTasks} can
+     * be called to begin sync-ing with the network.
+     */
+    public void deleteWatcherCache() {
+        mEngine.deleteWatcherCache();
+    }
 }

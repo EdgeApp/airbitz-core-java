@@ -50,10 +50,11 @@ import co.airbitz.internal.tABC_Error;
 
 /**
  * Wallet represents a single HD, multiple address, wallet within an {@link
- * Account}.  This object is the basis for Sends and Requests. Initiate sends
- * by calling {@link Wallet#newSpend newSpend} which returns an {@link Spend}
- * object.  Use {@link Wallet#newReceiveRequest newReceiveRequest} to generate
- * an {@link ReceiveAddress} which contains a bitcoin address to receive funds.
+ * Account}.  This object is the basis for {@link Spend Spends} and {@link
+ * ReceiveAddress Requests}. Initiate sends by calling {@link Wallet#newSpend
+ * newSpend} which returns an {@link Spend} object.  Use {@link
+ * Wallet#newReceiveRequest newReceiveRequest} to generate an {@link
+ * ReceiveAddress} which contains a bitcoin address to receive funds.
  */
 public class Wallet {
     private Account mAccount;
