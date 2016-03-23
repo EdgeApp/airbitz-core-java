@@ -618,3 +618,7 @@ body {
     padding-bottom: 15px;
 }
 
+.skipNav {
+    height: 0px;
+    visibility: hidden;
+}
