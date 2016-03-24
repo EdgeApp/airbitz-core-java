@@ -39,6 +39,9 @@ import co.airbitz.internal.core;
 import co.airbitz.internal.tABC_Error;
 import co.airbitz.internal.tABC_CC;
 
+import java.util.List;
+import java.util.ArrayList;
+
 /**
  * ExchangeCache provides functions to deal with converting satoshis to fiat
  * and back. Currency exchange rate updates can also be requested from {@link
@@ -92,4 +95,18 @@ public class ExchangeCache {
         return Jni.get64BitLongAtPtr(Jni.getCPtr(l));
     }
 
+    /**
+     * Get a list of exchanges sources
+     * @return list of supported exchange sources
+     */
+    public List<String> exchangeRateSources() {
+        List<String> sources = new ArrayList<>();
+        sources.add("Bitstamp");
+        sources.add("Bitfinex");
+        sources.add("BitcoinAverage");
+        sources.add("BraveNewCoin");
+        sources.add("Coinbase");
+        sources.add("CleverCoin");
+        return sources;
+    }
 }

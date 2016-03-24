@@ -320,10 +320,9 @@ public class AirbitzCore {
      * Return whether the library has connectivity.
      * @return true has connectivity
      */
-    public boolean hasConnectivity() {
+    boolean hasConnectivity() {
         return mConnectivity;
     }
-
 
     /**
      * Determines if the core library was compiled for testnet or mainnet.
@@ -419,25 +418,10 @@ public class AirbitzCore {
     }
 
     /**
-     * Get a list of exchanges sources
-     * @return list of supported exchange sources
-     */
-    public List<String> exchangeRateSources() {
-        List<String> sources = new ArrayList<>();
-        sources.add("Bitstamp");
-        sources.add("Bitfinex");
-        sources.add("BitcoinAverage");
-        sources.add("BraveNewCoin");
-        sources.add("Coinbase");
-        sources.add("CleverCoin");
-        return sources;
-    }
-
-    /**
      * Get a list of previously logged in usernames on this device
      * @return list of previously logged in usernames
      */
-    public List<String> accountListLocal() {
+    public List<String> listLocalAccounts() {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_long lp = core.new_longp();
         SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
@@ -461,7 +445,7 @@ public class AirbitzCore {
      * @param username username of account to check
      * @return true if account exists locally
      */
-    public boolean accountSyncExistsLocal(String username) {
+    public boolean accountExistsLocal(String username) {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_long lp = core.new_longp();
         SWIGTYPE_p_bool exists = Jni.newBool(Jni.getCPtr(lp));
@@ -470,6 +454,13 @@ public class AirbitzCore {
             return Jni.getBytesAtPtr(Jni.getCPtr(lp), 1)[0] != 0;
         }
         return false;
+    }
+
+    /**
+     * TODO
+     */
+    public List<String> listOtpResetPending() throws AirbitzException {
+        return null;
     }
 
     /**
@@ -530,7 +521,7 @@ public class AirbitzCore {
      * @param username the username to check
      * @return true if username is available
      */
-    public boolean usernameAvailable(String username) throws AirbitzException {
+    public boolean isUsernameAvailable(String username) throws AirbitzException {
         tABC_Error error = new tABC_Error();
         core.ABC_AccountAvailable(username, error);
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
@@ -573,6 +564,32 @@ public class AirbitzCore {
     }
 
     /**
+     * Constants contains various values that are required by ABC. The values
+     * are provided as a convenience. ABC will still check to make sure input
+     * meets these requirements.
+     */
+    public static class Constants {
+        // The minimum username length
+        public final int ABC_MIN_USERNAME_LENGTH
+             = coreConstants.ABC_MIN_USERNAME_LENGTH;
+
+        // The minimum password length
+        public final int ABC_MIN_PASS_LENGTH
+            = coreConstants.ABC_MIN_PASS_LENGTH;
+
+        // The minimum pin length
+        public final int ABC_MIN_PIN_LENGTH
+            = coreConstants.ABC_MIN_PIN_LENGTH;
+    }
+
+    /**
+     * @return a populated Constants object
+     */
+    public Constants constants() {
+        return new Constants();
+    }
+
+    /**
      * PasswordRulesCheck class contains information regarding the quality of a
      * password.  Information includes how long cracking a password will take,
      * as well as if the password passes the Airbitz password requirements.
@@ -594,9 +611,6 @@ public class AirbitzCore {
 
         // Indicates if the password is missing an lowercase letter
         public boolean noLowerCase;
-
-        // The minimum password length as recommended by Airbitz
-        public int minPasswordLength;
     }
 
     /**
@@ -606,8 +620,6 @@ public class AirbitzCore {
      */
     public PasswordRulesCheck passwordRulesCheck(String password) {
         PasswordRulesCheck check = new PasswordRulesCheck();
-        check.minPasswordLength = coreConstants.ABC_MIN_PIN_LENGTH;
-
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_double seconds = core.new_doublep();
         SWIGTYPE_p_int pCount = core.new_intp();
@@ -714,7 +726,7 @@ public class AirbitzCore {
      * @param username an account username
      * @return new line delimited string of recovery questions
      */
-    public String recoveryQuestions(String username) throws AirbitzException {
+    public String[] recoveryQuestions(String username) throws AirbitzException {
         tABC_Error error = new tABC_Error();
 
         SWIGTYPE_p_long lp = core.new_longp();
@@ -723,7 +735,7 @@ public class AirbitzCore {
         tABC_CC result = core.ABC_GetRecoveryQuestions(username, ppChar, error);
         String questionString = Jni.getStringAtPtr(core.longp_value(lp));
         if (result == tABC_CC.ABC_CC_Ok) {
-            return questionString;
+            return questionString.split("\n");
         } else {
             throw new AirbitzException(error.getCode(), error);
         }
@@ -736,10 +748,9 @@ public class AirbitzCore {
      */
     public boolean accountHasRecovery(String username) {
         try {
-            String qstring = recoveryQuestions(username);
+            String[] qstring = recoveryQuestions(username);
             if (qstring != null) {
-                String[] qs = qstring.split("\n");
-                if (qs.length > 1) {
+                if (qstring.length > 1) {
                     // Recovery questions set
                     return true;
                 }
@@ -787,7 +798,7 @@ public class AirbitzCore {
      * @param username
      * @return true if a pin is set
      */
-    public boolean accountHasPin(String username) {
+    public boolean accountHasPinLogin(String username) {
         tABC_Error error = new tABC_Error();
 
         SWIGTYPE_p_long lp = core.new_longp();

@@ -340,8 +340,8 @@ public class Account {
      * Checks whether the account has a pin.
      * @return true if the account has a pin
      */
-    public boolean accountHasPin() {
-        return mApi.accountHasPin(username());
+    public boolean accountHasPinLogin() {
+        return mApi.accountHasPinLogin(username());
     }
 
     /**
@@ -699,6 +699,13 @@ public class Account {
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
             throw new AirbitzException(error.getCode(), error);
         }
+    }
+
+    /**
+     * TODO
+     */
+    public boolean isOtpResetPending(String username) throws AirbitzException {
+        return mApi.isOtpResetPending(username);
     }
 
     /**
