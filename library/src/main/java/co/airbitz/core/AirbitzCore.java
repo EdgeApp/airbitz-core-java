@@ -570,15 +570,15 @@ public class AirbitzCore {
      */
     public static class Constants {
         // The minimum username length
-        public final int ABC_MIN_USERNAME_LENGTH
+        public final int MIN_USERNAME_LENGTH
              = coreConstants.ABC_MIN_USERNAME_LENGTH;
 
         // The minimum password length
-        public final int ABC_MIN_PASS_LENGTH
+        public final int MIN_PASSWORD_LENGTH
             = coreConstants.ABC_MIN_PASS_LENGTH;
 
         // The minimum pin length
-        public final int ABC_MIN_PIN_LENGTH
+        public final int MIN_PIN_LENGTH
             = coreConstants.ABC_MIN_PIN_LENGTH;
     }
 
