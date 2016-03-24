@@ -71,10 +71,12 @@ public class UnsentTransaction {
      * Broadcast this signed transaction to the bitcoin network
      * @return true if the transaction was successfully broadcasted
      */
-    public boolean broadcast() {
+    public void broadcast() throws AirbitzException {
         tABC_Error error = new tABC_Error();
         core.ABC_SpendBroadcastTx(mSpend.mSpend, mRawTx, error);
-        return error.getCode() == tABC_CC.ABC_CC_Ok;
+        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
+            throw new AirbitzException(error.getCode(), error);
+        }
     }
 
     /**

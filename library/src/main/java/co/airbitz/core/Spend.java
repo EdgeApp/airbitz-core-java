@@ -195,7 +195,8 @@ public class Spend {
     public Transaction signBroadcastSave() throws AirbitzException {
         UnsentTransaction utx = sign();
         Transaction tx = null;
-        if (null != utx.base16Tx() && utx.broadcast()) {
+        if (null != utx.base16Tx()) {
+            utx.broadcast();
             tx = utx.save();
         }
         return tx;
