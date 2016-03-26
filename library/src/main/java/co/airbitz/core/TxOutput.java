@@ -45,14 +45,12 @@ public class TxOutput {
     private long  mIndex;
     private long  mValue;
     private String mAddress;
-    private String mTxId;
 
     public TxOutput(long pv) {
         tABC_TxOutput output = Jni.newTxOutput(pv);
         if (pv != 0) {
             mInput = output.getInput();
             mAddress = output.getSzAddress();
-            mTxId = output.getSzTxId();
             mValue = Jni.get64BitLongAtPtr(Jni.getCPtr(output.getValue()));
         }
     }
@@ -79,14 +77,6 @@ public class TxOutput {
      */
     public String address() {
         return mAddress;
-    }
-
-    /**
-     * Retrieve the txId of the input or output.
-     * @return the txId of the input or output
-     */
-    public String txId() {
-        return mTxId;
     }
 
     /**

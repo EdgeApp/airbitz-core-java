@@ -869,7 +869,7 @@ public class AirbitzCore {
         return new ParsedUri(text);
     }
 
-    private void otpKeySet(String username, String secret) throws AirbitzException {
+    void otpKeySet(String username, String secret) throws AirbitzException {
         tABC_Error error = new tABC_Error();
         core.ABC_OtpKeySet(username, secret, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {

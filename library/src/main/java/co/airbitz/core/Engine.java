@@ -252,19 +252,11 @@ class Engine {
         protected void onPostExecute(List<Wallet> walletList) {
             mAccount.mCachedWallets = walletList;
             if (mAccount.mCallbacks != null) {
-                mAccount.mCallbacks.userWalletsChanged();
+                mAccount.mCallbacks.walletsChanged();
             }
             mReloadWalletTask = null;
         }
     }
-
-    final Runnable mNotifyBitcoinLoaded = new Runnable() {
-        public void run() {
-            if (mAccount.mCallbacks != null) {
-                mAccount.mCallbacks.bitcoinLoaded();
-            }
-        }
-    };
 
     String mIncomingWallet;
     String mIncomingTxId;
@@ -279,14 +271,6 @@ class Engine {
             mIncomingWallet = null;
             mIncomingTxId = null;
             reloadWallets();
-        }
-    };
-
-    final Runnable mBalanceUpdated = new Runnable() {
-        public void run() {
-            if (mAccount.mCallbacks != null) {
-                mAccount.mCallbacks.balanceUpdate();
-            }
         }
     };
 
@@ -305,7 +289,15 @@ class Engine {
             startWatchers();
             reloadWallets();
             if (mAccount.mCallbacks != null) {
-                mAccount.mCallbacks.userAccountChanged();
+                mAccount.mCallbacks.accountChanged();
+            }
+        }
+    };
+
+    final Runnable mWalletsLoaded = new Runnable() {
+        public void run() {
+            if (mAccount.mCallbacks != null) {
+                mAccount.mCallbacks.walletsLoaded();
             }
         }
     };
@@ -339,7 +331,7 @@ class Engine {
         if (mAccount.mCallbacks != null) {
             mMainHandler.post(new Runnable() {
                 public void run() {
-                    mAccount.mCallbacks.userWalletsLoading();
+                    mAccount.mCallbacks.walletsLoading();
                 }
             });
         }
@@ -350,27 +342,20 @@ class Engine {
                     core.ABC_WalletLoad(mAccount.username(), uuid, error);
 
                     startWatcher(uuid);
-                    if (mAccount.mCallbacks != null) {
-                        mMainHandler.post(new Runnable() {
-                            public void run() {
-                                mAccount.mCallbacks.userWalletStatusChange(mWatcherTasks.size(), walletCount);
+                    mMainHandler.post(new Runnable() {
+                        public void run() {
+                            if (mAccount.mCallbacks != null) {
+                                final Wallet wallet = mAccount.wallet(uuid);
+                                mAccount.mCallbacks.walletChanged(wallet);
                             }
-                        });
-                    }
+                        }
+                    });
                     mMainHandler.sendEmptyMessage(RELOAD);
                 }
             });
         }
         mCoreHandler.post(new Runnable() {
             public void run() {
-                if (mAccount.mCallbacks != null) {
-                    mMainHandler.post(new Runnable() {
-                        public void run() {
-                            mAccount.mCallbacks.userWalletsLoaded();
-                        }
-                    });
-                }
-                startBitcoinUpdates();
                 startExchangeRateUpdates();
                 startFileSyncUpdates();
 
@@ -512,16 +497,6 @@ class Engine {
         }
     }
 
-    public void startBitcoinUpdates() {
-        if (mAccount.mCallbacks != null) {
-            mMainHandler.post(new Runnable() {
-                public void run() {
-                    mAccount.mCallbacks.bitcoinLoading();
-                }
-            });
-        }
-    }
-
     public void startExchangeRateUpdates() {
         updateExchangeRates();
     }
@@ -601,7 +576,7 @@ class Engine {
                                 if (mAccount.otpSecret() != null) {
                                     mAccount.mCallbacks.otpSkew();
                                 } else {
-                                    mAccount.mCallbacks.otpRequired(e.otpResetDate());
+                                    mAccount.mCallbacks.otpRequired();
                                 }
                             }
                         });
@@ -613,7 +588,7 @@ class Engine {
                     if (mAccount.mCallbacks != null) {
                         mMainHandler.post(new Runnable() {
                             public void run() {
-                                mAccount.mCallbacks.userRemotePasswordChange();
+                                mAccount.mCallbacks.remotePasswordChange();
                             }
                         });
                     }
@@ -675,12 +650,14 @@ class Engine {
     }
 
     private static final int BALANCE_CHANGE_DELAY = 1000;
+    // Hopefully AddressDone will fire before this does
+    private static final int BLOCKCHAIN_WAIT = 1000 * 60;
 
     private void callbackAsyncBitcoinInfo(long asyncBitCoinInfo_ptr) {
         tABC_AsyncBitCoinInfo info = Jni.newAsyncBitcoinInfo(asyncBitCoinInfo_ptr);
         tABC_AsyncEventType type = info.getEventType();
 
-        AirbitzCore.logi("asyncBitCoinInfo callback type = "+type.toString());
+        AirbitzCore.logi("asyncBitCoinInfo callback type = " + type.toString());
         if (type==tABC_AsyncEventType.ABC_AsyncEventType_IncomingBitCoin) {
             mIncomingWallet = info.getSzWalletUUID();
             mIncomingTxId = info.getSzTxID();
@@ -691,10 +668,28 @@ class Engine {
         } else if (type == tABC_AsyncEventType.ABC_AsyncEventType_BlockHeightChange) {
             mMainHandler.post(mBlockHeightUpdater);
         } else if (type == tABC_AsyncEventType.ABC_AsyncEventType_AddressCheckDone) {
-            mMainHandler.post(mNotifyBitcoinLoaded);
+            List<String> ids = mAccount.walletIds();
+            List<Wallet> wallets = mAccount.wallets();
+            // Check to see if all the wallets have finished sync-ing before notifying...
+            if (ids != null
+                    && wallets != null
+                    && ids.size() == wallets.size()) {
+                mMainHandler.post(mWalletsLoaded);
+            }
         } else if (type == tABC_AsyncEventType.ABC_AsyncEventType_BalanceUpdate) {
-            mMainHandler.removeCallbacks(mBalanceUpdated);
-            mMainHandler.postDelayed(mBalanceUpdated, BALANCE_CHANGE_DELAY);
+            final String uuid = info.getSzWalletUUID();
+            final String txid = info.getSzTxID();
+            if (mAccount.mCallbacks != null) {
+                mMainHandler.postDelayed(new Runnable() {
+                    public void run() {
+                        final Wallet wallet = mAccount.wallet(uuid);
+                        mAccount.mCallbacks.balanceUpdate(wallet, txid);
+                        reloadWallets();
+                    }
+                }, BALANCE_CHANGE_DELAY);
+                mMainHandler.removeCallbacks(mWalletsLoaded);
+                mMainHandler.postDelayed(mWalletsLoaded, BLOCKCHAIN_WAIT);
+            }
         } else if (type == tABC_AsyncEventType.ABC_AsyncEventType_IncomingSweep) {
             final String uuid = info.getSzWalletUUID();
             final String txid = info.getSzTxID();
@@ -703,8 +698,9 @@ class Engine {
                 mMainHandler.postDelayed(new Runnable() {
                     public void run() {
                         final Wallet wallet = mAccount.wallet(uuid);
-                        // final Transaction tx = wallet.transaction(txid);
+                        final Transaction tx = wallet.transaction(txid);
                         mAccount.mCallbacks.sweep(wallet, txid, amount);
+                        reloadWallets();
                     }
                 }, BALANCE_CHANGE_DELAY);
             }

@@ -164,6 +164,7 @@ public class Wallet {
                 id(), newName, error);
         if (result == tABC_CC.ABC_CC_Ok) {
             mName = newName;
+            mAccount.reloadWallets();
         }
         return result == tABC_CC.ABC_CC_Ok;
     }
@@ -245,6 +246,40 @@ public class Wallet {
         Jni.set64BitLongAtPtr(Jni.getCPtr(endTime), end); //0 means all transactions
 
         tABC_CC result = core.ABC_CsvExport(
+                mAccount.username(), mAccount.password(),
+                id(), startTime, endTime, ppChar, pError);
+        if (result == tABC_CC.ABC_CC_Ok) {
+            return Jni.getStringAtPtr(core.longp_value(lp)); // will be null for NoRecoveryQuestions
+        } else if (result == tABC_CC.ABC_CC_NoTransaction) {
+            return "";
+        } else {
+            AirbitzCore.loge(pError.getSzDescription() +
+                            ";" + pError.getSzSourceFile() +
+                            ";" + pError.getSzSourceFunc() +
+                            ";" + pError.getNSourceLine());
+            return null;
+        }
+    }
+
+    /**
+     * Export a wallet's transactions to QBO format, for a given date range.
+     * @param start timestamp of start export
+     * @param end timestamp of end export
+     * @return csv file contents
+     */
+    public String qboExport(long start, long end) {
+        tABC_Error pError = new tABC_Error();
+
+        SWIGTYPE_p_long lp = core.new_longp();
+        SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
+
+        SWIGTYPE_p_int64_t startTime = core.new_int64_tp();
+        Jni.set64BitLongAtPtr(Jni.getCPtr(startTime), start); //0 means all transactions
+
+        SWIGTYPE_p_int64_t endTime = core.new_int64_tp();
+        Jni.set64BitLongAtPtr(Jni.getCPtr(endTime), end); //0 means all transactions
+
+        tABC_CC result = core.ABC_QBOExport(
                 mAccount.username(), mAccount.password(),
                 id(), startTime, endTime, ppChar, pError);
         if (result == tABC_CC.ABC_CC_Ok) {
@@ -433,5 +468,15 @@ public class Wallet {
             return 0;
         }
         return core.intp_value(bh);
+    }
+
+    /**
+     * Deprioritize all addresses.
+     */
+    public void deprioritize() {
+        tABC_Error error = new tABC_Error();
+        core.ABC_PrioritizeAddress(
+                mAccount.username(), mAccount.password(),
+                id(), null, error);
     }
 }

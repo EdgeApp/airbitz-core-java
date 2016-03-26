@@ -183,9 +183,15 @@ public class ReceiveAddress {
      */
     public void prioritize(boolean prior) {
         tABC_Error error = new tABC_Error();
-        core.ABC_PrioritizeAddress(
-                mAccount.username(), mAccount.password(),
-                mWallet.id(), mAddress, error);
+        if (prior) {
+            core.ABC_PrioritizeAddress(
+                    mAccount.username(), mAccount.password(),
+                    mWallet.id(), mAddress, error);
+        } else {
+            core.ABC_PrioritizeAddress(
+                    mAccount.username(), mAccount.password(),
+                    mWallet.id(), null, error);
+        }
     }
 
     /**

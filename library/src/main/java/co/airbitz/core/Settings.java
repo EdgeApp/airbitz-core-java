@@ -188,21 +188,6 @@ public class Settings {
     }
 
     /**
-     * Set the PIN of the user
-     */
-    public void pin(String value) {
-        settings().setSzPIN(value);
-    }
-
-    /**
-     * Retrieve the pin of the user.
-     * @return the pin for the user
-     */
-    public String pin() {
-        return settings().getSzPIN();
-    }
-
-    /**
      * Set whether the user wants to include their display name on {@link
      * ReceiveAddress} URIs. This is not enforced inside ABC. The application
      * developer must include the display name if the user desires.

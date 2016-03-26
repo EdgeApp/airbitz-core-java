@@ -91,6 +91,7 @@ public class UnsentTransaction {
         core.ABC_SpendSaveTx(mSpend.mSpend, mRawTx, pTxId, error);
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
             mTxId = Jni.getStringAtPtr(core.longp_value(txid));
+            mAccount.reloadWallets();
             return mWallet.transaction(mTxId);
         } else {
             mTxId = null;

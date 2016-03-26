@@ -77,7 +77,7 @@ public class Account {
     private String mPassword;
     private AirbitzCore mApi;
     private Categories mCategories;
-    List<Wallet> mCachedWallets = null;
+    List<Wallet> mCachedWallets;
     Engine mEngine;
     Settings mSettings;
 
@@ -90,42 +90,40 @@ public class Account {
         /**
          * Called when the password changed remotely for this user.
          */
-        public void userRemotePasswordChange();
+        public void remotePasswordChange();
 
         /**
          * Called when the user has been completed logged out.
          */
-        public void userLoggedOut();
+        public void loggedOut();
 
         /**
          * Called when the account has changed remotely. This includes a change
          * in settings which occurred on a different device.
          */
-        public void userAccountChanged();
+        public void accountChanged();
 
         /**
          * Called when wallets have begun loading. This can be used to display
          * a notification to the user that the wallet meta-data is still being
          * fetched or cloned.
          */
-        public void userWalletsLoading();
-
-        /**
-         * When a wallet completes loading, this is called.
-         * @param loaded how many wallets have been loaded so far
-         * @param total the total number of wallets that will be loaded
-         */
-        public void userWalletStatusChange(int loaded, int total);
+        public void walletsLoading();
 
         /**
          * Called when all the wallets have been loaded.
          */
-        public void userWalletsLoaded();
+        public void walletsLoaded();
 
         /**
          * Called when the data in a wallet changed remotely.
          */
-        public void userWalletsChanged();
+        public void walletsChanged();
+
+        /**
+         * Called when the data in a wallet changed remotely.
+         */
+        public void walletChanged(Wallet wallet);
 
         /**
          * If the user has OTP enabled, this is called when a clock skew is
@@ -136,7 +134,7 @@ public class Account {
         /**
          * Called when OTP has been enabled remotely.
          */
-        public void otpRequired(String resetDate);
+        public void otpRequired();
 
         /**
          * Called when OTP reset has been triggered.
@@ -156,7 +154,7 @@ public class Account {
         /**
          * Called when a wallet balance changes.
          */
-        public void balanceUpdate();
+        public void balanceUpdate(Wallet wallet, String txid);
 
         /**
          * Called when new bitcoin has been received.
@@ -169,17 +167,6 @@ public class Account {
          */
         // public void sweep(Wallet wallet, Transaction transaction, long amountSwept);
         public void sweep(Wallet wallet, String txid, long amountSwept);
-
-        /**
-         * Called when connecting to the bitcoin network is initialized.
-         */
-        public void bitcoinLoading();
-
-        /**
-         * Called when the device is in sync with the bitcoin network. This
-         * means that existing addresses for this wallet have all been queried.
-         */
-        public void bitcoinLoaded();
     }
     Callbacks mCallbacks;
 
@@ -340,7 +327,7 @@ public class Account {
      * Checks whether the account has a pin.
      * @return true if the account has a pin
      */
-    public boolean accountHasPinLogin() {
+    public boolean hasPinLogin() {
         return mApi.accountHasPinLogin(username());
     }
 
@@ -348,7 +335,19 @@ public class Account {
      * Setup the account PIN. If the account settings allow PIN login, then
      * this will setup the account PIN package as well.
      */
-    public void pinLoginSetup() throws AirbitzException {
+    public void pinLoginSetup(boolean enabled) throws AirbitzException {
+        if (enabled) {
+            pinLoginSetup();
+        } else {
+            pinLoginDisable();
+        }
+    }
+
+    /**
+     * Setup the account PIN. If the account settings allow PIN login, then
+     * this will setup the account PIN package as well.
+     */
+    void pinLoginSetup() throws AirbitzException {
         Settings settings = settings();
         settings.settings().setBDisablePINLogin(false);
         settings.save();
@@ -358,7 +357,7 @@ public class Account {
      * Setup the account PIN. If the account settings allow PIN login, then
      * this will setup the account PIN package as well.
      */
-    public void pinLoginDisable() throws AirbitzException {
+    void pinLoginDisable() throws AirbitzException {
         Settings settings = settings();
         settings.settings().setBDisablePINLogin(true);
         settings.save();
@@ -417,7 +416,11 @@ public class Account {
      * wallets.  @return list of wallets
      */
     public List<Wallet> wallets() {
-        return mCachedWallets;
+        if (mCachedWallets != null) {
+            return new ArrayList<Wallet>(mCachedWallets);
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -458,6 +461,7 @@ public class Account {
                 walletName, currencyNum, ppChar, pError);
         if (result == tABC_CC.ABC_CC_Ok) {
             mEngine.startWatchers();
+            reloadWallets();
             return true;
         } else {
             AirbitzCore.loge("Create wallet failed - "+pError.getSzDescription()+", at "+pError.getSzSourceFunc());
@@ -469,7 +473,7 @@ public class Account {
      * This can be used to change or set the password for the account.
      * @param password
      */
-    public void passwordSetup(String password) throws AirbitzException {
+    public void passwordChange(String password) throws AirbitzException {
         tABC_Error error = new tABC_Error();
         tABC_CC cc = core.ABC_ChangePassword(
             mUsername, password, password, error);
@@ -498,11 +502,11 @@ public class Account {
 
     /**
      * Fetch a wallet by wallet id.
-     * @param uuid the wallet id
+     * @param id the wallet id
      * @return a wallet object
      */
-    public Wallet wallet(String uuid) {
-        if (uuid == null) {
+    public Wallet wallet(String id) {
+        if (id == null) {
             return null;
         }
         List<Wallet> wallets = wallets();
@@ -510,7 +514,7 @@ public class Account {
             return null;
         }
         for (Wallet w : wallets) {
-            if (uuid.equals(w.id())) {
+            if (id.equals(w.id())) {
                 return w;
             }
         }
@@ -536,6 +540,7 @@ public class Account {
         if (result != tABC_CC.ABC_CC_Ok) {
             AirbitzCore.loge("Error: CoreBridge.setWalletOrder" + error.getSzDescription());
         }
+        reloadWallets();
     }
 
     void sendReloadWallets() {
@@ -543,9 +548,10 @@ public class Account {
     }
 
     /**
-     * Request the wallets be reloaded. This is an asynchronous call and will return immediately.
+     * Request the wallets be reloaded. This is an asynchronous call and will
+     * return immediately.
      */
-    public void reloadWallets() {
+    void reloadWallets() {
         mEngine.reloadWallets();
     }
 
@@ -602,7 +608,7 @@ public class Account {
      * @param message
      * @return the tuple of address and the signature
      */
-    public BitidSignature bitidSignature(String uri, String message) {
+    public BitidSignature bitidSign(String uri, String message) {
         BitidSignature bitid = new BitidSignature();
 
         tABC_Error error = new tABC_Error();
@@ -651,7 +657,7 @@ public class Account {
      * Used to check if OTP is enabled for this account.
      * @return true if OTP is enabled
      */
-    public boolean otpAuthGet() throws AirbitzException {
+    public boolean isOtpEnabled() throws AirbitzException {
         tABC_Error error = new tABC_Error();
         SWIGTYPE_p_long ptimeout = core.new_longp();
         SWIGTYPE_p_int lp = core.new_intp();
@@ -667,9 +673,9 @@ public class Account {
     }
 
     /**
-     * Enable OTP for this account
+     * Enable OTP for this account.
      */
-    public void otpSetup() throws AirbitzException {
+    public void otpEnable() throws AirbitzException {
         tABC_Error error = new tABC_Error();
         core.ABC_OtpAuthSet(mUsername, mPassword, OTP_RESET_DELAY_SECS, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
@@ -678,7 +684,8 @@ public class Account {
     }
 
     /**
-     * Disable OTP for this account.
+     * Disable OTP for this account on the server and removes the key from the
+     * local device.
      */
     public void otpDisable() throws AirbitzException {
         tABC_Error error = new tABC_Error();
@@ -702,10 +709,10 @@ public class Account {
     }
 
     /**
-     * TODO
+     *
      */
-    public boolean isOtpResetPending(String username) throws AirbitzException {
-        return mApi.isOtpResetPending(username);
+    public boolean isOtpResetPending() throws AirbitzException {
+        return mApi.isOtpResetPending(username());
     }
 
     /**
@@ -722,44 +729,11 @@ public class Account {
     }
 
     /**
-     * Generate an OTP QR code.
-     * @return a byte-array for the two factor secret QR code
+     * Set the OTP secret for the account.
+     * @param secret the OTP secret for this account
      */
-    public byte[] otpQrCode() {
-        SWIGTYPE_p_long lp = core.new_longp();
-        SWIGTYPE_p_p_unsigned_char ppData = core.longp_to_unsigned_ppChar(lp);
-
-        SWIGTYPE_p_int pWidth = core.new_intp();
-        SWIGTYPE_p_unsigned_int pWCount = core.int_to_uint(pWidth);
-
-        tABC_Error error = new tABC_Error();
-        tABC_CC cc = core.ABC_QrEncode(otpSecret(), ppData, pWCount, error);
-        if (cc == tABC_CC.ABC_CC_Ok) {
-            int width = core.intp_value(pWidth);
-            return Jni.getBytesAtPtr(core.longp_value(lp), width*width);
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Generate an OTP QR code.
-     * @return a bitmap for the two factor secret QR code
-     */
-    public Bitmap otpQrCodeBitmap() {
-        byte[] array = otpQrCode();
-        if (null != array) {
-            return mApi.qrEncode(array, (int) Math.sqrt(array.length), 4);
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * This is a blocking function that
-     */
-    public void waitOnWatchers() {
-        mEngine.waitOnWatchers();
+    public void otpSecret(String secret) throws AirbitzException {
+        mApi.otpKeySet(username(), secret);
     }
 
     /**
@@ -769,7 +743,7 @@ public class Account {
      * this is finished, {@link #startBackgroundTasks startBackgroundTasks} can
      * be called to begin sync-ing with the network.
      */
-    public void deleteWatcherCache() {
+    public void clearBlockchainCache() {
         mEngine.deleteWatcherCache();
     }
 }
