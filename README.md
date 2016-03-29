@@ -6,10 +6,10 @@ This repository contains the java bindings to the [airbitz-core][core] library.
 
 Just add `airbitz-core-android` to your dependencies in your `build.gradle`.
 
-	dependencies {
-		compile 'com.airbitz:airbitz-core-android:0.0.1@aar'
-		...
-	}
+    dependencies {
+        compile 'com.airbitz:airbitz-core-android:0.0.1@aar'
+        ...
+    }
 
 ## Documentation
 
@@ -19,7 +19,7 @@ Docs will be available soon.
 
 First have [airbitz-core][core] cloned locally at the same level as this repository.
 
-    ./gradlew buildAirbitzCore assemble 
+    ./gradlew buildAirbitzMainnet assemble
 
 If all goes well, you can publish to your local maven.
 
