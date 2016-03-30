@@ -45,6 +45,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+import co.airbitz.core.BuildConfig;
 import co.airbitz.internal.Jni;
 import co.airbitz.internal.SWIGTYPE_p_bool;
 import co.airbitz.internal.SWIGTYPE_p_double;
@@ -227,18 +228,11 @@ public class AirbitzCore {
     }
 
     /**
-     * Gets the version of AirbitzCore compiled into this implementation
+     * Gets the version of AirbitzCore.
      * @return version number
      */
     public String version() {
-        tABC_Error error = new tABC_Error();
-        SWIGTYPE_p_long lp = core.new_longp();
-        SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
-        core.ABC_Version(ppChar, error);
-        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
-            return Jni.getStringAtPtr(core.longp_value(lp));
-        }
-        return "";
+        return BuildConfig.VERSION_NAME;
     }
 
     /*
