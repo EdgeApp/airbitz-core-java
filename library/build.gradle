@@ -19,7 +19,7 @@ android {
 
 
 dependencies {
-    compile 'com.android.support:support-v4:21.0.+'
+    compile 'com.android.support:support-v4:21.+'
 }
 
 android.libraryVariants.all { variant -> 
