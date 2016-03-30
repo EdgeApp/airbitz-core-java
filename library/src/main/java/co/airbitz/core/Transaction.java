@@ -60,7 +60,6 @@ public class Transaction {
     long mAmountFeesAirbitzSatoshi;
     long mAmountFeesMinersSatoshi;
     private String mId;
-    private String mMalId;
     private Date mDate;
     private List<TxOutput> mOutputs;
     private List<TxOutput> mInputs;
@@ -95,10 +94,6 @@ public class Transaction {
 
         mABFees = mTxInfo.getDetails().getmAmountFeesAirbitzSatoshi();
         mMinerFees = mTxInfo.getDetails().getmAmountFeesMinersSatoshi();
-
-        if (mTxInfo.getSzMalleableTxId() != null) {
-            mMalId = mTxInfo.getSzMalleableTxId();
-        }
 
         mInputs = new ArrayList<TxOutput>();
         mOutputs = new ArrayList<TxOutput>();
@@ -174,14 +169,6 @@ public class Transaction {
      */
     public String id() {
         return mId;
-    }
-
-    /**
-     * Retrieve the malleable transaction id. This is the ID on the blockchain.
-     * @return the malleable transaction id
-     */
-    public String malId() {
-        return mMalId;
     }
 
     /**
