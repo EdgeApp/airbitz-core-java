@@ -248,7 +248,7 @@ public class Transaction {
      * @return true if this is a double spend
      */
     public boolean isDoubleSpend() {
-        return false;
+        return mTxInfo.getBDoubleSpent();
     }
 
     /**
@@ -256,6 +256,6 @@ public class Transaction {
      * @return true if this is an RBF transaction
      */
     public boolean isReplaceByFee() {
-        return false;
+        return mTxInfo.getBReplaceByFee();
     }
 }
