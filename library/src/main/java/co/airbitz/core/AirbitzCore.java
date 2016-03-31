@@ -120,7 +120,7 @@ public class AirbitzCore {
      * @param airbitzApiKey API key obtained from Airbitz Inc.
      */
     public void init(Context context, String airbitzApiKey) {
-        init(context, airbitzApiKey, null);
+        init(context, airbitzApiKey, "");
     }
 
     /**
