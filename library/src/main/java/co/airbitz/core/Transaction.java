@@ -67,6 +67,7 @@ public class Transaction {
     private long mAmountSatoshi;
     private long mMinerFees;
     private long mABFees;
+    private int mHeight;
 
     private Wallet mWallet;
     private Account mAccount;
@@ -83,6 +84,8 @@ public class Transaction {
 
     public void setup() {
         mId = mTxInfo.getID();
+        mHeight = (int) mTxInfo.getHeight();
+
         mMeta.name(mTxInfo.getDetails().getSzName());
         mMeta.notes(mTxInfo.getDetails().getSzNotes());
         mMeta.category(mTxInfo.getDetails().getSzCategory());
@@ -147,20 +150,17 @@ public class Transaction {
      * transaction was mined in.
      */
     public int height() {
+        if (mHeight > 0) {
+            return mHeight;
+        }
+
         tABC_Error Error = new tABC_Error();
         SWIGTYPE_p_int th = core.new_intp();
-
-        setSyncing(false);
-        if (mWallet.id().length() == 0 || id().length() == 0) {
-            return 0;
-        }
         if (core.ABC_TxHeight(mWallet.id(), id(), th, Error) != tABC_CC.ABC_CC_Ok) {
-            setSyncing(true);
             return 0;
         }
-
-        int txHeight = core.intp_value(th);
-        return txHeight;
+        mHeight = core.intp_value(th);
+        return mHeight;
     }
 
     /**
