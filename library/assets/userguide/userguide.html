@@ -43,13 +43,21 @@ href="https://developer.airbitz.co">developer.airbitz.co</a> and signup to get y
 <p>
 To get started with the airbitz-core-android API you can create a new android
 project. Once you have your new project ready to go, add the following to your
-build.gradle.
+build.gradle inside or your app directory.
 </p>
-<pre><code class="groovy">allprojects {
+<pre><code class="groovy">// Add the Airbitz maven repository
+allprojects {
     repositories {
         maven {
             url "https://developer.airbitz.co/maven"
         }
+    }
+}
+
+// Be sure your minSdkVersion is 16
+android {
+    defaultConfig {
+        minSdkVersion 16
     }
 }
 
