@@ -154,19 +154,17 @@ public class Account {
         /**
          * Called when a wallet balance changes.
          */
-        public void balanceUpdate(Wallet wallet, String txid);
+        public void balanceUpdate(Wallet wallet, Transaction tx);
 
         /**
          * Called when new bitcoin has been received.
          */
-        // public void incomingBitcoin(Wallet wallet, Transaction transaction);
-        public void incomingBitcoin(Wallet wallet, String txid);
+        public void incomingBitcoin(Wallet wallet, Transaction tx);
 
         /**
          * Called when a private key sweep finishes.
          */
-        // public void sweep(Wallet wallet, Transaction transaction, long amountSwept);
-        public void sweep(Wallet wallet, String txid, long amountSwept);
+        public void sweep(Wallet wallet, Transaction tx, long amountSwept);
     }
     Callbacks mCallbacks;
 
