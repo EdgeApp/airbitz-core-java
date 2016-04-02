@@ -4,20 +4,20 @@
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.2.0/styles/color-brewer.min.css" rel="stylesheet">
     <link href="javadoc/stylesheet.css" rel="stylesheet">
-	<title>Android User Guide</title>
+    <title>Android User Guide</title>
 </head>
 <body>
-	<!-- TODO, convert this to markdown -->
+    <!-- TODO, convert this to markdown -->
     <nav class="navbar navbar-fixed-top site-decorated">
     <div class="container-fluid">
         <div class="navbar-header">
-			<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#submenu-collapse" aria-expanded="false">
-				<span class="sr-only">Toggle navigation</span>
-				<span class="icon-bar"></span>
-				<span class="icon-bar"></span>
-				<span class="icon-bar"></span>
-			</button>
-			<a href="https://developer.airbitz.co" class="navbar-brand" target="_top" alt="Airbitz"><img src="https://airbitz.co/static/airbitz-theme/img-custom/airbitz-logo-mono-blue-100.a5c039aae748.png" width="50px" height="26px" /></a>
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#submenu-collapse" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="https://developer.airbitz.co" class="navbar-brand" target="_top" alt="Airbitz"><img src="https://airbitz.co/static/airbitz-theme/img-custom/airbitz-logo-mono-blue-100.a5c039aae748.png" width="50px" height="26px" /></a>
         </div>
 
         <div class="collapse navbar-collapse" id="submenu-collapse">
@@ -67,11 +67,14 @@ dependencies {
 }
 </pre></code>
 
+<p>In your AndroidManifest.xml be sure to require internet access. </p>
+<pre><code class="xml">&lt;uses-permission android:name="android.permission.INTERNET" /&gt;</pre></code>
+
 <p>
 Your are not ready to use ABC in your project. Let's write some code.
 </p>
 
-<pre><code class="java">
+<pre><code class="java">// Initialize ABC with your API from developer.airbitz.co  
 AirbitzCore api = AirbitzCore.getApi();
 api.init(context, "YOUR-API-KEY");
 
@@ -91,16 +94,38 @@ Wallet wallet = account.createWallet("My Awesome Wallet", "USD");
 account.logout();
 </code></pre>
 
-<pre><code class="java">
-// Log back in with full credentials
+<p>
+Airbitz providers multiple ways to log a user into their account. Password
+logins are the obvious way to log a user in, but they can be tedious and
+sometimes you just want quick access.
+</p>
+
+<p>
+The pinLogin is a faster method, but it requires that the user data exists
+locally on the phone. So the pinLogin can only be used after the user has done
+one passwordLogin. You can use accountHasPinLogin to determine whether to show
+a use the password login form, or the pin login form.
+</p>
+
+<pre><code class="java">// Log back in with full credentials
 Account account = api.passwordLogin("myusername", "MyPa55w0rd");
 
 // Or log back in with PIN
 Account account = api.pinLogin("myusername", "1111");
 </code></pre>
 
-<pre><code class="java">
-account.callbacks(new Callbacks {
+<p>
+ABC does a lot of work in the background such as syncing encrypted data and
+communicating with the blockchain. Callbacks are how ABC notifies you of new
+bitcoin, wallet balance changes, block height changes or data changes.
+</p>
+
+<p>
+It is important to set the callbacks for an account after login in order to
+receive notifications about asynchronous events.
+</p>
+
+<pre><code class="java">account.callbacks(new Callbacks {
     public void incomingBitcoin(Wallet wallet, String txid) {
         // Yay! Received bitcoin...
     }
@@ -120,9 +145,13 @@ String uri     = request.uri();
 Bitmap qrcode  = request.qrCode();
 </code></pre>
 
+<p>
+This just scratches the surface of what ABC can do.
+</p>
+
     </div>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.2.0/highlight.min.js"></script>
-	<script>hljs.initHighlightingOnLoad();</script>
+    <script>hljs.initHighlightingOnLoad();</script>
 </body>
 </html>
