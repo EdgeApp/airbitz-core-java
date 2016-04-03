@@ -23,6 +23,6 @@ First have [airbitz-core][core] cloned locally at the same level as this reposit
 
 If all goes well, you can publish to your local maven.
 
-    ./gradlew publishLibraryPublicationToMavenLocal
+    ./gradlew publishToMavenLocal
 
 [core]: https://github.com/airbitz/airbitz-core

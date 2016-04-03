@@ -56,7 +56,8 @@ public class ParsedUri {
         ADDRESS,
         PRIVATE_KEY,
         BITID,
-        PAYMENT_PROTO;
+        PAYMENT_PROTO,
+        OTP_KEY;
     };
 
     private tABC_ParsedUri mParsedUri;
@@ -66,6 +67,7 @@ public class ParsedUri {
     private String mWif;
     private String mPaymentProto;
     private String mBitidUri;
+    private String mOtpKey;
 
     ParsedUri(String text) throws AirbitzException {
         tABC_Error error = new tABC_Error();
@@ -81,6 +83,7 @@ public class ParsedUri {
         mWif = mParsedUri.getSzWif();
         mPaymentProto = mParsedUri.getSzPaymentProto();
         mBitidUri = mParsedUri.getSzBitidUri();
+        mOtpKey = mParsedUri.getSzOtpKey();
         if (mPaymentProto != null) {
             mType = UriType.PAYMENT_PROTO;
         } else if (mBitidUri != null) {
@@ -89,6 +92,8 @@ public class ParsedUri {
             mType = UriType.PRIVATE_KEY;
         } else if (mAddress != null) {
             mType = UriType.ADDRESS;
+        } else if (mOtpKey != null) {
+            mType = UriType.OTP_KEY;
         }
     }
 
@@ -142,6 +147,15 @@ public class ParsedUri {
      */
     public String bitid() {
         return mBitidUri;
+    }
+
+    /**
+     * Returns an OTP token, if this is an otpauth URI.
+     * If the URI is not a Bitid request this will return null.
+     * @return the OTP Key
+     */
+    public String otpKey() {
+        return mOtpKey;
     }
 
     /**
