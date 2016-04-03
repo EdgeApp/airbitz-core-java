@@ -37,12 +37,16 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import co.airbitz.internal.Jni;
+import co.airbitz.internal.SWIGTYPE_p_int;
 import co.airbitz.internal.SWIGTYPE_p_long;
 import co.airbitz.internal.SWIGTYPE_p_p_char;
+import co.airbitz.internal.SWIGTYPE_p_p_p_char;
+import co.airbitz.internal.SWIGTYPE_p_unsigned_int;
 import co.airbitz.internal.core;
 import co.airbitz.internal.tABC_CC;
 import co.airbitz.internal.tABC_Error;
@@ -70,6 +74,43 @@ public class DataStore  {
         mPluginId = pluginId;
     }
 
+    /**
+     * List the keys in the data store.
+     * @return the list of keys.
+     */
+    public List<String> list() {
+        tABC_Error Error = new tABC_Error();
+        List<String> keys = new ArrayList<String>();
+        
+        SWIGTYPE_p_int pCount = core.new_intp();
+        SWIGTYPE_p_unsigned_int pUCount = core.int_to_uint(pCount);
+        
+        SWIGTYPE_p_long aKeys = core.new_longp();
+        SWIGTYPE_p_p_p_char pppKeys = core.longp_to_pppChar(aKeys);
+        
+        tABC_CC result = core.ABC_PluginDataKeys(mAccount.username(),
+                                                 mAccount.password(),
+                                                 mPluginId,
+                                                 pppKeys, pUCount, Error);
+        if (tABC_CC.ABC_CC_Ok == result)
+        {
+            if (core.longp_value(aKeys) != 0)
+            {
+                int count = core.intp_value(pCount);
+                long base = core.longp_value(aKeys);
+                for (int i = 0; i < count; i++)
+                {
+                    Jni.pLong temp = new Jni.pLong(base + i * 4);
+                    long start = core.longp_value(temp);
+                    if (start != 0) {
+                        keys.add(Jni.getStringAtPtr(start));
+                    }
+                }
+            }
+        }
+        return keys;
+    }
+    
     /**
      * Retreive the value for a given key.
      * @param key the key
