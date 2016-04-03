@@ -296,7 +296,7 @@ public class Utils {
         return 0L;
     }
 
-    public String totpGenerate(String key)
+    public static String totpGenerate(String key)
     {
         String out = "";
         tABC_Error error = new tABC_Error();
@@ -309,7 +309,7 @@ public class Utils {
         return out;
     }
 
-    public String totpEncode(String key, String label)
+    public static String totpEncode(String key, String label)
     {
         String out = "";
         tABC_Error error = new tABC_Error();
