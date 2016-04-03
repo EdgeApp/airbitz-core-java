@@ -295,4 +295,17 @@ public class Utils {
         }
         return 0L;
     }
+
+    public String totpGenerate(String key)
+    {
+        String out = "";
+        tABC_Error error = new tABC_Error();
+        SWIGTYPE_p_long lp = core.new_longp();
+        SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
+        core.ABC_OtpGenerate(ppChar, key, error);
+        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
+            out = Jni.getStringAtPtr(core.longp_value(lp));
+        }
+        return out;
+    }
 }
