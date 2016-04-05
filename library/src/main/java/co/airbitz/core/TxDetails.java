@@ -48,7 +48,6 @@ class TxDetails extends tABC_TxDetails {
     long mBizId; /** payee business-directory id (0 otherwise) */
     String mCategory;   /** category for the transaction */
     String mNotes;  /** notes for the transaction */
-    int mAttributes;    /** attributes for the transaction */
 
     public TxDetails(long pv) {
         super(pv, false);
@@ -65,7 +64,6 @@ class TxDetails extends tABC_TxDetails {
             mBizId = super.getBizId();
             mCategory = super.getSzCategory();
             mNotes = super.getSzNotes();
-            mAttributes = (int) super.getAttributes();
         }
     }
 

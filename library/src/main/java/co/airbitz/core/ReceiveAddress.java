@@ -245,7 +245,6 @@ public class ReceiveAddress {
         mDetails.setSzName(mMeta.name());
         mDetails.setSzNotes(mMeta.notes());
         mDetails.setSzCategory(mMeta.category());
-        mDetails.setAttributes(0x0);
         if (0 < mMeta.bizid()) {
             mDetails.setBizId(mMeta.bizid());
         }
