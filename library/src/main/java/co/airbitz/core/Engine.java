@@ -670,10 +670,17 @@ class Engine {
         } else if (type == tABC_AsyncEventType.ABC_AsyncEventType_AddressCheckDone) {
             List<String> ids = mAccount.walletIds();
             List<Wallet> wallets = mAccount.wallets();
+            int walletCount = ids != null ? ids.size() : 0;
+            int loadedCount = 0;
+            if (wallets != null) {
+                for (Wallet w : wallets) {
+                    if (w.isSynced()) {
+                        loadedCount++;
+                    }
+                }
+            }
             // Check to see if all the wallets have finished sync-ing before notifying...
-            if (ids != null
-                    && wallets != null
-                    && ids.size() == wallets.size()) {
+            if (walletCount == loadedCount) {
                 mMainHandler.post(mWalletsLoaded);
             }
         } else if (type == tABC_AsyncEventType.ABC_AsyncEventType_BalanceUpdate) {
