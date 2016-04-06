@@ -77,6 +77,7 @@ public class Account {
     private String mPassword;
     private AirbitzCore mApi;
     private Categories mCategories;
+    private boolean mLoggedIn;
     List<Wallet> mCachedWallets;
     Engine mEngine;
     Settings mSettings;
@@ -172,6 +173,7 @@ public class Account {
         mApi = api;
         mUsername = username;
         mPassword = password;
+        mLoggedIn = true;
         mCategories = new Categories(this);
         mEngine = new Engine(api, this);
         settings();
@@ -213,7 +215,7 @@ public class Account {
      * @return true if the user is logged in
      */
     public boolean isLoggedIn() {
-        return mUsername != null;
+        return mLoggedIn;
     }
 
     /**
@@ -367,10 +369,9 @@ public class Account {
      */
     public void logout() {
         mEngine.stop();
-        mSettings = null;
-        mCachedWallets = null;
         mApi.mAccounts.remove(this);
         mApi.destroy();
+        mLoggedIn = false;
     }
 
     /**
