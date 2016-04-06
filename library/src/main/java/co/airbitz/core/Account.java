@@ -369,9 +369,9 @@ public class Account {
      */
     public void logout() {
         mEngine.stop();
+        mLoggedIn = false;
         mApi.mAccounts.remove(this);
         mApi.destroy();
-        mLoggedIn = false;
     }
 
     /**

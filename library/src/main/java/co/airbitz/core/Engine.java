@@ -47,6 +47,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -110,8 +111,16 @@ class Engine {
         }
     }
 
+    private void sendIfNotEmptying(Handler handler, Runnable runnable) {
+        if (handler != null && !handler.hasMessages(LAST)) {
+            handler.post(runnable);
+        } else {
+            AirbitzCore.logi("Ignore message...handler is empting");
+        }
+    }
+
     private void startWatcher(final String uuid) {
-        mWatcherHandler.post(new Runnable() {
+        sendIfNotEmptying(mWatcherHandler, new Runnable() {
             public void run() {
                 if (uuid != null && !mWatcherTasks.containsKey(uuid)) {
                     tABC_Error error = new tABC_Error();
@@ -143,17 +152,22 @@ class Engine {
     }
 
     public void connectWatcher(final String uuid) {
-        mWatcherHandler.post(new Runnable() {
+        sendIfNotEmptying(mWatcherHandler, new Runnable() {
             public void run() {
-                tABC_Error error = new tABC_Error();
-                core.ABC_WatcherConnect(uuid, error);
-                Utils.printABCError(error);
+                if (uuid != null && mWatcherTasks.containsKey(uuid) && mAccount.isLoggedIn()) {
+                    AirbitzCore.logi("Watcher connecting  " + uuid + ".");
+                    tABC_Error error = new tABC_Error();
+                    core.ABC_WatcherConnect(uuid, error);
+                    Utils.printABCError(error);
+                } else {
+                    AirbitzCore.logi("Watcher not connecting  " + uuid + ". Watcher not running.");
+                }
             }
         });
     }
 
     public void disconnectWatchers() {
-        mWatcherHandler.post(new Runnable() {
+        sendIfNotEmptying(mWatcherHandler, new Runnable() {
             public void run() {
                 for (String uuid : mWatcherTasks.keySet()) {
                     tABC_Error error = new tABC_Error();
@@ -192,22 +206,29 @@ class Engine {
     }
 
     public void stopWatchers() {
-        tABC_Error error = new tABC_Error();
-        for (String uuid : mWatcherTasks.keySet()) {
-            core.ABC_WatcherStop(uuid, error);
-        }
-        // Wait for all of the threads to finish.
-        for (Thread thread : mWatcherTasks.values()) {
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                AirbitzCore.loge(e.getMessage());
+        mWatcherHandler.post(new Runnable() {
+            public void run() {
+                tABC_Error error = new tABC_Error();
+                List<String> uuids = new ArrayList<String>(mWatcherTasks.keySet());
+                for (String uuid : uuids) {
+                    core.ABC_WatcherStop(uuid, error);
+                }
+                // Wait for all of the threads to finish.
+                for (String uuid : uuids) {
+                    Thread t = mWatcherTasks.get(uuid);
+                    try {
+                        t.join();
+                    } catch (InterruptedException e) {
+                        AirbitzCore.loge(e.getMessage());
+                    }
+                    mWatcherTasks.remove(uuid);
+                }
+                for (String uuid : uuids) {
+                    core.ABC_WatcherDelete(uuid, error);
+                }
             }
-        }
-        for (String uuid : mWatcherTasks.keySet()) {
-            core.ABC_WatcherDelete(uuid, error);
-        }
-        mWatcherTasks.clear();
+        });
+        waitOnWatchers();
     }
 
     public void stopWatcher(String uuid) {
