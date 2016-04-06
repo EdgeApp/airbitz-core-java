@@ -369,7 +369,7 @@ public class Account {
         mEngine.stop();
         mSettings = null;
         mCachedWallets = null;
-
+        mApi.mAccounts.remove(this);
         mApi.destroy();
     }
 

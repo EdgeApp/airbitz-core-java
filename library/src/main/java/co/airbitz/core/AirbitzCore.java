@@ -91,9 +91,9 @@ public class AirbitzCore {
 
     private static AirbitzCore mInstance = null;
     private static boolean mInitialized = false;
-    private List<Account> mAccounts;
     private boolean mConnectivity = true;
     private ExchangeCache mExchangeCache;
+    List<Account> mAccounts;
 
     static {
         System.loadLibrary("abc");

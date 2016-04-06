@@ -398,8 +398,6 @@ class Engine {
         mExchangeHandler.sendEmptyMessage(LAST);
         mWatcherHandler.removeCallbacksAndMessages(null);
         mWatcherHandler.sendEmptyMessage(LAST);
-        mMainHandler.removeCallbacksAndMessages(null);
-        mMainHandler.sendEmptyMessage(LAST);
         while (mCoreHandler.hasMessages(LAST)
                 || mWatcherHandler.hasMessages(LAST)
                 || mExchangeHandler.hasMessages(LAST)
@@ -409,13 +407,14 @@ class Engine {
                     "Data: " + mDataHandler.hasMessages(LAST) + ", " +
                     "Core: " + mCoreHandler.hasMessages(LAST) + ", " +
                     "Watcher: " + mWatcherHandler.hasMessages(LAST) + ", " +
-                    "Exchange: " + mExchangeHandler.hasMessages(LAST) + ", " +
-                    "Main: " + mMainHandler.hasMessages(LAST));
+                    "Exchange: " + mExchangeHandler.hasMessages(LAST) + "");
                 Thread.sleep(200);
             } catch (Exception e) {
                 AirbitzCore.loge(e.getMessage());
             }
         }
+        mMainHandler.removeCallbacksAndMessages(null);
+        mMainHandler.sendEmptyMessage(LAST);
 
         stopWatchers();
         stopExchangeRateUpdates();
@@ -718,7 +717,6 @@ class Engine {
     private Wallet getWalletFromCore(String uuid) {
         tABC_CC result;
         tABC_Error error = new tABC_Error();
-
         Wallet wallet = new Wallet(mAccount, uuid);
         if (null != mWatcherTasks.get(uuid)) {
             // Load Wallet name
