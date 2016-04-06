@@ -726,7 +726,7 @@ class Engine {
             SWIGTYPE_p_p_char ppName = core.longp_to_ppChar(pName);
             result = core.ABC_WalletName(mAccount.username(), uuid, ppName, error);
             if (result == tABC_CC.ABC_CC_Ok) {
-                wallet.name(Jni.getStringAtPtr(core.longp_value(pName)));
+                wallet.setName(Jni.getStringAtPtr(core.longp_value(pName)));
             }
 
             // Load currency
