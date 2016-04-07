@@ -722,8 +722,8 @@ class Engine {
                         reloadWallets();
                     }
                 }, BALANCE_CHANGE_DELAY);
-                mMainHandler.removeCallbacks(mWalletsLoaded);
-                mMainHandler.postDelayed(mWalletsLoaded, BLOCKCHAIN_WAIT);
+                // mMainHandler.removeCallbacks(mWalletsLoaded);
+                // mMainHandler.postDelayed(mWalletsLoaded, BLOCKCHAIN_WAIT);
             }
         } else if (type == tABC_AsyncEventType.ABC_AsyncEventType_IncomingSweep) {
             final String uuid = info.getSzWalletUUID();
