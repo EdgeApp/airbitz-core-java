@@ -81,9 +81,13 @@ class Engine {
 
     private Handler mMainHandler;
     private Handler mCoreHandler;
+    private HandlerThread mCoreThread;
     private Handler mWatcherHandler;
+    private HandlerThread mWatcherThread;
     private Handler mDataHandler;
+    private HandlerThread mDataThread;
     private Handler mExchangeHandler;
+    private HandlerThread mExchangeThread;
     private boolean mDataFetched = false;
 
     final static int RELOAD = 0;
@@ -331,21 +335,21 @@ class Engine {
     public void start() {
         mMainHandler = new MainHandler();
 
-        HandlerThread ht = new HandlerThread("Data Handler");
-        ht.start();
-        mDataHandler = new DataHandler(ht.getLooper());
+        mDataThread = new HandlerThread(mAccount.username() + " Data Handler");
+        mDataThread.start();
+        mDataHandler = new DataHandler(mDataThread.getLooper());
 
-        ht = new HandlerThread("Exchange Handler");
-        ht.start();
-        mExchangeHandler = new ExchangeHandler(ht.getLooper());
+        mExchangeThread = new HandlerThread(mAccount.username() + " Exchange Handler");
+        mExchangeThread.start();
+        mExchangeHandler = new ExchangeHandler(mExchangeThread.getLooper());
 
-        ht = new HandlerThread("ABC Core");
-        ht.start();
-        mCoreHandler = new Handler(ht.getLooper());
+        mCoreThread = new HandlerThread(mAccount.username() + " ABC Core");
+        mCoreThread.start();
+        mCoreHandler = new Handler(mCoreThread.getLooper());
 
-        ht = new HandlerThread("Watchers");
-        ht.start();
-        mWatcherHandler = new Handler(ht.getLooper());
+        mWatcherThread = new HandlerThread(mAccount.username() + " Watchers");
+        mWatcherThread.start();
+        mWatcherHandler = new Handler(mWatcherThread.getLooper());
 
         final List<String> uuids = mAccount.walletIds();
         final int walletCount = uuids.size();
@@ -434,13 +438,16 @@ class Engine {
                 AirbitzCore.loge(e.getMessage());
             }
         }
-        mMainHandler.removeCallbacksAndMessages(null);
-        mMainHandler.sendEmptyMessage(LAST);
+        waitOnAsync();
 
         stopWatchers();
         stopExchangeRateUpdates();
         stopFileSyncUpdates();
-        waitOnAsync();
+
+        mCoreThread.quit();
+        mDataThread.quit();
+        mExchangeThread.quit();
+        mWatcherThread.quit();
     }
 
     private class DataHandler extends Handler {
