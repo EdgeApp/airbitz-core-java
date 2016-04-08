@@ -506,7 +506,7 @@ public class AirbitzCore {
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
             return Jni.getStringAtPtr(core.longp_value(lp));
         } else {
-            throw new AirbitzException(error.getCode(), null);
+            throw new AirbitzException(error.getCode(), error);
         }
     }
 
@@ -521,7 +521,7 @@ public class AirbitzCore {
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
             return true;
         } else {
-            throw new AirbitzException(error.getCode(), null);
+            throw new AirbitzException(error.getCode(), error);
         }
     }
 
