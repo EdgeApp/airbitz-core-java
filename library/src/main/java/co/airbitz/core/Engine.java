@@ -733,7 +733,10 @@ class Engine {
                 mMainHandler.postDelayed(new Runnable() {
                     public void run() {
                         final Wallet wallet = mAccount.wallet(uuid);
-                        final Transaction tx = wallet.transaction(txid);
+                        Transaction tx = null;
+                        if (txid != null && !"".equals(txid.trim())) {
+                            tx = wallet.transaction(txid);
+                        }
                         mAccount.mCallbacks.sweep(wallet, tx, amount);
                         reloadWallets();
                     }
