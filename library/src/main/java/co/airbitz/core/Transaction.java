@@ -68,6 +68,8 @@ public class Transaction {
     private long mMinerFees;
     private long mABFees;
     private int mHeight;
+    private boolean mDoubleSpend;
+    private boolean mReplaceByFee;
 
     private Wallet mWallet;
     private Account mAccount;
@@ -85,6 +87,8 @@ public class Transaction {
     public void setup() {
         mId = mTxInfo.getID();
         mHeight = (int) mTxInfo.getHeight();
+        mDoubleSpend = mTxInfo.getBDoubleSpent();
+        mReplaceByFee = mTxInfo.getBReplaceByFee();
 
         mMeta.name(mTxInfo.getDetails().getSzName());
         mMeta.notes(mTxInfo.getDetails().getSzNotes());
@@ -248,7 +252,7 @@ public class Transaction {
      * @return true if this is a double spend
      */
     public boolean isDoubleSpend() {
-        return mTxInfo.getBDoubleSpent();
+        return mDoubleSpend;
     }
 
     /**
@@ -256,6 +260,6 @@ public class Transaction {
      * @return true if this is an RBF transaction
      */
     public boolean isReplaceByFee() {
-        return mTxInfo.getBReplaceByFee();
+        return mReplaceByFee;
     }
 }
