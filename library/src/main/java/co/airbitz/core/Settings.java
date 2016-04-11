@@ -105,6 +105,7 @@ public class Settings {
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
             throw new AirbitzException(error.getCode(), error);
         }
+        load();
     }
 
     /**
