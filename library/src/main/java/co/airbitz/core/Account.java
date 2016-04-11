@@ -305,6 +305,12 @@ public class Account {
         Settings settings = settings();
         settings.settings().setSzPIN(pin);
         settings.save();
+
+        tABC_Error error = new tABC_Error();
+        core.ABC_PinSetup(username(), password(), pin, error);
+        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
+            throw new AirbitzException(error.getCode(), error);
+        }
     }
 
     /**
