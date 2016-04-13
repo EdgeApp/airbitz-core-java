@@ -499,16 +499,18 @@ class Engine {
 
     void restoreConnectivity() {
         connectWatchers();
-        mCoreHandler.post(new Runnable() {
-            public void run() {
-                startExchangeRateUpdates();
-            }
-        });
-        mCoreHandler.post(new Runnable() {
-            public void run() {
-                startFileSyncUpdates();
-            }
-        });
+        if (mCoreHandler != null) {
+            mCoreHandler.post(new Runnable() {
+                public void run() {
+                    startExchangeRateUpdates();
+                }
+            });
+            mCoreHandler.post(new Runnable() {
+                public void run() {
+                    startFileSyncUpdates();
+                }
+            });
+        }
     }
 
     void lostConnectivity() {
