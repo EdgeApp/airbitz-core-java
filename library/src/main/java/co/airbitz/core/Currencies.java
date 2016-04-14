@@ -105,7 +105,15 @@ class Currencies {
     }
 
     CoreCurrency lookup(String code) {
-        return mCodeIndex.get(code);
+        CoreCurrency currency =  mCodeIndex.get(code);
+        if (null == currency) {
+            CoreCurrency c = new CoreCurrency();
+            c.currencyNum = 0;
+            c.code = "";
+            return c;
+        } else {
+            return currency;
+        }
     }
 
     protected int map(String code) {
