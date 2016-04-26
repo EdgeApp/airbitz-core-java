@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         versionCode 1
-        versionName "0.9.2"
+        versionName "0.9.3"
     }
 
     productFlavors {
@@ -79,19 +79,19 @@ publishing {
         mainnetLibrary(MavenPublication) {
             groupId 'co.airbitz'
             artifactId 'airbitz-core-android'
-            version '0.9.2'
+            version '0.9.3'
             artifact("$buildDir/outputs/aar/library-mainnet-release.aar")
         }
         testnetLibrary(MavenPublication) {
             groupId 'co.airbitz'
             artifactId 'airbitz-core-android-testnet'
-            version '0.9.2'
+            version '0.9.3'
             artifact("$buildDir/outputs/aar/library-nettest-release.aar")
         }
         developLibrary(MavenPublication) {
             groupId 'co.airbitz'
             artifactId 'airbitz-core-android-develop'
-            version '0.9.2'
+            version '0.9.3'
             artifact("$buildDir/outputs/aar/library-develop-release.aar")
         }
     }

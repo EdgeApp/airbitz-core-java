@@ -30,13 +30,6 @@
  */
 package co.airbitz.core;
 
-import android.graphics.Bitmap;
-import android.os.AsyncTask;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.Looper;
-import android.os.Message;
-
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -49,6 +42,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import co.airbitz.internal.Jni;
@@ -79,15 +77,16 @@ class Engine {
     private AirbitzCore mApi;
     private Account mAccount;
 
-    private Handler mMainHandler;
-    private Handler mCoreHandler;
-    private HandlerThread mCoreThread;
-    private Handler mWatcherHandler;
-    private HandlerThread mWatcherThread;
-    private Handler mDataHandler;
-    private HandlerThread mDataThread;
-    private Handler mExchangeHandler;
-    private HandlerThread mExchangeThread;
+    private ScheduledExecutorService mMainHandler;
+    private ScheduledExecutorService mReloadExecutor;
+    private ScheduledExecutorService mCoreHandler;
+    private ScheduledExecutorService mWatcherExecutor;
+    private ScheduledExecutorService mDataExecutor;
+    private ScheduledExecutorService mExchangeExecutor;
+    private ScheduledFuture mDataFuture;
+    private ScheduledFuture mExchangeFuture;
+    private ScheduledFuture mMainIncomingFuture;
+    private ScheduledFuture mMainDataFuture;
     private boolean mDataFetched = false;
 
     final static int RELOAD = 0;
@@ -115,16 +114,16 @@ class Engine {
         }
     }
 
-    private void sendIfNotEmptying(Handler handler, Runnable runnable) {
-        if (handler != null && !handler.hasMessages(LAST)) {
-            handler.post(runnable);
+    private void sendIfNotEmptying(ExecutorService executor, Runnable runnable) {
+        if (executor != null && !executor.isShutdown()) {
+            executor.submit(runnable);
         } else {
             AirbitzCore.logi("Ignore message...handler is empting");
         }
     }
 
     private void startWatcher(final String uuid) {
-        sendIfNotEmptying(mWatcherHandler, new Runnable() {
+        sendIfNotEmptying(mWatcherExecutor, new Runnable() {
             public void run() {
                 if (uuid != null && !mWatcherTasks.containsKey(uuid)) {
                     tABC_Error error = new tABC_Error();
@@ -142,7 +141,7 @@ class Engine {
 
                     // Request a data sync as soon as watcher is started
                     requestWalletDataSync(uuid);
-                    mMainHandler.sendEmptyMessage(RELOAD);
+                    sendReloadWallets();
                 }
             }
         });
@@ -156,7 +155,7 @@ class Engine {
     }
 
     public void connectWatcher(final String uuid) {
-        sendIfNotEmptying(mWatcherHandler, new Runnable() {
+        sendIfNotEmptying(mWatcherExecutor, new Runnable() {
             public void run() {
                 if (uuid != null && mWatcherTasks.containsKey(uuid) && mAccount.isLoggedIn()) {
                     AirbitzCore.logi("Watcher connecting  " + uuid + ".");
@@ -171,7 +170,7 @@ class Engine {
     }
 
     public void disconnectWatchers() {
-        sendIfNotEmptying(mWatcherHandler, new Runnable() {
+        sendIfNotEmptying(mWatcherExecutor, new Runnable() {
             public void run() {
                 for (String uuid : mWatcherTasks.keySet()) {
                     tABC_Error error = new tABC_Error();
@@ -182,8 +181,8 @@ class Engine {
     }
 
     public void waitOnWatchers() {
-        mWatcherHandler.sendEmptyMessage(LAST);
-        while (mWatcherHandler != null && mWatcherHandler.hasMessages(LAST)) {
+        mWatcherExecutor.shutdown();
+        while (mWatcherExecutor != null && !mWatcherExecutor.isTerminated()) {
             try {
                 Thread.sleep(1000);
             } catch (Exception e) {
@@ -210,7 +209,7 @@ class Engine {
     }
 
     public void stopWatchers() {
-        mWatcherHandler.post(new Runnable() {
+        mWatcherExecutor.submit(new Runnable() {
             public void run() {
                 tABC_Error error = new tABC_Error();
                 List<String> uuids = new ArrayList<String>(mWatcherTasks.keySet());
@@ -232,7 +231,6 @@ class Engine {
                 }
             }
         });
-        waitOnWatchers();
     }
 
     public void stopWatcher(String uuid) {
@@ -251,36 +249,40 @@ class Engine {
     }
 
     void sendReloadWallets() {
-        mMainHandler.sendEmptyMessage(RELOAD);
+        mMainHandler.submit(new Runnable() {
+            public void run() {
+                reloadWallets();
+            }
+        });
     }
 
-    ReloadWalletTask mReloadWalletTask = null;
+    private Future mReloadFuture = null;
     public void reloadWallets() {
-        if (mReloadWalletTask == null && mAccount.isLoggedIn()) {
-            mReloadWalletTask = new ReloadWalletTask();
-            mReloadWalletTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        if (mReloadExecutor != null
+                && (mReloadFuture == null || mReloadFuture.isDone())
+                && mAccount.isLoggedIn()) {
+            mReloadFuture = mReloadExecutor.submit(new Runnable() {
+                public void run() {
+                    List<Wallet> wallets = new ArrayList<Wallet>();
+                    List<String> uuids = mAccount.walletIds();
+                    for (String uuid : uuids) {
+                        wallets.add(getWalletFromCore(uuid));
+                    }
+                    postWalletsToMain(wallets);
+                }
+            });
         }
     }
 
-    private class ReloadWalletTask extends AsyncTask<Void, Void, List<Wallet>> {
-        @Override
-        protected List<Wallet> doInBackground(Void... params) {
-            List<Wallet> wallets = new ArrayList<Wallet>();
-            List<String> uuids = mAccount.walletIds();
-            for (String uuid : uuids) {
-                wallets.add(getWalletFromCore(uuid));
+    private void postWalletsToMain(final List<Wallet> wallets) {
+        mMainHandler.submit(new Runnable() {
+            public void run() {
+                mAccount.updateWallets(wallets);
+                if (mAccount.mCallbacks != null) {
+                    mAccount.mCallbacks.walletsChanged();
+                }
             }
-            return wallets;
-        }
-
-        @Override
-        protected void onPostExecute(List<Wallet> walletList) {
-            mAccount.mCachedWallets = walletList;
-            if (mAccount.mCallbacks != null) {
-                mAccount.mCallbacks.walletsChanged();
-            }
-            mReloadWalletTask = null;
-        }
+        });
     }
 
     String mIncomingWallet;
@@ -299,75 +301,47 @@ class Engine {
         }
     };
 
-    final Runnable mBlockHeightUpdater = new Runnable() {
-        public void run() {
-            mAccount.mSettings = null;
-            if (mAccount.mCallbacks != null) {
-                mAccount.mCallbacks.blockHeightChanged();
-            }
-        }
-    };
-
-    final Runnable mDataSyncUpdater = new Runnable() {
-        public void run() {
-            mAccount.mSettings = null;
-            startWatchers();
-            reloadWallets();
-            if (mAccount.mCallbacks != null) {
-                mAccount.mCallbacks.accountChanged();
-            }
-        }
-    };
-
-    final Runnable mWalletsLoaded = new Runnable() {
-        public void run() {
-            if (mAccount.mCallbacks != null) {
-                mAccount.mCallbacks.walletsLoaded();
-            }
-        }
-    };
-
     private void receiveDataSyncUpdate() {
-        mMainHandler.removeCallbacks(mDataSyncUpdater);
-        mMainHandler.postDelayed(mDataSyncUpdater, BALANCE_CHANGE_DELAY);
+        if (mMainDataFuture != null) {
+            mMainDataFuture.cancel(false);
+        }
+        mMainDataFuture = mMainHandler.schedule(new Runnable() {
+            public void run() {
+                mAccount.mSettings = null;
+                startWatchers();
+                reloadWallets();
+                if (mAccount.mCallbacks != null) {
+                    mAccount.mCallbacks.accountChanged();
+                }
+            }
+        }, ABC_EXCHANGE_RATE_REFRESH_INTERVAL_SECONDS, TimeUnit.SECONDS);
     }
 
     public void start() {
-        mMainHandler = new MainHandler();
-
-        mDataThread = new HandlerThread(mAccount.username() + " Data Handler");
-        mDataThread.start();
-        mDataHandler = new DataHandler(mDataThread.getLooper());
-
-        mExchangeThread = new HandlerThread(mAccount.username() + " Exchange Handler");
-        mExchangeThread.start();
-        mExchangeHandler = new ExchangeHandler(mExchangeThread.getLooper());
-
-        mCoreThread = new HandlerThread(mAccount.username() + " ABC Core");
-        mCoreThread.start();
-        mCoreHandler = new Handler(mCoreThread.getLooper());
-
-        mWatcherThread = new HandlerThread(mAccount.username() + " Watchers");
-        mWatcherThread.start();
-        mWatcherHandler = new Handler(mWatcherThread.getLooper());
+        mMainHandler = Executors.newScheduledThreadPool(1);
+        mReloadExecutor = Executors.newScheduledThreadPool(1);
+        mDataExecutor = Executors.newScheduledThreadPool(1);
+        mExchangeExecutor = Executors.newScheduledThreadPool(1);
+        mCoreHandler = Executors.newScheduledThreadPool(1);
+        mWatcherExecutor = Executors.newScheduledThreadPool(1);
 
         final List<String> uuids = mAccount.walletIds();
         final int walletCount = uuids.size();
         if (mAccount.mCallbacks != null) {
-            mMainHandler.post(new Runnable() {
+            mMainHandler.submit(new Runnable() {
                 public void run() {
                     mAccount.mCallbacks.walletsLoading();
                 }
             });
         }
         for (final String uuid : uuids) {
-            mCoreHandler.post(new Runnable() {
+            mCoreHandler.submit(new Runnable() {
                 public void run() {
                     tABC_Error error = new tABC_Error();
                     core.ABC_WalletLoad(mAccount.username(), uuid, error);
 
                     startWatcher(uuid);
-                    mMainHandler.post(new Runnable() {
+                    mMainHandler.submit(new Runnable() {
                         public void run() {
                             if (mAccount.mCallbacks != null) {
                                 final Wallet wallet = mAccount.wallet(uuid);
@@ -375,142 +349,60 @@ class Engine {
                             }
                         }
                     });
-                    mMainHandler.sendEmptyMessage(RELOAD);
+                    sendReloadWallets();
                 }
             });
         }
-        mCoreHandler.post(new Runnable() {
+        mCoreHandler.submit(new Runnable() {
             public void run() {
                 startExchangeRateUpdates();
                 startFileSyncUpdates();
 
-                mMainHandler.sendEmptyMessage(RELOAD);
+                sendReloadWallets();
             }
         });
     }
 
-    private void waitOnAsync() {
-        AsyncTask[] as = new AsyncTask[] {
-            mReloadWalletTask
-        };
-        for (AsyncTask a : as) {
-            if (a != null) {
-                a.cancel(true);
-                try {
-                    a.get(1000, TimeUnit.MILLISECONDS);
-                } catch (java.util.concurrent.CancellationException e) {
-                    AirbitzCore.loge("task cancelled");
-                } catch (Exception e) {
-                    AirbitzCore.loge(e.getMessage());
-                }
-            }
-        }
-    }
-
     public void stop() {
         if (mCoreHandler == null
-                || mDataHandler == null
-                || mExchangeHandler == null
-                || mWatcherHandler == null
+                || mDataExecutor == null
+                || mExchangeExecutor == null
+                || mWatcherExecutor == null
                 || mMainHandler == null) {
             return;
         }
-        mCoreHandler.removeCallbacksAndMessages(null);
-        mCoreHandler.sendEmptyMessage(LAST);
-        mDataHandler.removeCallbacksAndMessages(null);
-        mDataHandler.sendEmptyMessage(LAST);
-        mExchangeHandler.removeCallbacksAndMessages(null);
-        mExchangeHandler.sendEmptyMessage(LAST);
-        mWatcherHandler.removeCallbacksAndMessages(null);
-        mWatcherHandler.sendEmptyMessage(LAST);
-        while (mCoreHandler.hasMessages(LAST)
-                || mWatcherHandler.hasMessages(LAST)
-                || mExchangeHandler.hasMessages(LAST)
-                || mMainHandler.hasMessages(LAST)) {
-            try {
-                AirbitzCore.logi(
-                    "Data: " + mDataHandler.hasMessages(LAST) + ", " +
-                    "Core: " + mCoreHandler.hasMessages(LAST) + ", " +
-                    "Watcher: " + mWatcherHandler.hasMessages(LAST) + ", " +
-                    "Exchange: " + mExchangeHandler.hasMessages(LAST) + "");
-                Thread.sleep(200);
-            } catch (Exception e) {
-                AirbitzCore.loge(e.getMessage());
-            }
-        }
-        waitOnAsync();
-
         stopWatchers();
         stopExchangeRateUpdates();
         stopFileSyncUpdates();
 
-        mCoreThread.quit();
-        mDataThread.quit();
-        mExchangeThread.quit();
-        mWatcherThread.quit();
-    }
-
-    private class DataHandler extends Handler {
-        DataHandler(Looper looper) {
-            super(looper);
-        }
-
-        @Override
-        public void handleMessage(final Message msg) {
-            if (REPEAT == msg.what) {
-                postDelayed(new Runnable() {
-                    public void run() {
-                        syncAllData();
-                    }
-                }, ABC_SYNC_REFRESH_INTERVAL_SECONDS * 1000);
-            }
-        }
-    }
-
-    private class ExchangeHandler extends Handler {
-        ExchangeHandler(Looper looper) {
-            super(looper);
-        }
-
-        @Override
-        public void handleMessage(final Message msg) {
-            if (REPEAT == msg.what) {
-                postDelayed(new Runnable() {
-                    public void run() {
-                        updateExchangeRates();
-                    }
-                }, 1000 * ABC_EXCHANGE_RATE_REFRESH_INTERVAL_SECONDS);
-            }
-        }
-    }
-
-    private class MainHandler extends Handler {
-        MainHandler() {
-            super();
-        }
-
-        @Override
-        public void handleMessage(final Message msg) {
-            if (RELOAD == msg.what) {
-                reloadWallets();
+        mCoreHandler.shutdownNow();
+        mDataExecutor.shutdownNow();
+        mExchangeExecutor.shutdownNow();
+        mReloadExecutor.shutdownNow();
+        mMainHandler.shutdownNow();
+        mWatcherExecutor.shutdown();
+        while (!mCoreHandler.isTerminated()
+                || !mExchangeExecutor.isTerminated()
+                || !mWatcherExecutor.isTerminated()
+                || !mReloadExecutor.isTerminated()
+                || !mMainHandler.isTerminated()) {
+            try {
+                AirbitzCore.logi(
+                    "Data: " + mDataExecutor.isTerminated() + ", " +
+                    "Core: " + mCoreHandler.isTerminated() + ", " +
+                    "Reload: " + mReloadExecutor.isTerminated() + ", " +
+                    "Exchange: " + mExchangeExecutor.isTerminated() + "");
+                Thread.sleep(200);
+            } catch (Exception e) {
+                AirbitzCore.loge(e.getMessage());
             }
         }
     }
 
     void restoreConnectivity() {
         connectWatchers();
-        if (mCoreHandler != null) {
-            mCoreHandler.post(new Runnable() {
-                public void run() {
-                    startExchangeRateUpdates();
-                }
-            });
-            mCoreHandler.post(new Runnable() {
-                public void run() {
-                    startFileSyncUpdates();
-                }
-            });
-        }
+        startExchangeRateUpdates();
+        startFileSyncUpdates();
     }
 
     void lostConnectivity() {
@@ -520,9 +412,9 @@ class Engine {
     }
 
     public void stopExchangeRateUpdates() {
-        if (null != mExchangeHandler) {
-            mExchangeHandler.removeCallbacksAndMessages(null);
-            mExchangeHandler.sendEmptyMessage(LAST);
+        if (null != mExchangeExecutor) {
+            mExchangeExecutor.shutdownNow();
+            mExchangeExecutor = Executors.newScheduledThreadPool(1);
         }
     }
 
@@ -530,13 +422,20 @@ class Engine {
         updateExchangeRates();
     }
 
+    private void queueExchangeRateUpdate() {
+        mMainHandler.submit(new Runnable() {
+            public void run() {
+                updateExchangeRates();
+            }
+        });
+    }
+
     public void updateExchangeRates() {
-        if (null == mExchangeHandler
-            || mExchangeHandler.hasMessages(REPEAT)
-            || mExchangeHandler.hasMessages(LAST)) {
+        AirbitzCore.logi("updateExchangeRates");
+        if ((mExchangeFuture != null && !mExchangeFuture.isDone())
+                || mExchangeExecutor.isShutdown()) {
             return;
         }
-
         List<Wallet> wallets = mAccount.wallets();
         if (mAccount.isLoggedIn()
                 && null != mAccount.settings()
@@ -549,18 +448,23 @@ class Engine {
                 }
             }
             if (mAccount.mCallbacks != null) {
-                mMainHandler.post(new Runnable() {
+                mMainHandler.submit(new Runnable() {
                     public void run() {
                         mAccount.mCallbacks.exchangeRateChanged();
                     }
                 });
             }
         }
-        mExchangeHandler.sendEmptyMessage(REPEAT);
+        mExchangeFuture = mExchangeExecutor.schedule(new Runnable() {
+            public void run() {
+                AirbitzCore.logi("Schedule mExchangeExecutor");
+                queueExchangeRateUpdate();
+            }
+        }, ABC_EXCHANGE_RATE_REFRESH_INTERVAL_SECONDS, TimeUnit.SECONDS);
     }
 
     void requestExchangeRateUpdate(final Account account, final String currency) {
-        mExchangeHandler.post(new Runnable() {
+        mExchangeExecutor.submit(new Runnable() {
             public void run() {
                 AirbitzCore.getApi().exchangeCache().update(account, currency);
             }
@@ -568,8 +472,9 @@ class Engine {
     }
 
     public void stopFileSyncUpdates() {
-        if (null != mDataHandler) {
-            mDataHandler.removeCallbacksAndMessages(null);
+        if (null != mDataExecutor) {
+            mDataExecutor.shutdownNow();
+            mDataExecutor = Executors.newScheduledThreadPool(1);
         }
     }
 
@@ -577,17 +482,26 @@ class Engine {
         syncAllData();
     }
 
+    private void queueSyncAllData() {
+        mMainHandler.submit(new Runnable() {
+            public void run() {
+                syncAllData();
+            }
+        });
+    }
+
     public void syncAllData() {
-        if (mDataHandler.hasMessages(REPEAT)
-            || mDataHandler.hasMessages(LAST)) {
+        AirbitzCore.logi("syncAllData");
+        if ((mDataFuture != null && !mDataFuture.isDone())
+                || mDataExecutor.isShutdown()) {
             return;
         }
-        mDataHandler.post(new Runnable() {
+        mDataExecutor.submit(new Runnable() {
             public void run() {
                 mApi.generalInfoUpdate();
             }
         });
-        mDataHandler.post(new Runnable() {
+        mDataExecutor.submit(new Runnable() {
             public void run() {
                 tABC_Error error = new tABC_Error();
                 SWIGTYPE_p_long pdirty = core.new_longp();
@@ -599,7 +513,7 @@ class Engine {
                 if (error.getCode() == tABC_CC.ABC_CC_InvalidOTP) {
                     final AirbitzException e = new AirbitzException(error.getCode(), error);
                     if (mAccount.isLoggedIn() && mAccount.mCallbacks != null) {
-                        mMainHandler.post(new Runnable() {
+                        mMainHandler.submit(new Runnable() {
                             public void run() {
                                 // if the account has an OTP token, then its probably a skew problem
                                 if (mAccount.otpSecret() != null) {
@@ -615,7 +529,7 @@ class Engine {
                     receiveDataSyncUpdate();
                 } else if (Jni.getBytesAtPtr(Jni.getCPtr(pchange), 1)[0] != 0) {
                     if (mAccount.mCallbacks != null) {
-                        mMainHandler.post(new Runnable() {
+                        mMainHandler.submit(new Runnable() {
                             public void run() {
                                 mAccount.mCallbacks.remotePasswordChange();
                             }
@@ -630,16 +544,16 @@ class Engine {
             requestWalletDataSync(uuid);
         }
 
-        mDataHandler.post(new Runnable() {
+        mDataExecutor.submit(new Runnable() {
             public void run() {
                 boolean pending = false;
                 try {
                     pending = mApi.isOtpResetPending(mAccount.username());
                 } catch (AirbitzException e) {
-                    AirbitzCore.loge("mDataHandler.post error:");
+                    AirbitzCore.loge("mDataExecutor.post error:");
                 }
                 final boolean isPending = pending;
-                mMainHandler.post(new Runnable() {
+                mMainHandler.submit(new Runnable() {
                     public void run() {
                         if (!mDataFetched) {
                             mDataFetched = true;
@@ -653,18 +567,23 @@ class Engine {
             }
         });
         // Repeat the data sync
-        mDataHandler.sendEmptyMessage(REPEAT);
+        mDataFuture = mDataExecutor.schedule(new Runnable() {
+            public void run() {
+                AirbitzCore.logi("Schedule mDataExecutor");
+                queueSyncAllData();
+            }
+        }, ABC_SYNC_REFRESH_INTERVAL_SECONDS, TimeUnit.SECONDS);
     }
 
     private void requestWalletDataSync(final String uuid) {
-        mDataHandler.post(new Runnable() {
+        mDataExecutor.submit(new Runnable() {
             public void run() {
                 tABC_Error error = new tABC_Error();
                 SWIGTYPE_p_long pdirty = core.new_longp();
                 SWIGTYPE_p_bool dirty = Jni.newBool(Jni.getCPtr(pdirty));
 
                 core.ABC_DataSyncWallet(mAccount.username(), mAccount.password(), uuid, dirty, error);
-                mMainHandler.post(new Runnable() {
+                mMainHandler.submit(new Runnable() {
                     public void run() {
                         if (!mDataFetched) {
                             connectWatcher(uuid);
@@ -678,7 +597,7 @@ class Engine {
         });
     }
 
-    private static final int BALANCE_CHANGE_DELAY = 1000;
+    private static final int BALANCE_CHANGE_DELAY_SECONDS = 1;
     // Hopefully AddressDone will fire before this does
     private static final int BLOCKCHAIN_WAIT = 1000 * 60;
 
@@ -692,10 +611,19 @@ class Engine {
             mIncomingTxId = info.getSzTxID();
 
             // Notify app of new tx
-            mMainHandler.removeCallbacks(mIncomingBitcoinUpdater);
-            mMainHandler.postDelayed(mIncomingBitcoinUpdater, BALANCE_CHANGE_DELAY);
+            if (mMainIncomingFuture != null) {
+                mMainIncomingFuture.cancel(false);
+            }
+            mMainHandler.schedule(mIncomingBitcoinUpdater, BALANCE_CHANGE_DELAY_SECONDS, TimeUnit.SECONDS);
         } else if (type == tABC_AsyncEventType.ABC_AsyncEventType_BlockHeightChange) {
-            mMainHandler.post(mBlockHeightUpdater);
+            mMainHandler.submit(new Runnable() {
+                public void run() {
+                    mAccount.mSettings = null;
+                    if (mAccount.mCallbacks != null) {
+                        mAccount.mCallbacks.blockHeightChanged();
+                    }
+                }
+            });
         } else if (type == tABC_AsyncEventType.ABC_AsyncEventType_AddressCheckDone) {
             List<String> ids = mAccount.walletIds();
             List<Wallet> wallets = mAccount.wallets();
@@ -710,29 +638,33 @@ class Engine {
             }
             // Check to see if all the wallets have finished sync-ing before notifying...
             if (walletCount == loadedCount) {
-                mMainHandler.post(mWalletsLoaded);
+                mMainHandler.submit(new Runnable() {
+                    public void run() {
+                        if (mAccount.mCallbacks != null) {
+                            mAccount.mCallbacks.walletsLoaded();
+                        }
+                    }
+                });
             }
         } else if (type == tABC_AsyncEventType.ABC_AsyncEventType_BalanceUpdate) {
             final String uuid = info.getSzWalletUUID();
             final String txid = info.getSzTxID();
             if (mAccount.mCallbacks != null) {
-                mMainHandler.postDelayed(new Runnable() {
+                mMainHandler.schedule(new Runnable() {
                     public void run() {
                         final Wallet wallet = mAccount.wallet(uuid);
                         final Transaction tx = wallet.transaction(txid);
                         mAccount.mCallbacks.balanceUpdate(wallet, tx);
                         reloadWallets();
                     }
-                }, BALANCE_CHANGE_DELAY);
-                // mMainHandler.removeCallbacks(mWalletsLoaded);
-                // mMainHandler.postDelayed(mWalletsLoaded, BLOCKCHAIN_WAIT);
+                }, BALANCE_CHANGE_DELAY_SECONDS, TimeUnit.SECONDS);
             }
         } else if (type == tABC_AsyncEventType.ABC_AsyncEventType_IncomingSweep) {
             final String uuid = info.getSzWalletUUID();
             final String txid = info.getSzTxID();
             final long amount = Jni.get64BitLongAtPtr(Jni.getCPtr(info.getSweepSatoshi()));
             if (mAccount.mCallbacks != null) {
-                mMainHandler.postDelayed(new Runnable() {
+                mMainHandler.schedule(new Runnable() {
                     public void run() {
                         final Wallet wallet = mAccount.wallet(uuid);
                         Transaction tx = null;
@@ -742,7 +674,7 @@ class Engine {
                         mAccount.mCallbacks.sweep(wallet, tx, amount);
                         reloadWallets();
                     }
-                }, BALANCE_CHANGE_DELAY);
+                }, BALANCE_CHANGE_DELAY_SECONDS, TimeUnit.SECONDS);
             }
         }
     }

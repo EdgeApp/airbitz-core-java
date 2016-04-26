@@ -31,12 +31,6 @@
 
 package co.airbitz.core;
 
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.graphics.Matrix;
-import android.os.Build;
-
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
@@ -119,8 +113,8 @@ public class AirbitzCore {
      * Initialize the AirbitzCore object. Required for functionality of ABC SDK.
      * @param airbitzApiKey API key obtained from Airbitz Inc.
      */
-    public void init(Context context, String airbitzApiKey) {
-        init(context, airbitzApiKey, "");
+    public void init(File filesDir, File certpath, String airbitzApiKey) {
+        init(filesDir, certpath, airbitzApiKey, "");
     }
 
     /**
@@ -129,15 +123,17 @@ public class AirbitzCore {
      * @param hiddenbitzKey (Optional) unique key used to encrypt private keys for use as implementation
      * specific "gift cards" that are only redeemable by applications using this implementation.
      */
-    public void init(Context context, String airbitzApiKey, String hiddenbitzKey) {
+    public void init(File filesDir, File certpath, String airbitzApiKey, String hiddenbitzKey) {
+        String seed = seedData();
+        init(filesDir, certpath, airbitzApiKey, hiddenbitzKey, seed);
+    }
+
+    public void init(File filesDir, File certpath, String airbitzApiKey, String hiddenbitzKey, String seed) {
         if (mInitialized) {
             return;
         }
-        String seed = seedData();
         tABC_Error error = new tABC_Error();
-        File filesDir = context.getFilesDir();
-        String certPath = Utils.setupCerts(context, filesDir);
-        core.ABC_Initialize(filesDir.getPath(), certPath, airbitzApiKey, hiddenbitzKey, seed, seed.length(), error);
+        core.ABC_Initialize(filesDir.getPath(), certpath.getPath(), airbitzApiKey, hiddenbitzKey, seed, seed.length(), error);
         mInitialized = true;
 
         // Fetch General Info
@@ -148,7 +144,7 @@ public class AirbitzCore {
         }).start();
     }
 
-   private static String seedData() {
+    private static String seedData() {
         String strSeed = "";
 
         long time = System.nanoTime();
@@ -248,16 +244,6 @@ public class AirbitzCore {
      */
     public boolean uploadLogs(String username, String password) {
         tABC_Error Error = new tABC_Error();
-
-        // Send system information to end of logfile
-        String deviceName = Build.MODEL;
-        String deviceMan = Build.MANUFACTURER;
-        String deviceBrand = Build.BRAND;
-        String deviceOS = Build.VERSION.RELEASE;
-
-        AirbitzCore.logi("Platform:" + deviceBrand + " " + deviceMan + " " + deviceName);
-        AirbitzCore.logi("Android Version:" + deviceOS);
-
         core.ABC_UploadLogs(username, password, Error);
         return Error.getCode() == tABC_CC.ABC_CC_Ok;
     }
@@ -362,37 +348,6 @@ public class AirbitzCore {
         core.ABC_QrEncode(text, ppChar, pUCount, error);
         int width = core.intp_value(pWidth);
         return Jni.getBytesAtPtr(core.longp_value(lp), width * width);
-    }
-
-    /**
-     * Encodes a QR code byte array into Bitmap.
-     * @param array byte array such as one produced by {@link
-     * AirbitzCore#qrEncode}
-     * @return qrcode
-     */
-    public Bitmap qrEncode(byte[] array) {
-        return qrEncode(array, (int) Math.sqrt(array.length), 16);
-    }
-
-    /**
-     * Encodes a QR code byte array into Bitmap
-     * @param array byte array such as one produced by {@link
-     * AirbitzCore#qrEncode}
-     * @param width width of the bitmap
-     * @param scale scale of the bitmap
-     * @return qrcode
-     */
-    public Bitmap qrEncode(byte[] array, int width, int scale) {
-        Bitmap bmpBinary = Bitmap.createBitmap(width*scale, width*scale, Bitmap.Config.ARGB_8888);
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < width; y++) {
-                bmpBinary.setPixel(x, y, array[y * width + x] != 0 ? Color.BLACK : Color.WHITE);
-            }
-        }
-        Matrix matrix = new Matrix();
-        matrix.postScale(scale, scale);
-        Bitmap resizedBitmap = Bitmap.createBitmap(bmpBinary, 0, 0, width, width, matrix, false);
-        return resizedBitmap;
     }
 
     /**

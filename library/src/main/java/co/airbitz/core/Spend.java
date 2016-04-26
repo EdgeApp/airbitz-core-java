@@ -31,8 +31,6 @@
 
 package co.airbitz.core;
 
-import android.text.TextUtils;
-
 import co.airbitz.internal.Jni;
 import co.airbitz.internal.SWIGTYPE_p_long;
 import co.airbitz.internal.SWIGTYPE_p_p_char;

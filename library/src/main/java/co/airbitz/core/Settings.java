@@ -31,8 +31,6 @@
 
 package co.airbitz.core;
 
-import android.util.Log;
-
 import java.util.Currency;
 import java.util.Locale;
 import java.util.Map;

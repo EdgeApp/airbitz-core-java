@@ -30,8 +30,6 @@
  */
 package co.airbitz.core;
 
-import android.graphics.Bitmap;
-
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -78,7 +76,7 @@ public class Account {
     private AirbitzCore mApi;
     private Categories mCategories;
     private boolean mLoggedIn;
-    List<Wallet> mCachedWallets;
+    private List<Wallet> mCachedWallets;
     Engine mEngine;
     Settings mSettings;
 
@@ -416,15 +414,24 @@ public class Account {
         return uuids;
     }
 
+    static Object WALLET_LOCK = new Object();
     /**
      * Returns a list of the wallets for this account, include Archived
      * wallets.  @return list of wallets
      */
-    public List<Wallet> wallets() {
+    public synchronized List<Wallet> wallets() {
         if (mCachedWallets != null) {
-            return new ArrayList<Wallet>(mCachedWallets);
+            synchronized(WALLET_LOCK) {
+                return new ArrayList<Wallet>(mCachedWallets);
+            }
         } else {
             return null;
+        }
+    }
+
+    synchronized void updateWallets(List<Wallet> wallets) {
+        synchronized(WALLET_LOCK) {
+            mCachedWallets = wallets;
         }
     }
 

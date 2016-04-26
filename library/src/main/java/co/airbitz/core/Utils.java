@@ -31,8 +31,6 @@
 
 package co.airbitz.core;
 
-import android.content.Context;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -59,42 +57,6 @@ import co.airbitz.internal.tABC_Error;
  */
 public class Utils {
     private static final String CERT_FILENAME = "ca-certificates.crt";
-
-    static String setupCerts(Context context, File filesDir) {
-        List<String> files = Arrays.asList(filesDir.list());
-        OutputStream outputStream = null;
-        if (!files.contains(CERT_FILENAME)) {
-            InputStream certStream = context.getResources().openRawResource(R.raw.ca_certificates);
-            try {
-                outputStream = context.openFileOutput(CERT_FILENAME, Context.MODE_PRIVATE);
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-            copyStreamToFile(certStream, outputStream);
-        }
-        return filesDir.getPath() + "/" + CERT_FILENAME;
-    }
-    static void copyStreamToFile(InputStream src, OutputStream outputStream) {
-        final byte[] largeBuffer = new byte[1024 * 4];
-        int bytesRead;
-
-        try {
-            while ((bytesRead = src.read(largeBuffer)) > 0) {
-                if (largeBuffer.length == bytesRead) {
-                    outputStream.write(largeBuffer);
-                } else {
-                    final byte[] shortBuffer = new byte[bytesRead];
-                    System.arraycopy(largeBuffer, 0, shortBuffer, 0, bytesRead);
-                    outputStream.write(shortBuffer);
-                }
-            }
-            outputStream.flush();
-            outputStream.close();
-            src.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
     static void printABCError(tABC_Error pError) {
         if (pError.getCode() != tABC_CC.ABC_CC_Ok) {
