@@ -1,0 +1,50 @@
+
+apply plugin: 'java'
+apply plugin: 'maven-publish'
+
+// sourceSets.main.jni.srcDirs = []
+
+task buildAirbitzMainnet(type:Exec) {
+    workingDir '..'
+    commandLine './mkabc'
+}
+
+task copyAirbitzMainnet(type:Exec) {
+    workingDir '..'
+    commandLine './cpabc'
+}
+
+task buildAirbitzTestnet(type:Exec) {
+    workingDir '..'
+    environment 'ENABLE_TESTNET': 1
+    commandLine './mkabc'
+}
+
+task copyAirbitzTestnet(type:Exec) {
+    workingDir '..'
+    environment 'ENABLE_TESTNET': 1
+    commandLine './cpabc'
+}
+
+publishing {
+    publications {
+        mainnetCore(MavenPublication) {
+            groupId 'co.airbitz'
+            artifactId 'airbitz-core-java'
+            version '0.9.3'
+            artifact("$buildDir/libs/core.jar")
+        }
+        testnetCore(MavenPublication) {
+            groupId 'co.airbitz'
+            artifactId 'airbitz-core-java-testnet'
+            version '0.9.3'
+            artifact("$buildDir/libs/core.jar")
+        }
+        developCore(MavenPublication) {
+            groupId 'co.airbitz'
+            artifactId 'airbitz-core-java-develop'
+            version '0.9.3'
+            artifact("$buildDir/libs/core.jar")
+        }
+    }
+}

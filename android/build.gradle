@@ -22,9 +22,11 @@ android {
     }
 }
 
-
 dependencies {
     compile 'com.android.support:support-v4:21.+'
+    mainnetCompile project(':core')
+    nettestCompile project(':core')
+    developCompile project(':core')
 }
 
 android.libraryVariants.all { variant -> 
@@ -52,47 +54,25 @@ android.libraryVariants.all { variant ->
   }
 }
 
-task buildAirbitzMainnet(type:Exec) {
-    workingDir '..'
-    commandLine './mkabc'
-}
-
-task copyAirbitzMainnet(type:Exec) {
-    workingDir '..'
-    commandLine './cpabc'
-}
-
-task buildAirbitzTestnet(type:Exec) {
-    workingDir '..'
-    environment 'ENABLE_TESTNET': 1
-    commandLine './mkabc'
-}
-
-task copyAirbitzTestnet(type:Exec) {
-    workingDir '..'
-    environment 'ENABLE_TESTNET': 1
-    commandLine './cpabc'
-}
-
 publishing {
     publications {
-        mainnetLibrary(MavenPublication) {
+        mainnetAndroid(MavenPublication) {
             groupId 'co.airbitz'
             artifactId 'airbitz-core-android'
             version '0.9.3'
-            artifact("$buildDir/outputs/aar/library-mainnet-release.aar")
+            artifact("$buildDir/outputs/aar/android-mainnet-release.aar")
         }
-        testnetLibrary(MavenPublication) {
+        testnetAndroid(MavenPublication) {
             groupId 'co.airbitz'
             artifactId 'airbitz-core-android-testnet'
             version '0.9.3'
-            artifact("$buildDir/outputs/aar/library-nettest-release.aar")
+            artifact("$buildDir/outputs/aar/android-nettest-release.aar")
         }
-        developLibrary(MavenPublication) {
+        developAndroid(MavenPublication) {
             groupId 'co.airbitz'
             artifactId 'airbitz-core-android-develop'
             version '0.9.3'
-            artifact("$buildDir/outputs/aar/library-develop-release.aar")
+            artifact("$buildDir/outputs/aar/android-develop-release.aar")
         }
     }
 }

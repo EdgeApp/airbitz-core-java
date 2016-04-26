@@ -39,7 +39,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-import co.airbitz.core.BuildConfig;
 import co.airbitz.internal.Jni;
 import co.airbitz.internal.SWIGTYPE_p_bool;
 import co.airbitz.internal.SWIGTYPE_p_double;
@@ -228,7 +227,7 @@ public class AirbitzCore {
      * @return version number
      */
     public String version() {
-        return BuildConfig.VERSION_NAME;
+        return "";
     }
 
     /*

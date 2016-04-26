@@ -13,10 +13,10 @@ TODO
 .project
 *.keystore
 usercontext.properties
-library/src/main/java/co/airbitz/internal/*.java
-library/src/main/jni/ABC-const.h
-library/src/main/jni/ABC.h
-library/src/main/jni/ABC_wrap.c
+core/src/main/java/co/airbitz/internal/*.java
+core/src/main/jni/ABC-const.h
+core/src/main/jni/ABC.h
+core/src/main/jni/ABC_wrap.c
 
 .gradle
 /local.properties
@@ -50,6 +50,7 @@ local.properties
 /*/local.properties
 /*/out
 /*/*/build
+/*/build
 /*/*/production
 *.iml
 *.iws

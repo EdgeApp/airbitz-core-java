@@ -19,7 +19,8 @@ fi
 BASE=$(pwd)
 CORE_PATH="$BASE/../airbitz-core"
 BUILD_PATH=${BUILD_DIR:-$CORE_PATH/$DEPS_BUILD}
-WALLET_PATH="$BASE/library/src/main"
+WALLET_PATH="$BASE/core/src/main"
+ANDROID_PATH="$BASE/android/src/main"
 
 # Copy the core build output into the jni folder:
 mkdir -p $WALLET_PATH/jni/
@@ -36,10 +37,11 @@ cd $WALLET_PATH
 swig -java -package co.airbitz.internal \
     -outdir java/co/airbitz/internal -o jni/ABC_wrap.c jni/ABC.i
 
-# Build the wrapper library:
+# Build the wrapper core:
 cd $WALLET_PATH/jni/
 $BUILD_PATH/ndk/android-ndk-r10d/ndk-build
 
 # Gradle is looking in the wrong place for libraries:
 mkdir -p $WALLET_PATH/jniLibs
 cp -R $WALLET_PATH/libs/* $WALLET_PATH/jniLibs
+cp -R $WALLET_PATH/libs/* $ANDROID_PATH/jniLibs
