@@ -323,7 +323,7 @@ public class Account {
         SWIGTYPE_p_long lp = core.new_longp();
         SWIGTYPE_p_bool result = Jni.newBool(Jni.getCPtr(lp));
         core.ABC_PinCheck(mUsername, mPassword, pin, result, error);
-        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
+        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
             return Jni.getBytesAtPtr(Jni.getCPtr(lp), 1)[0] != 0;
         }
         return false;
