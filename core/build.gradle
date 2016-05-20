@@ -7,14 +7,14 @@ publishing {
         core(MavenPublication) {
             groupId 'co.airbitz'
             artifactId 'airbitz-core-java'
-            version '0.9.3'
+            version '0.9.4'
             artifact("$buildDir/libs/core.jar")
         }
 
         coreDevelop(MavenPublication) {
             groupId 'co.airbitz'
             artifactId 'airbitz-core-java-develop'
-            version '0.9.3'
+            version '0.9.4'
             artifact("$buildDir/libs/core.jar")
         }
     }
