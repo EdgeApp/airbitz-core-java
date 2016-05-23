@@ -16,12 +16,12 @@
 %apply char * { unsigned char * }
 
 %{
-#include "ABC.h"
+#include "build/includes/ABC.h"
 %}
 
 /* Feed SWIG a modified version of the core header, since we don't want
  * any write accessors for `const char *` structure members: */
-%include "ABC-const.h"
+%include "build/includes/ABC-const.h"
 
 %pointer_cast(int64_t *, long *, p64_t_to_long_ptr);
 %pointer_cast(int64_t *, double *, p64_t_to_double_ptr);

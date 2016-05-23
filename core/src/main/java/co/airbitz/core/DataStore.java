@@ -31,8 +31,6 @@
 
 package co.airbitz.core;
 
-import android.content.Context;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;

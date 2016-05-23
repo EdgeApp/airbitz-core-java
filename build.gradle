@@ -20,3 +20,29 @@ ext {
     compileSdkVersion = 23
     buildToolsVersion = "23.0.2"
 }
+
+task cleanJni(type: Delete) {
+    delete 'jni/build'
+}
+
+task buildAirbitzMainnet(type:Exec) {
+    workingDir '.'
+    commandLine './mkabc'
+}
+
+task copyAirbitzMainnet(type:Exec) {
+    workingDir '.'
+    commandLine './cpabc'
+}
+
+task buildAirbitzTestnet(type:Exec) {
+    workingDir '.'
+    environment 'ENABLE_TESTNET': 1
+    commandLine './mkabc'
+}
+
+task copyAirbitzTestnet(type:Exec) {
+    workingDir '.'
+    environment 'ENABLE_TESTNET': 1
+    commandLine './cpabc'
+}

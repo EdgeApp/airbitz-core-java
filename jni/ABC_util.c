@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ABC.h>
-#include <android/log.h>
 
 // cached refs for later callbacks
 JavaVM * g_vm;
@@ -72,9 +71,6 @@ Java_co_airbitz_core_Engine_registerAsyncCallback(JNIEnv *env, jobject obj)
     int status = (*env)->GetJavaVM(env, &g_vm);
     if (status != 0)
     {
-        __android_log_print(
-                ANDROID_LOG_INFO, "ABC_android_util",
-                "RegisterAsyncCallback global vm fail");
         return false;
     }
 
@@ -82,18 +78,12 @@ Java_co_airbitz_core_Engine_registerAsyncCallback(JNIEnv *env, jobject obj)
     jclass g_clazz = (*env)->GetObjectClass(env, g_obj);
     if (g_clazz == NULL)
     {
-        __android_log_print(
-                ANDROID_LOG_INFO, "ABC_android_util",
-                "RegisterAsyncCallback failed to find class");
         return false;
     }
 
     g_async_callback = (*env)->GetMethodID(
             env, g_clazz, "callbackAsyncBitcoinInfo", "(J)V");
     if (g_async_callback == NULL) {
-        __android_log_print(
-                ANDROID_LOG_INFO, "ABC_android_util",
-                "RegisterAsyncCallback unable to get method ref");
         return false;
     }
     return true;

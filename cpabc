@@ -19,27 +19,31 @@ fi
 BASE=$(pwd)
 CORE_PATH="$BASE/../airbitz-core"
 BUILD_PATH=${BUILD_DIR:-$CORE_PATH/$DEPS_BUILD}
-WALLET_PATH="$BASE/library/src/main"
+WALLET_PATH="$BASE/core/src/main"
+JNI_DIR="$BASE/jni"
+JNI_BUILD_DIR="$JNI_DIR/build"
+ANDROID_PATH="$BASE/android/src/main"
 
+# Clean old android build library
+rm -rf $JNI_BUILD_DIR
 # Copy the core build output into the jni folder:
-mkdir -p $WALLET_PATH/jni/
-mkdir -p $WALLET_PATH/jni/armeabi
-mkdir -p $WALLET_PATH/jni/x86
-cp $CORE_PATH/src/ABC.h $WALLET_PATH/jni/
-sed  -e 's/const char *\*/const char *const /' $WALLET_PATH/jni/ABC.h \
-    > $WALLET_PATH/jni/ABC-const.h
-cp $BUILD_PATH/abc/android-arm/libabc.so $WALLET_PATH/jni/armeabi/libabc.so
-cp $BUILD_PATH/abc/android-x86/libabc.so $WALLET_PATH/jni/x86/libabc.so
+mkdir -p $JNI_BUILD_DIR/includes
+mkdir -p $JNI_BUILD_DIR/armeabi
+mkdir -p $JNI_BUILD_DIR/x86
+cp $CORE_PATH/src/ABC.h $JNI_BUILD_DIR/includes
+sed  -e 's/const char *\*/const char *const /' $JNI_BUILD_DIR/includes/ABC.h \
+    > $JNI_BUILD_DIR/includes/ABC-const.h
+cp $BUILD_PATH/abc/android-arm/libabc.so $JNI_BUILD_DIR/armeabi/libabc.so
+cp $BUILD_PATH/abc/android-x86/libabc.so $JNI_BUILD_DIR/x86/libabc.so
 
 # Generate the wrapper code:
-cd $WALLET_PATH
+cd $JNI_DIR
 swig -java -package co.airbitz.internal \
-    -outdir java/co/airbitz/internal -o jni/ABC_wrap.c jni/ABC.i
-
-# Build the wrapper library:
-cd $WALLET_PATH/jni/
+    -outdir ../core/src/main/java/co/airbitz/internal -o $JNI_BUILD_DIR/ABC_wrap.c ABC.i
+# Build the wrapper core:
 $BUILD_PATH/ndk/android-ndk-r10d/ndk-build
+mv ../libs $JNI_BUILD_DIR
 
 # Gradle is looking in the wrong place for libraries:
-mkdir -p $WALLET_PATH/jniLibs
-cp -R $WALLET_PATH/libs/* $WALLET_PATH/jniLibs
+mkdir -p $ANDROID_PATH/jniLibs
+cp -R $JNI_BUILD_DIR/libs/* $ANDROID_PATH/jniLibs
