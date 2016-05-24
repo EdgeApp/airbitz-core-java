@@ -258,7 +258,7 @@ public class AirbitzCore {
      */
     public void background() {
         for (Account account : mAccounts) {
-            account.engine().stop();
+            account.engine().pause();
         }
     }
 
@@ -267,7 +267,7 @@ public class AirbitzCore {
      */
     public void foreground() {
         for (Account account : mAccounts) {
-            account.engine().start();
+            account.engine().resume();
         }
     }
 
