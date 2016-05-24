@@ -2,13 +2,13 @@
 apply plugin: 'java'
 apply plugin: 'maven-publish'
 
-project.version = '0.9.4'
+project.version = rootProject.ext.coreVersion
 
 task generateSources {
   def outputDir = file("$buildDir/generated-src")
   outputs.dir outputDir
   doFirst {
-	def srcFile = new File(outputDir, "Version.java")
+    def srcFile = new File(outputDir, "Version.java")
     srcFile.parentFile.mkdirs()
     srcFile.write("""
 package co.airbitz.core;
