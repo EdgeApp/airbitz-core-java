@@ -288,8 +288,10 @@ class Engine {
         public void run() {
             if (mAccount.mCallbacks != null) {
                 Wallet wallet = mAccount.wallet(mIncomingWallet);
-                Transaction tx = wallet.transaction(mIncomingTxId);
-                mAccount.mCallbacks.incomingBitcoin(wallet, tx);
+                if (wallet != null) {
+                    Transaction tx = wallet.transaction(mIncomingTxId);
+                    mAccount.mCallbacks.incomingBitcoin(wallet, tx);
+                }
             }
             mIncomingWallet = null;
             mIncomingTxId = null;
