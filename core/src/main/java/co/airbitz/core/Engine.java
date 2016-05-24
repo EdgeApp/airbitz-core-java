@@ -89,10 +89,6 @@ class Engine {
     private ScheduledFuture mMainDataFuture;
     private boolean mDataFetched = false;
 
-    final static int RELOAD = 0;
-    final static int REPEAT = 1;
-    final static int LAST = 2;
-
     Engine(AirbitzCore api, Account account) {
         mApi = api;
         mAccount = account;
@@ -209,7 +205,7 @@ class Engine {
     }
 
     public void stopWatchers() {
-        mWatcherExecutor.submit(new Runnable() {
+        sendIfNotEmptying(mWatcherExecutor, new Runnable() {
             public void run() {
                 tABC_Error error = new tABC_Error();
                 List<String> uuids = new ArrayList<String>(mWatcherTasks.keySet());
@@ -249,7 +245,7 @@ class Engine {
     }
 
     void sendReloadWallets() {
-        mMainHandler.submit(new Runnable() {
+        sendIfNotEmptying(mMainHandler, new Runnable() {
             public void run() {
                 reloadWallets();
             }
@@ -275,7 +271,7 @@ class Engine {
     }
 
     private void postWalletsToMain(final List<Wallet> wallets) {
-        mMainHandler.submit(new Runnable() {
+        sendIfNotEmptying(mMainHandler, new Runnable() {
             public void run() {
                 mAccount.updateWallets(wallets);
                 if (mAccount.mCallbacks != null) {
@@ -391,6 +387,7 @@ class Engine {
                     "Data: " + mDataExecutor.isTerminated() + ", " +
                     "Core: " + mCoreHandler.isTerminated() + ", " +
                     "Reload: " + mReloadExecutor.isTerminated() + ", " +
+                    "Main: " + mMainHandler.isTerminated() + ", " +
                     "Exchange: " + mExchangeExecutor.isTerminated() + "");
                 Thread.sleep(200);
             } catch (Exception e) {
