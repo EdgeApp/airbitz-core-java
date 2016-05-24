@@ -396,16 +396,24 @@ class Engine {
         }
     }
 
-    void restoreConnectivity() {
+    void resume() {
         connectWatchers();
         startExchangeRateUpdates();
         startFileSyncUpdates();
     }
 
-    void lostConnectivity() {
+    void pause() {
         stopExchangeRateUpdates();
         stopFileSyncUpdates();
         disconnectWatchers();
+    }
+
+    void restoreConnectivity() {
+        resume();
+    }
+
+    void lostConnectivity() {
+        pause();
     }
 
     public void stopExchangeRateUpdates() {

@@ -2,14 +2,16 @@
 apply plugin: 'android-library'
 apply plugin: 'maven-publish'
 
+project.version = rootProject.ext.androidVersionName
+
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
     sourceSets.main.jni.srcDirs = []
 
     defaultConfig {
-        versionCode 1
-        versionName "0.9.4"
+        versionCode rootProject.ext.androidVersionCode
+        versionName rootProject.ext.androidVersionName
     }
 
     productFlavors {
@@ -49,7 +51,7 @@ android.libraryVariants.all { variant ->
     exclude '**/internal/*.java' 
   }
   task("generate${variant.name.capitalize()}Userguide", type:Copy) {
-	from new File(projectDir, "assets/userguide/userguide.html")
+    from new File(projectDir, "assets/userguide/userguide.html")
     into 'build/docs/'
   }
 }
@@ -59,19 +61,19 @@ publishing {
         mainnetAndroid(MavenPublication) {
             groupId 'co.airbitz'
             artifactId 'airbitz-core-android'
-            version '0.9.4'
+            version "$rootProject.ext.androidVersionName"
             artifact("$buildDir/outputs/aar/android-mainnet-release.aar")
         }
         testnetAndroid(MavenPublication) {
             groupId 'co.airbitz'
             artifactId 'airbitz-core-android-testnet'
-            version '0.9.4'
+            version "$rootProject.ext.androidVersionName"
             artifact("$buildDir/outputs/aar/android-nettest-release.aar")
         }
         developAndroid(MavenPublication) {
             groupId 'co.airbitz'
             artifactId 'airbitz-core-android-develop'
-            version '0.9.4'
+            version "$rootProject.ext.androidVersionName"
             artifact("$buildDir/outputs/aar/android-develop-release.aar")
         }
     }
