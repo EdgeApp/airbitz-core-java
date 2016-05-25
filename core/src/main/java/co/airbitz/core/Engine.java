@@ -85,7 +85,6 @@ class Engine {
     private ScheduledExecutorService mExchangeExecutor;
     private ScheduledFuture mDataFuture;
     private ScheduledFuture mExchangeFuture;
-    private ScheduledFuture mMainIncomingFuture;
     private ScheduledFuture mMainDataFuture;
     private boolean mDataFetched = false;
 
@@ -280,24 +279,6 @@ class Engine {
             }
         });
     }
-
-    String mIncomingWallet;
-    String mIncomingTxId;
-
-    final Runnable mIncomingBitcoinUpdater = new Runnable() {
-        public void run() {
-            if (mAccount.mCallbacks != null) {
-                Wallet wallet = mAccount.wallet(mIncomingWallet);
-                if (wallet != null) {
-                    Transaction tx = wallet.transaction(mIncomingTxId);
-                    mAccount.mCallbacks.incomingBitcoin(wallet, tx);
-                }
-            }
-            mIncomingWallet = null;
-            mIncomingTxId = null;
-            reloadWallets();
-        }
-    };
 
     private void receiveDataSyncUpdate() {
         if (mMainDataFuture != null) {
@@ -582,6 +563,22 @@ class Engine {
         }, ABC_SYNC_REFRESH_INTERVAL_SECONDS, TimeUnit.SECONDS);
     }
 
+    private boolean allWalletsLoaded() {
+        List<String> ids = mAccount.walletIds();
+        List<Wallet> wallets = mAccount.wallets();
+        int walletCount = ids != null ? ids.size() : 0;
+        int loadedCount = 0;
+        if (wallets != null) {
+            for (Wallet w : wallets) {
+                if (w.isSynced()) {
+                    loadedCount++;
+                }
+            }
+        }
+        // Check to see if all the wallets have finished sync-ing before notifying...
+        return walletCount == loadedCount;
+    }
+
     private void requestWalletDataSync(final String uuid) {
         mDataExecutor.submit(new Runnable() {
             public void run() {
@@ -613,15 +610,22 @@ class Engine {
         tABC_AsyncEventType type = info.getEventType();
 
         AirbitzCore.logi("asyncBitCoinInfo callback type = " + type.toString());
-        if (type==tABC_AsyncEventType.ABC_AsyncEventType_IncomingBitCoin) {
-            mIncomingWallet = info.getSzWalletUUID();
-            mIncomingTxId = info.getSzTxID();
-
-            // Notify app of new tx
-            if (mMainIncomingFuture != null) {
-                mMainIncomingFuture.cancel(false);
-            }
-            mMainHandler.schedule(mIncomingBitcoinUpdater, BALANCE_CHANGE_DELAY_SECONDS, TimeUnit.SECONDS);
+        if (type == tABC_AsyncEventType.ABC_AsyncEventType_IncomingBitCoin) {
+            final String walletId = info.getSzWalletUUID();
+            final String txId = info.getSzTxID();
+            mMainHandler.submit(new Runnable() {
+                public void run() {
+                    if (mAccount.mCallbacks == null) {
+                        return;
+                    }
+                    Wallet wallet = mAccount.wallet(walletId);
+                    if (wallet != null) {
+                        Transaction tx = wallet.transaction(txId);
+                        mAccount.mCallbacks.incomingBitcoin(wallet, tx);
+                    }
+                }
+            });
+            reloadWallets();
         } else if (type == tABC_AsyncEventType.ABC_AsyncEventType_BlockHeightChange) {
             mMainHandler.submit(new Runnable() {
                 public void run() {
@@ -632,19 +636,8 @@ class Engine {
                 }
             });
         } else if (type == tABC_AsyncEventType.ABC_AsyncEventType_AddressCheckDone) {
-            List<String> ids = mAccount.walletIds();
-            List<Wallet> wallets = mAccount.wallets();
-            int walletCount = ids != null ? ids.size() : 0;
-            int loadedCount = 0;
-            if (wallets != null) {
-                for (Wallet w : wallets) {
-                    if (w.isSynced()) {
-                        loadedCount++;
-                    }
-                }
-            }
             // Check to see if all the wallets have finished sync-ing before notifying...
-            if (walletCount == loadedCount) {
+            if (allWalletsLoaded()) {
                 mMainHandler.submit(new Runnable() {
                     public void run() {
                         if (mAccount.mCallbacks != null) {
