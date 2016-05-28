@@ -726,6 +726,10 @@ class Engine {
                 wallet.mCurrencyNum = -1;
             }
             wallet.mSynced = wallet.mCurrencyNum != -1;
+            if (wallet.mSynced) {
+                // Request an exchanger rate update once wallet is synced
+                requestExchangeRateUpdate(mAccount, wallet.currency().code);
+            }
 
             // Load balance
             SWIGTYPE_p_int64_t l = core.new_int64_tp();

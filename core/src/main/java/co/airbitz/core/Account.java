@@ -473,6 +473,7 @@ public class Account {
                 walletName, currencyNum, ppChar, pError);
         if (result == tABC_CC.ABC_CC_Ok) {
             mEngine.startWatchers();
+            mEngine.requestExchangeRateUpdate(this, currency);
             reloadWallets();
             return true;
         } else {
