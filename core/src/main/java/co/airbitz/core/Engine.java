@@ -86,6 +86,7 @@ class Engine {
     private ScheduledFuture mDataFuture;
     private ScheduledFuture mExchangeFuture;
     private ScheduledFuture mMainDataFuture;
+    private Map<String, ScheduledFuture> mBalanceUpdateFuture = new ConcurrentHashMap<String, ScheduledFuture>();
     private boolean mDataFetched = false;
 
     Engine(AirbitzCore api, Account account) {
@@ -98,6 +99,7 @@ class Engine {
     }
 
     private Map<String, Thread> mWatcherTasks = new ConcurrentHashMap<String, Thread>();
+    private Map<String, Boolean> mWalletSynced = new ConcurrentHashMap<String, Boolean>();
 
     public void startWatchers() {
         List<String> wallets = mAccount.walletIds();
@@ -563,20 +565,23 @@ class Engine {
         }, ABC_SYNC_REFRESH_INTERVAL_SECONDS, TimeUnit.SECONDS);
     }
 
-    private boolean allWalletsLoaded() {
+    private boolean allWalletsSynced() {
         List<String> ids = mAccount.walletIds();
-        List<Wallet> wallets = mAccount.wallets();
         int walletCount = ids != null ? ids.size() : 0;
-        int loadedCount = 0;
-        if (wallets != null) {
-            for (Wallet w : wallets) {
-                if (w.isSynced()) {
-                    loadedCount++;
+        int syncedCount = 0;
+        if (ids != null) {
+            for (String id : ids) {
+                Boolean synced = mWalletSynced.get(id);
+                if (synced == null) {
+                    mWalletSynced.put(id, false);
+                } else if (synced) {
+                    syncedCount++;
                 }
             }
+            return walletCount == syncedCount;
+        } else {
+            return false;
         }
-        // Check to see if all the wallets have finished sync-ing before notifying...
-        return walletCount == loadedCount;
     }
 
     private void requestWalletDataSync(final String uuid) {
@@ -637,7 +642,19 @@ class Engine {
             });
         } else if (type == tABC_AsyncEventType.ABC_AsyncEventType_AddressCheckDone) {
             // Check to see if all the wallets have finished sync-ing before notifying...
-            if (allWalletsLoaded()) {
+            final String walletId = info.getSzWalletUUID();
+            mWalletSynced.put(walletId, true);
+            if (null != walletId) {
+                mMainHandler.submit(new Runnable() {
+                    public void run() {
+                        if (mAccount.mCallbacks != null) {
+                            final Wallet wallet = mAccount.wallet(walletId);
+                            mAccount.mCallbacks.walletChanged(wallet);
+                        }
+                    }
+                });
+            }
+            if (allWalletsSynced()) {
                 mMainHandler.submit(new Runnable() {
                     public void run() {
                         if (mAccount.mCallbacks != null) {
@@ -650,14 +667,20 @@ class Engine {
             final String uuid = info.getSzWalletUUID();
             final String txid = info.getSzTxID();
             if (mAccount.mCallbacks != null) {
-                mMainHandler.schedule(new Runnable() {
+                // Throttle balance update callbacks
+                if (mBalanceUpdateFuture.get(uuid) != null) {
+                    mBalanceUpdateFuture.get(uuid).cancel(false);
+                }
+                mBalanceUpdateFuture.put(uuid, mMainHandler.schedule(new Runnable() {
                     public void run() {
                         final Wallet wallet = mAccount.wallet(uuid);
-                        final Transaction tx = wallet.transaction(txid);
-                        mAccount.mCallbacks.balanceUpdate(wallet, tx);
+                        if (wallet != null) {
+                            final Transaction tx = wallet.transaction(txid);
+                            mAccount.mCallbacks.balanceUpdate(wallet, tx);
+                        }
                         reloadWallets();
                     }
-                }, BALANCE_CHANGE_DELAY_SECONDS, TimeUnit.SECONDS);
+                }, BALANCE_CHANGE_DELAY_SECONDS, TimeUnit.SECONDS));
             }
         } else if (type == tABC_AsyncEventType.ABC_AsyncEventType_IncomingSweep) {
             final String uuid = info.getSzWalletUUID();
@@ -703,6 +726,10 @@ class Engine {
                 wallet.mCurrencyNum = -1;
             }
             wallet.mSynced = wallet.mCurrencyNum != -1;
+            if (wallet.mSynced) {
+                // Request an exchanger rate update once wallet is synced
+                requestExchangeRateUpdate(mAccount, wallet.currency().code);
+            }
 
             // Load balance
             SWIGTYPE_p_int64_t l = core.new_int64_tp();
