@@ -438,9 +438,13 @@ class Engine {
                 }
             }
             if (mAccount.mCallbacks != null) {
-                mMainHandler.submit(new Runnable() {
+                mExchangeExecutor.submit(new Runnable() {
                     public void run() {
-                        mAccount.mCallbacks.exchangeRateChanged();
+                        mMainHandler.submit(new Runnable() {
+                            public void run() {
+                                mAccount.mCallbacks.exchangeRateChanged();
+                            }
+                        });
                     }
                 });
             }
