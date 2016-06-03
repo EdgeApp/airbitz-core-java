@@ -615,9 +615,12 @@ class Engine {
     private static final int BLOCKCHAIN_WAIT = 1000 * 60;
 
     private void callbackAsyncBitcoinInfo(long asyncBitCoinInfo_ptr) {
+        if (mMainHandler.isTerminated()) {
+            return;
+        }
+
         tABC_AsyncBitCoinInfo info = Jni.newAsyncBitcoinInfo(asyncBitCoinInfo_ptr);
         tABC_AsyncEventType type = info.getEventType();
-
         AirbitzCore.logi("asyncBitCoinInfo callback type = " + type.toString());
         if (type == tABC_AsyncEventType.ABC_AsyncEventType_IncomingBitCoin) {
             final String walletId = info.getSzWalletUUID();
