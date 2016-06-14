@@ -41,7 +41,7 @@ cd $JNI_DIR
 swig -java -package co.airbitz.internal \
     -outdir ../core/src/main/java/co/airbitz/internal -o $JNI_BUILD_DIR/ABC_wrap.c ABC.i
 # Build the wrapper core:
-$BUILD_PATH/ndk/android-ndk-r11c/ndk-build
+$BUILD_PATH/ndk/android-ndk-r10d/ndk-build
 mv ../libs $JNI_BUILD_DIR
 
 # Gradle is looking in the wrong place for libraries:
