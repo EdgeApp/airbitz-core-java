@@ -34,12 +34,13 @@ package co.airbitz.core;
 import co.airbitz.internal.Jni;
 import co.airbitz.internal.SWIGTYPE_p_long;
 import co.airbitz.internal.SWIGTYPE_p_p_char;
+import co.airbitz.internal.SWIGTYPE_p_p_void;
 import co.airbitz.internal.SWIGTYPE_p_uint64_t;
+import co.airbitz.internal.SWIGTYPE_p_void;
 import co.airbitz.internal.core;
 import co.airbitz.internal.tABC_CC;
 import co.airbitz.internal.tABC_Error;
-import co.airbitz.internal.SWIGTYPE_p_void;
-import co.airbitz.internal.SWIGTYPE_p_p_void;
+import co.airbitz.internal.tABC_SpendFeeLevel;
 
 /**
  * Spend is used to build a Spend from the {@link Wallet}. The caller can add
@@ -54,10 +55,24 @@ public class Spend {
     SWIGTYPE_p_long _pl;
     SWIGTYPE_p_p_void _ppv;
 
+    public enum FeeLevel {
+        LOW(tABC_SpendFeeLevel.ABC_SpendFeeLevelLow),
+        STANDARD(tABC_SpendFeeLevel.ABC_SpendFeeLevelStandard),
+        HIGH(tABC_SpendFeeLevel.ABC_SpendFeeLevelHigh),
+        CUSTOM(tABC_SpendFeeLevel.ABC_SpendFeeLevelCustom);
+
+        private final tABC_SpendFeeLevel value;
+        FeeLevel(tABC_SpendFeeLevel value) {
+            this.value = value;
+        }
+    };
+
     private Account mAccount;
     private Wallet mWallet;
     private MetadataSet mMeta;
     private boolean mIsTransfer;
+    private FeeLevel mFeeLevel;
+    private long mCustomFee;
 
     Spend(Account account, Wallet wallet) throws AirbitzException {
         mAccount = account;
@@ -225,6 +240,19 @@ public class Spend {
             throw new AirbitzException(error.getCode(), error);
         }
         return fees;
+    }
+
+    /**
+     * Change the fee level. Higher fees will result in faster confirmation times.
+     * @param level the fee level, high, standard or low
+     */
+    public void feeLevel(FeeLevel level) {
+        SWIGTYPE_p_uint64_t ua = core.new_uint64_tp();
+        Jni.set64BitLongAtPtr(Jni.getCPtr(ua), mCustomFee);
+
+        tABC_Error error = new tABC_Error();
+        mFeeLevel = level;
+        core.ABC_SpendSetFee(mSpend, level.value, ua, error);
     }
 
     private void updateMeta() {

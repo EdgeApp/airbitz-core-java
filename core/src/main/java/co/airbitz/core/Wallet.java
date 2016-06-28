@@ -227,6 +227,25 @@ public class Wallet {
         }
     }
 
+    /*
+     * Export a wallet's public seed (XPub)
+     * @return string of public seed contents.
+     */
+    public String xpub() {
+        tABC_Error error = new tABC_Error();
+        SWIGTYPE_p_long lp = core.new_longp();
+        SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
+
+        tABC_CC result = core.ABC_ExportWalletXPub(
+                mAccount.username(), mAccount.password(),
+                id(), ppChar, error);
+        if (tABC_CC.ABC_CC_Ok == result) {
+            return Jni.getStringAtPtr(core.longp_value(lp));
+        } else {
+            return null;
+        }
+    }
+
     /**
      * Export a wallet's transactions to CSV format, for a given date range.
      * @param start timestamp of start export

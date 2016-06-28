@@ -31,6 +31,8 @@
 
 package co.airbitz.core;
 
+import java.util.Locale;
+
 /**
  * CoreCurrency contains information associated with a fiat currency. It
  * includes a label, description and a symbol such as $ or €.
@@ -50,5 +52,13 @@ public class CoreCurrency {
     @Override
     public String toString() {
         return code + " - " + description;
+    }
+
+    public static CoreCurrency defaultCurrency() {
+        return Currencies.instance().defaultCurrency();
+    }
+
+    public static CoreCurrency defaultCurrency(Locale locale) {
+        return Currencies.instance().defaultCurrency(locale);
     }
 }
