@@ -205,7 +205,7 @@ class Engine {
         }
     }
 
-    public void stopWatchers() {
+    private void stopWatchers() {
         sendIfNotEmptying(mWatcherExecutor, new Runnable() {
             public void run() {
                 tABC_Error error = new tABC_Error();
@@ -352,10 +352,6 @@ class Engine {
                 || mMainHandler == null) {
             return;
         }
-        stopWatchers();
-        stopExchangeRateUpdates();
-        stopFileSyncUpdates();
-
         mCoreHandler.shutdownNow();
         mDataExecutor.shutdownNow();
         mExchangeExecutor.shutdownNow();
@@ -379,6 +375,11 @@ class Engine {
                 AirbitzCore.loge(e.getMessage());
             }
         }
+        mWatcherExecutor = Executors.newScheduledThreadPool(1);
+        stopWatchers();
+        stopExchangeRateUpdates();
+        stopFileSyncUpdates();
+
     }
 
     void resume() {
@@ -401,7 +402,7 @@ class Engine {
         pause();
     }
 
-    public void stopExchangeRateUpdates() {
+    private void stopExchangeRateUpdates() {
         if (null != mExchangeExecutor) {
             mExchangeExecutor.shutdownNow();
             mExchangeExecutor = Executors.newScheduledThreadPool(1);
@@ -466,7 +467,7 @@ class Engine {
         });
     }
 
-    public void stopFileSyncUpdates() {
+    private void stopFileSyncUpdates() {
         if (null != mDataExecutor) {
             mDataExecutor.shutdownNow();
             mDataExecutor = Executors.newScheduledThreadPool(1);
