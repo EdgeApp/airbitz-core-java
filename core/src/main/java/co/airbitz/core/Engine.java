@@ -423,6 +423,7 @@ class Engine {
     public void updateExchangeRates() {
         AirbitzCore.logi("updateExchangeRates");
         if ((mExchangeFuture != null && !mExchangeFuture.isDone())
+                || mExchangeExecutor == null
                 || mExchangeExecutor.isShutdown()) {
             return;
         }
@@ -487,6 +488,7 @@ class Engine {
     public void syncAllData() {
         AirbitzCore.logi("syncAllData");
         if ((mDataFuture != null && !mDataFuture.isDone())
+                || mDataExecutor == null
                 || mDataExecutor.isShutdown()) {
             return;
         }
