@@ -258,6 +258,7 @@ public class AirbitzCore {
      */
     public void background() {
         for (Account account : mAccounts) {
+            account.mLastBackgroundTime = System.currentTimeMillis();
             account.engine().pause();
         }
     }
