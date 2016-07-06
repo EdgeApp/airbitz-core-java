@@ -373,6 +373,7 @@ class Engine {
                     "Core: " + mCoreHandler.isTerminated() + ", " +
                     "Reload: " + mReloadExecutor.isTerminated() + ", " +
                     "Main: " + mMainHandler.isTerminated() + ", " +
+                    "Watcher: " + mWatcherExecutor.isTerminated() + ", " +
                     "Exchange: " + mExchangeExecutor.isTerminated() + "");
                 Thread.sleep(200);
             } catch (Exception e) {
@@ -382,9 +383,13 @@ class Engine {
     }
 
     void resume() {
-        connectWatchers();
-        startExchangeRateUpdates();
-        startFileSyncUpdates();
+        if (mAccount.isExpired()) {
+            mAccount.logout();
+        } else {
+            connectWatchers();
+            startExchangeRateUpdates();
+            startFileSyncUpdates();
+        }
     }
 
     void pause() {

@@ -759,4 +759,19 @@ public class Account {
     public void clearBlockchainCache() {
         mEngine.deleteWatcherCache();
     }
+
+    long mLastBackgroundTime = 0;
+    boolean isExpired() {
+        if (mLastBackgroundTime == 0) {
+            return false;
+        }
+        long milliDelta = (System.currentTimeMillis() - mLastBackgroundTime);
+        Settings settings = settings();
+        if (settings != null) {
+            if (milliDelta > settings.secondsAutoLogout() * 1000) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
