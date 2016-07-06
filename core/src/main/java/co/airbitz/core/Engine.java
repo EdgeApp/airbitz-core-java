@@ -84,6 +84,7 @@ class Engine {
     private ScheduledExecutorService mDataExecutor;
     private ScheduledExecutorService mExchangeExecutor;
     private ScheduledFuture mDataFuture;
+    private ScheduledFuture mLoadedFuture;
     private ScheduledFuture mExchangeFuture;
     private ScheduledFuture mMainDataFuture;
     private Map<String, ScheduledFuture> mBalanceUpdateFuture = new ConcurrentHashMap<String, ScheduledFuture>();
@@ -619,7 +620,15 @@ class Engine {
 
     private static final int BALANCE_CHANGE_DELAY_SECONDS = 1;
     // Hopefully AddressDone will fire before this does
-    private static final int BLOCKCHAIN_WAIT = 1000 * 60;
+    private static final int BLOCKCHAIN_WAIT = 60;
+
+    final Runnable mWalletsLoaded = new Runnable() {
+        public void run() {
+            if (mAccount.mCallbacks != null) {
+                mAccount.mCallbacks.walletsLoaded();
+            }
+        }
+    };
 
     private void callbackAsyncBitcoinInfo(long asyncBitCoinInfo_ptr) {
         if (mMainHandler.isTerminated()) {
@@ -669,13 +678,10 @@ class Engine {
                 });
             }
             if (allWalletsSynced()) {
-                mMainHandler.submit(new Runnable() {
-                    public void run() {
-                        if (mAccount.mCallbacks != null) {
-                            mAccount.mCallbacks.walletsLoaded();
-                        }
-                    }
-                });
+                if (mLoadedFuture != null && mLoadedFuture.isDone()) {
+                    mLoadedFuture.cancel(false);
+                }
+                mMainHandler.submit(mWalletsLoaded);
             }
         } else if (type == tABC_AsyncEventType.ABC_AsyncEventType_BalanceUpdate) {
             final String uuid = info.getSzWalletUUID();
@@ -696,6 +702,11 @@ class Engine {
                     }
                 }, BALANCE_CHANGE_DELAY_SECONDS, TimeUnit.SECONDS));
             }
+            // In case we don't receive all the Done callbacks
+            if (mLoadedFuture != null && mLoadedFuture.isDone()) {
+                mLoadedFuture.cancel(false);
+            }
+            mLoadedFuture = mMainHandler.schedule(mWalletsLoaded, BLOCKCHAIN_WAIT, TimeUnit.SECONDS);
         } else if (type == tABC_AsyncEventType.ABC_AsyncEventType_IncomingSweep) {
             final String uuid = info.getSzWalletUUID();
             final String txid = info.getSzTxID();
