@@ -47,7 +47,7 @@ public class CoreCurrency {
     // The currency symbol such as $ or €.
     public String symbol;
 
-    int currencyNum;
+    public int currencyNum;
 
     @Override
     public String toString() {
