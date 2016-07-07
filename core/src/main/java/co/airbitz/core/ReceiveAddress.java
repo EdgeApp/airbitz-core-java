@@ -87,7 +87,12 @@ public class ReceiveAddress {
                 update();
             }
         };
-        update();
+        // NOTE: Don't run update until we have an ABC_GetReceiveRequest to
+        // load the meta data otherwise, for existing requests, we will write
+        // an empty receive request.
+        if (null == address) {
+            update();
+        }
     }
 
 
