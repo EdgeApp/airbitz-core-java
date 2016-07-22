@@ -7,7 +7,8 @@ This repository contains the java bindings to the [airbitz-core][core] library.
 Just add `airbitz-core-android` to your dependencies in your `build.gradle`.
 
     dependencies {
-        compile 'com.airbitz:airbitz-core-android:0.0.1@aar'
+        compile 'co.airbitz:airbitz-core-java:0.9.+'
+        compile 'co.airbitz:airbitz-core-android:0.9.+@aar'
         ...
     }
 
