@@ -26,5 +26,6 @@ If all goes well, you can publish to your local maven.
 
     ./gradlew publishCoreDevelopPublicationToMavenLocal
     ./gradlew publishDevelopAndroidPublicationToMavenLocal
+    ./gradlew publishToMavenLocal
 
 [core]: https://github.com/airbitz/airbitz-core
