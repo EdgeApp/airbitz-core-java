@@ -8,6 +8,7 @@ import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 
 import android.content.Context;
+import android.telecom.Call;
 import android.widget.Toast;
 
 import com.facebook.react.bridge.NativeModule;
@@ -33,6 +34,7 @@ import co.airbitz.core.Wallet;
 import co.airbitz.core.android.AndroidUtils;
 
 import java.lang.reflect.Array;
+import java.util.Date;
 import java.util.Map;
 
 public class AirbitzCoreRCT extends ReactContextBaseJavaModule {
@@ -87,6 +89,8 @@ public class AirbitzCoreRCT extends ReactContextBaseJavaModule {
         }
 
         try {
+            if (password != null && password.length() == 0)
+                password = null;
             mABCAccount =  mABC.createAccount(username, password, pin);
             complete.invoke(null, mABCAccount.username());
             return;
@@ -96,11 +100,195 @@ public class AirbitzCoreRCT extends ReactContextBaseJavaModule {
         }
     }
 
+    @ReactMethod
+    public void passwordLogin(String username,
+                              String password,
+                              String otpToken,
+                              Callback complete,
+                              Callback error) {
+        if (mABC == null) {
+            error.invoke(null, makeErrorABCNotInitialized());
+            return;
+        }
+
+        if (mABCAccount != null) {
+            mABCAccount.logout();
+            mABCAccount = null;
+        }
+
+        try {
+            mABCAccount = mABC.passwordLogin(username, password, otpToken);
+            complete.invoke(null, mABCAccount.username());
+        } catch (AirbitzException e) {
+            if (e.code() == 37 /* ABCConditionCodeInvalidOTP */) {
+                String err = makeOTPError(e.code(), e.otpResetDate(), e.otpResetToken());
+                error.invoke(null, err);
+            } else {
+                error.invoke(null, makeError(e.code(), e.description()));
+            }
+            return;
+        }
+    }
+
+    @ReactMethod
+    public void pinLogin(String username,
+                         String pin,
+                         Callback complete,
+                         Callback error) {
+        if (mABC == null) {
+            error.invoke(null, makeErrorABCNotInitialized());
+            return;
+        }
+
+        if (mABCAccount != null) {
+            mABCAccount.logout();
+            mABCAccount = null;
+        }
+
+        try {
+            mABCAccount = mABC.pinLogin(username, pin, null);
+            complete.invoke(null, mABCAccount.username());
+        } catch (AirbitzException e) {
+            error.invoke(null, makeError(e.code(), e.description()));
+            return;
+        }
+    }
+
+    @ReactMethod
+    public void changePassword(String password,
+                               Callback complete,
+                               Callback error) {
+        if (mABC == null) {
+            error.invoke(null, makeErrorABCNotInitialized());
+            return;
+        }
+
+        if (mABCAccount == null) {
+            error.invoke(null, makeErrorNotLoggedIn());
+            return;
+        }
+
+        try {
+            mABCAccount.passwordChange(password);
+            complete.invoke(null, null);
+        } catch (AirbitzException e) {
+            error.invoke(null, makeError(e.code(), e.description()));
+            return;
+        }
+    }
+
+    @ReactMethod
+    public void changePIN(String pin,
+                          Callback complete,
+                          Callback error) {
+        if (mABC == null) {
+            error.invoke(null, makeErrorABCNotInitialized());
+            return;
+        }
+
+        if (mABCAccount == null) {
+            error.invoke(null, makeErrorNotLoggedIn());
+            return;
+        }
+
+        try {
+            mABCAccount.pin(pin);
+            complete.invoke(null, null);
+        } catch (AirbitzException e) {
+            error.invoke(null, makeError(e.code(), e.description()));
+            return;
+        }
+    }
+
+    @ReactMethod
+    public void accountHasPassword(String username,
+                                   Callback complete,
+                                   Callback error) {
+        if (mABC == null) {
+            error.invoke(null, makeErrorABCNotInitialized());
+            return;
+        }
+
+        Boolean hasPassword = mABC.accountHasPassword(username);
+        complete.invoke(null, hasPassword);
+    }
+
+    @ReactMethod
+    public void checkPassword(String password,
+                              Callback complete,
+                              Callback error) {
+        if (mABC == null) {
+            error.invoke(null, makeErrorABCNotInitialized());
+            return;
+        }
+
+        if (mABCAccount == null) {
+            error.invoke(null, makeErrorNotLoggedIn());
+            return;
+        }
+
+        Boolean check = mABCAccount.checkPassword(password);
+        complete.invoke(null, check);
+    }
+
+    @ReactMethod
+    public void pinLoginSetup(Boolean enable,
+                              Callback complete,
+                              Callback error) {
+        if (mABC == null) {
+            error.invoke(null, makeErrorABCNotInitialized());
+            return;
+        }
+
+        if (mABCAccount == null) {
+            error.invoke(null, makeErrorNotLoggedIn());
+            return;
+        }
+        try {
+            mABCAccount.pinLoginSetup(enable);
+            complete.invoke(null, null);
+        } catch (AirbitzException e) {
+            error.invoke(null, makeError(e.code(), e.description()));
+            return;
+        }
+    }
+
+
+    @ReactMethod
+    public void logout(Callback complete) {
+        if (mABC != null) {
+            if (mABCAccount != null) {
+                mABCAccount.logout();
+                mABCAccount = null;
+            }
+        }
+        complete.invoke();
+    }
+
+    //
+    // To standardize between React Native on ObjC and Android, all methods use two callbacks of type Callback.
+    // One for success (complete) and one for failure (error). Callback takes a list of arguments but the first element
+    // is only for errors to match iOS. For ABC we always send 'null' for the first argument and return parameters in the 2nd argument.
+    // Convention shall be that if there is only one return parameter, it is simply the argument. If there is more than one,
+    // It shall be encoded as a Json string. Error parameters are returned the same way as success parameters but are simply
+    // differentiated by the callback used.
+    //
+    // Errors are always encoded as a string encoding of a Json array with the first parameter as the integer error cod
+    // and 2nd, 3rd, and 4th parameters as descriptions.
+    //
+
+
     class ABCError {
         int code;
         String description;
         String description2;
         String description3;
+    }
+
+    class ABCOTPError {
+        int code;
+        String resetDate;
+        String resetToken;
     }
 
     private String makeErrorABCNotInitialized () {
@@ -122,6 +310,21 @@ public class AirbitzCoreRCT extends ReactContextBaseJavaModule {
         return makeError(code, description, description2, null);
     }
 
+    private String makeOTPError(int code,
+                                String otpResetDate,
+                                String otpResetToken) {
+
+
+        ABCOTPError err = new ABCOTPError();
+
+        err.code = code;
+        if (otpResetDate != null)
+            err.resetDate = otpResetDate;
+        if (otpResetToken != null)
+            err.resetToken = otpResetToken;
+
+        return makeJsonFromObj(err);
+    }
 
     private String makeError(int code,
                              String description,
