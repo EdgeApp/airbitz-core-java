@@ -8,6 +8,7 @@ import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.modules.core.RCTNativeAppEventEmitter;
 
 import android.content.Context;
@@ -291,11 +292,10 @@ public class AirbitzCoreRCT extends ReactContextBaseJavaModule {
             public void accountChanged() {
                 AirbitzCore.logw("callback: accountChanged");
                 if (mABCAccount != null) {
-                    WritableMap event = Arguments.createMap();
-                    mReactContext.getJSModule(RCTEventEmitter.class).receiveEvent(
-                            0,
-                            "abcAccountAccountChanged",
-                            event);
+                    WritableMap map = Arguments.createMap();
+                    map.putString("name", mABCAccount.username());
+                    getReactApplicationContext().getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                            .emit("abcAccountAccountChanged", map);
                 }
             }
 
@@ -306,12 +306,10 @@ public class AirbitzCoreRCT extends ReactContextBaseJavaModule {
             public void walletChanged(Wallet wallet) {
                 AirbitzCore.logw("callback: walletChanged");
                 if (mABCAccount != null) {
-                    WritableMap event = Arguments.createMap();
-                    event.putString("uuid", wallet.id());
-                    mReactContext.getJSModule(RCTEventEmitter.class).receiveEvent(
-                            0,
-                            "abcAccountWalletChanged",
-                            event);
+                    WritableMap map = Arguments.createMap();
+                    map.putString("uuid", wallet.id());
+                    getReactApplicationContext().getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                            .emit("abcAccountAccountChanged", map);
                 }
             }
 
