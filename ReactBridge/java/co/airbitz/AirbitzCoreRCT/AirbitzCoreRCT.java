@@ -4,8 +4,11 @@ package co.airbitz.AirbitzCoreRCT;
  * Created by paul on 7/22/16.
  */
 
+import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
+import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.modules.core.RCTNativeAppEventEmitter;
 
 import android.content.Context;
 import android.telecom.Call;
@@ -17,6 +20,7 @@ import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableArray;
+import com.facebook.react.uimanager.events.RCTEventEmitter;
 import com.google.gson.Gson;
 
 import org.json.JSONObject;
@@ -37,11 +41,14 @@ import java.lang.reflect.Array;
 import java.util.Date;
 import java.util.Map;
 
+import javax.annotation.Nullable;
+
 public class AirbitzCoreRCT extends ReactContextBaseJavaModule {
 
     private Context mContext    = null;
     private AirbitzCore mABC    = null;
     private Account mABCAccount  = null;
+    private ReactApplicationContext mReactContext = null;
 
     @Override
     public String getName() {
@@ -50,6 +57,7 @@ public class AirbitzCoreRCT extends ReactContextBaseJavaModule {
 
     public AirbitzCoreRCT(ReactApplicationContext reactContext) {
         super(reactContext);
+        mReactContext = reactContext;
     }
 
     @ReactMethod
@@ -92,6 +100,7 @@ public class AirbitzCoreRCT extends ReactContextBaseJavaModule {
             if (password != null && password.length() == 0)
                 password = null;
             mABCAccount =  mABC.createAccount(username, password, pin);
+            registerCallbacks(mABCAccount);
             complete.invoke(null, mABCAccount.username());
             return;
         } catch (AirbitzException e) {
@@ -118,6 +127,7 @@ public class AirbitzCoreRCT extends ReactContextBaseJavaModule {
 
         try {
             mABCAccount = mABC.passwordLogin(username, password, otpToken);
+            registerCallbacks(mABCAccount);
             complete.invoke(null, mABCAccount.username());
         } catch (AirbitzException e) {
             if (e.code() == 37 /* ABCConditionCodeInvalidOTP */) {
@@ -147,6 +157,8 @@ public class AirbitzCoreRCT extends ReactContextBaseJavaModule {
 
         try {
             mABCAccount = mABC.pinLogin(username, pin, null);
+            registerCallbacks(mABCAccount);
+
             complete.invoke(null, mABCAccount.username());
         } catch (AirbitzException e) {
             error.invoke(null, makeError(e.code(), e.description()));
@@ -263,6 +275,87 @@ public class AirbitzCoreRCT extends ReactContextBaseJavaModule {
             }
         }
         complete.invoke();
+    }
+
+
+    private void registerCallbacks(Account account) {
+        account.callbacks(new Account.Callbacks() {
+            public void remotePasswordChange() {
+                AirbitzCore.logw("callback: remotePasswordChange");
+            }
+
+            public void loggedOut() {
+                AirbitzCore.logw("callback: loggedOut");
+            }
+
+            public void accountChanged() {
+                AirbitzCore.logw("callback: accountChanged");
+                if (mABCAccount != null) {
+                    WritableMap event = Arguments.createMap();
+                    mReactContext.getJSModule(RCTEventEmitter.class).receiveEvent(
+                            0,
+                            "abcAccountAccountChanged",
+                            event);
+                }
+            }
+
+            public void walletsLoading() {
+                AirbitzCore.logw("callback: walletsLoading");
+            }
+
+            public void walletChanged(Wallet wallet) {
+                AirbitzCore.logw("callback: walletChanged");
+                if (mABCAccount != null) {
+                    WritableMap event = Arguments.createMap();
+                    event.putString("uuid", wallet.id());
+                    mReactContext.getJSModule(RCTEventEmitter.class).receiveEvent(
+                            0,
+                            "abcAccountWalletChanged",
+                            event);
+                }
+            }
+
+            public void walletsLoaded() {
+                AirbitzCore.logw("callback: walletsLoaded");
+            }
+
+            public void walletsChanged() {
+                AirbitzCore.logw("callback: walletsChanged");
+            }
+
+            public void otpSkew() {
+                AirbitzCore.logw("callback: otpSkew");
+            }
+
+            public void otpRequired() {
+                AirbitzCore.logw("callback: otpRequired");
+            }
+
+            public void otpResetPending() {
+                AirbitzCore.logw("callback: otpResetPending");
+            }
+
+            public void exchangeRateChanged() {
+                AirbitzCore.logw("callback: exchangeRateChanged");
+            }
+
+            public void blockHeightChanged() {
+                AirbitzCore.logw("callback: blockHeightChanged");
+            }
+
+            public void balanceUpdate(final Wallet wallet, final Transaction tx) {
+                AirbitzCore.logw("callback: balanceUpdate");
+            }
+
+            public void incomingBitcoin(final Wallet wallet, final Transaction tx) {
+                AirbitzCore.logw("callback: incomingBitcoin");
+            }
+
+            public void sweep(final Wallet wallet, final Transaction tx, final long amountSwept) {
+                AirbitzCore.logw("callback: sweep");
+            }
+        });
+        account.startBackgroundTasks();
     }
 
     //
