@@ -606,9 +606,12 @@ public class Account {
         String urlDomain = null;
 
         SWIGTYPE_p_long lp = core.new_longp();
-        SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
+        SWIGTYPE_p_p_char ppDomain = core.longp_to_ppChar(lp);
 
-        core.ABC_BitidParseUri(mUsername, null, uri, ppChar, error);
+        SWIGTYPE_p_long lp2 = core.new_longp();
+        SWIGTYPE_p_p_char ppBitIDCallbackURI = core.longp_to_ppChar(lp2);
+
+        core.ABC_BitidParseUri(mUsername, null, uri, ppDomain, ppBitIDCallbackURI, error);
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
             urlDomain = Jni.getStringAtPtr(core.longp_value(lp));
         }
