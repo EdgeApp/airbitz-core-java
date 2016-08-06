@@ -7,6 +7,7 @@ package co.airbitz.AirbitzCoreRCT;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
+import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.modules.core.RCTNativeAppEventEmitter;
@@ -40,6 +41,7 @@ import co.airbitz.core.android.AndroidUtils;
 
 import java.lang.reflect.Array;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nullable;
@@ -51,6 +53,7 @@ public class AirbitzCoreRCT extends ReactContextBaseJavaModule {
     private Account mABCAccount  = null;
     private ReactApplicationContext mReactContext = null;
 
+
     @Override
     public String getName() {
         return "AirbitzCoreRCT";
@@ -61,34 +64,37 @@ public class AirbitzCoreRCT extends ReactContextBaseJavaModule {
         mReactContext = reactContext;
     }
 
+    /***********************************************
+     * ABCContext methods
+     ***********************************************/
+
     @ReactMethod
     public void init(String abcAPIKey,
                      String hbitsKey,
-                     Callback complete,
-                     Callback error) {
+                     Callback callback) {
         if (mContext == null)
             mContext = getReactApplicationContext().getBaseContext();
 
         if (mABC != null) {
-            error.invoke(null, makeError(23, "ABC Already Initialized"));
+            callback.invoke(makeError(23, "ABC Already Initialized"));
+            return;
         } else {
             mABC = AndroidUtils.init(mContext, abcAPIKey, hbitsKey);
         }
 
         if (mABC != null)
-            complete.invoke();
+            callback.invoke(null, null);
         else
-            error.invoke(null);
+            callback.invoke(makeError(1, "Error Initializing ABC"));
     }
 
     @ReactMethod
     public void createAccount(String username,
                               String password,
                               String pin,
-                              Callback complete,
-                              Callback error) {
+                              Callback callback) {
         if (mABC == null) {
-            error.invoke(null, makeErrorABCNotInitialized());
+            callback.invoke(makeErrorABCNotInitialized());
             return;
         }
 
@@ -102,22 +108,21 @@ public class AirbitzCoreRCT extends ReactContextBaseJavaModule {
                 password = null;
             mABCAccount =  mABC.createAccount(username, password, pin);
             registerCallbacks(mABCAccount);
-            complete.invoke(null, mABCAccount.username());
+            callback.invoke(null, mABCAccount.username());
             return;
         } catch (AirbitzException e) {
-            error.invoke(null, makeError(e.code(), e.description()));
+            callback.invoke(makeError(e.code(), e.description()));
             return;
         }
     }
 
     @ReactMethod
-    public void passwordLogin(String username,
-                              String password,
-                              String otpToken,
-                              Callback complete,
-                              Callback error) {
+    public void loginWithPassword(String username,
+                                  String password,
+                                  String otpToken,
+                                  Callback callback) {
         if (mABC == null) {
-            error.invoke(null, makeErrorABCNotInitialized());
+            callback.invoke(makeErrorABCNotInitialized());
             return;
         }
 
@@ -129,25 +134,24 @@ public class AirbitzCoreRCT extends ReactContextBaseJavaModule {
         try {
             mABCAccount = mABC.passwordLogin(username, password, otpToken);
             registerCallbacks(mABCAccount);
-            complete.invoke(null, mABCAccount.username());
+            callback.invoke(null, mABCAccount.username());
         } catch (AirbitzException e) {
             if (e.code() == 37 /* ABCConditionCodeInvalidOTP */) {
                 String err = makeOTPError(e.code(), e.otpResetDate(), e.otpResetToken());
-                error.invoke(null, err);
+                callback.invoke(err);
             } else {
-                error.invoke(null, makeError(e.code(), e.description()));
+                callback.invoke(makeError(e.code(), e.description()));
             }
             return;
         }
     }
 
     @ReactMethod
-    public void pinLogin(String username,
-                         String pin,
-                         Callback complete,
-                         Callback error) {
+    public void loginWithPIN(String username,
+                             String pin,
+                             Callback callback) {
         if (mABC == null) {
-            error.invoke(null, makeErrorABCNotInitialized());
+            callback.invoke(makeErrorABCNotInitialized(), null);
             return;
         }
 
@@ -160,108 +164,151 @@ public class AirbitzCoreRCT extends ReactContextBaseJavaModule {
             mABCAccount = mABC.pinLogin(username, pin, null);
             registerCallbacks(mABCAccount);
 
-            complete.invoke(null, mABCAccount.username());
+            callback.invoke(null, mABCAccount.username());
         } catch (AirbitzException e) {
-            error.invoke(null, makeError(e.code(), e.description()));
-            return;
-        }
-    }
-
-    @ReactMethod
-    public void changePassword(String password,
-                               Callback complete,
-                               Callback error) {
-        if (mABC == null) {
-            error.invoke(null, makeErrorABCNotInitialized());
-            return;
-        }
-
-        if (mABCAccount == null) {
-            error.invoke(null, makeErrorNotLoggedIn());
-            return;
-        }
-
-        try {
-            mABCAccount.passwordChange(password);
-            complete.invoke(null, null);
-        } catch (AirbitzException e) {
-            error.invoke(null, makeError(e.code(), e.description()));
-            return;
-        }
-    }
-
-    @ReactMethod
-    public void changePIN(String pin,
-                          Callback complete,
-                          Callback error) {
-        if (mABC == null) {
-            error.invoke(null, makeErrorABCNotInitialized());
-            return;
-        }
-
-        if (mABCAccount == null) {
-            error.invoke(null, makeErrorNotLoggedIn());
-            return;
-        }
-
-        try {
-            mABCAccount.pin(pin);
-            complete.invoke(null, null);
-        } catch (AirbitzException e) {
-            error.invoke(null, makeError(e.code(), e.description()));
+            callback.invoke(makeError(e.code(), e.description()), null);
             return;
         }
     }
 
     @ReactMethod
     public void accountHasPassword(String username,
-                                   Callback complete,
-                                   Callback error) {
+                                   Callback callback) {
         if (mABC == null) {
-            error.invoke(null, makeErrorABCNotInitialized());
+            callback.invoke(makeErrorABCNotInitialized(), null);
             return;
         }
 
         Boolean hasPassword = mABC.accountHasPassword(username);
-        complete.invoke(null, hasPassword);
+        callback.invoke(null, hasPassword);
+    }
+
+    @ReactMethod
+    public void deleteLocalAccount(String username,
+                                   Callback callback) {
+        if (mABC == null) {
+            callback.invoke(makeErrorABCNotInitialized(), null);
+            return;
+        }
+
+        mABC.accountDeleteLocal(username);
+        callback.invoke(null, null);
+    }
+
+    @ReactMethod
+    public void listUsernames(Callback callback) {
+        if (mABC == null) {
+            callback.invoke(makeErrorABCNotInitialized(), null);
+            return;
+        }
+
+        List<String> usernames = mABC.listLocalAccounts();
+        WritableArray arrayNames = Arguments.createArray();
+
+        for (int i = 0; i < usernames.size(); i++)
+            arrayNames.pushString(usernames.get(i));
+        callback.invoke(null, arrayNames);
+    }
+
+    @ReactMethod
+    public void usernameAvailable(String username,
+                                  Callback callback) {
+        if (mABC == null) {
+            callback.invoke(makeErrorABCNotInitialized(), null);
+            return;
+        }
+
+        try {
+            Boolean available = mABC.isUsernameAvailable(username);
+            callback.invoke(null, available);
+        } catch (AirbitzException e) {
+            callback.invoke(null, false);
+            return;
+        }
+    }
+
+    /***********************************************
+     * ABCAccount methods
+     ***********************************************/
+
+    @ReactMethod
+    public void changePassword(String password,
+                               Callback callback) {
+        if (mABC == null) {
+            callback.invoke(makeErrorABCNotInitialized(), null);
+            return;
+        }
+
+        if (mABCAccount == null) {
+            callback.invoke(makeErrorNotLoggedIn(), null);
+            return;
+        }
+
+        try {
+            mABCAccount.passwordChange(password);
+            callback.invoke(null, null);
+        } catch (AirbitzException e) {
+            callback.invoke(makeError(e.code(), e.description()), null);
+            return;
+        }
+    }
+
+    @ReactMethod
+    public void changePIN(String pin,
+                          Callback callback) {
+        if (mABC == null) {
+            callback.invoke(null, makeErrorABCNotInitialized(), null);
+            return;
+        }
+
+        if (mABCAccount == null) {
+            callback.invoke(makeErrorNotLoggedIn(), null);
+            return;
+        }
+
+        try {
+            mABCAccount.pin(pin);
+            callback.invoke(null, null);
+        } catch (AirbitzException e) {
+            callback.invoke(null, makeError(e.code(), e.description()));
+            return;
+        }
     }
 
     @ReactMethod
     public void checkPassword(String password,
-                              Callback complete,
-                              Callback error) {
+                              Callback callback) {
         if (mABC == null) {
-            error.invoke(null, makeErrorABCNotInitialized());
+            callback.invoke(makeErrorABCNotInitialized(),null);
             return;
         }
 
         if (mABCAccount == null) {
-            error.invoke(null, makeErrorNotLoggedIn());
+            callback.invoke(makeErrorNotLoggedIn(),null);
             return;
         }
 
         Boolean check = mABCAccount.checkPassword(password);
-        complete.invoke(null, check);
+        callback.invoke(null, check);
     }
 
     @ReactMethod
     public void pinLoginSetup(Boolean enable,
-                              Callback complete,
-                              Callback error) {
+                              Callback callback) {
         if (mABC == null) {
-            error.invoke(null, makeErrorABCNotInitialized());
+            callback.invoke(makeErrorABCNotInitialized(),null);
             return;
         }
 
         if (mABCAccount == null) {
-            error.invoke(null, makeErrorNotLoggedIn());
+            callback.invoke(makeErrorNotLoggedIn(),null);
             return;
         }
         try {
             mABCAccount.pinLoginSetup(enable);
-            complete.invoke(null, null);
+            callback.invoke(null, null);
         } catch (AirbitzException e) {
-            error.invoke(null, makeError(e.code(), e.description()));
+            callback.invoke(makeError(e.code(), e.description()),null);
             return;
         }
     }
@@ -315,6 +362,11 @@ public class AirbitzCoreRCT extends ReactContextBaseJavaModule {
 
             public void walletsLoaded() {
                 AirbitzCore.logw("callback: walletsLoaded");
+                if (mABCAccount != null) {
+                    WritableMap map = Arguments.createMap();
+                    getReactApplicationContext().getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                            .emit("abcAccountWalletsLoaded", map);
+                }
             }
 
             public void walletsChanged() {
@@ -374,10 +426,6 @@ public class AirbitzCoreRCT extends ReactContextBaseJavaModule {
         String description;
         String description2;
         String description3;
-    }
-
-    class ABCOTPError {
-        int code;
         String resetDate;
         String resetToken;
     }
@@ -406,7 +454,7 @@ public class AirbitzCoreRCT extends ReactContextBaseJavaModule {
                                 String otpResetToken) {
 
 
-        ABCOTPError err = new ABCOTPError();
+        ABCError err = new ABCError();
 
         err.code = code;
         if (otpResetDate != null)
