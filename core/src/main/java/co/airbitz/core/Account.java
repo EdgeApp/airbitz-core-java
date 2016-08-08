@@ -692,8 +692,11 @@ public class Account {
      * Enable OTP for this account.
      */
     public void otpEnable() throws AirbitzException {
+        otpEnable(OTP_RESET_DELAY_SECS);
+    }
+    public void otpEnable(int timeout) throws AirbitzException {
         tABC_Error error = new tABC_Error();
-        core.ABC_OtpAuthSet(mUsername, mPassword, OTP_RESET_DELAY_SECS, error);
+        core.ABC_OtpAuthSet(mUsername, mPassword, timeout, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
             throw new AirbitzException(error.getCode(), error);
         }
