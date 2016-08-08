@@ -227,6 +227,17 @@ public class AirbitzCoreRCT extends ReactContextBaseJavaModule {
         }
     }
 
+    @ReactMethod
+    public void pinLoginEnabled(String username,
+                                Callback callback) {
+        if (mABC == null) {
+            callback.invoke(makeErrorABCNotInitialized(), null);
+            return;
+        }
+
+        Boolean enabled = mABC.accountHasPinLogin(username);
+        callback.invoke(null, enabled);
+    }
     /***********************************************
      * ABCAccount methods
      ***********************************************/
@@ -293,8 +304,8 @@ public class AirbitzCoreRCT extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void pinLoginSetup(Boolean enable,
-                              Callback callback) {
+    public void enablePINLogin(Boolean enable,
+                               Callback callback) {
         if (mABC == null) {
             callback.invoke(makeErrorABCNotInitialized(),null);
             return;
@@ -325,6 +336,145 @@ public class AirbitzCoreRCT extends ReactContextBaseJavaModule {
         complete.invoke();
     }
 
+    @ReactMethod
+    public void setupOTPKey(String key,
+                            Callback callback) {
+        if (mABC == null) {
+            callback.invoke(makeErrorABCNotInitialized(),null);
+            return;
+        }
+
+        if (mABCAccount == null) {
+            callback.invoke(makeErrorNotLoggedIn(),null);
+            return;
+        }
+        try {
+            mABCAccount.otpSecret(key);
+            callback.invoke(null, null);
+        } catch (AirbitzException e) {
+            callback.invoke(makeError(e.code(), e.description()),null);
+            return;
+        }
+    }
+
+    @ReactMethod
+    public void getOTPLocalKey(Callback callback) {
+        if (mABC == null) {
+            callback.invoke(makeErrorABCNotInitialized(),null);
+            return;
+        }
+
+        if (mABCAccount == null) {
+            callback.invoke(makeErrorNotLoggedIn(),null);
+            return;
+        }
+        String key = mABCAccount.otpSecret();
+        callback.invoke(null, key);
+    }
+
+    @ReactMethod
+    public void getOTPDetails(Callback callback) {
+        if (mABC == null) {
+            callback.invoke(makeErrorABCNotInitialized(),null);
+            return;
+        }
+
+        if (mABCAccount == null) {
+            callback.invoke(makeErrorNotLoggedIn(),null);
+            return;
+        }
+        try {
+            Boolean enabled = mABCAccount.isOtpEnabled();
+            callback.invoke(null, enabled, 60 * 60 * 24 * 7);
+        } catch (AirbitzException e) {
+            callback.invoke(makeError(e.code(), e.description()),null);
+            return;
+        }
+    }
+
+    @ReactMethod
+    public void enableOTP(int timeout,
+                          Callback callback) {
+        if (mABC == null) {
+            callback.invoke(makeErrorABCNotInitialized(),null);
+            return;
+        }
+
+        if (mABCAccount == null) {
+            callback.invoke(makeErrorNotLoggedIn(),null);
+            return;
+        }
+        try {
+            mABCAccount.otpEnable(timeout);
+            callback.invoke(null, null);
+        } catch (AirbitzException e) {
+            callback.invoke(makeError(e.code(), e.description()),null);
+            return;
+        }
+    }
+
+    @ReactMethod
+    public void disableOTP (Callback callback) {
+        if (mABC == null) {
+            callback.invoke(makeErrorABCNotInitialized(),null);
+            return;
+        }
+
+        if (mABCAccount == null) {
+            callback.invoke(makeErrorNotLoggedIn(),null);
+            return;
+        }
+        try {
+            mABCAccount.otpDisable();
+            callback.invoke(null, null);
+        } catch (AirbitzException e) {
+            callback.invoke(makeError(e.code(), e.description()),null);
+            return;
+        }
+    }
+
+    @ReactMethod
+    public void cancelOTPResetRequest (Callback callback) {
+        if (mABC == null) {
+            callback.invoke(makeErrorABCNotInitialized(),null);
+            return;
+        }
+
+        if (mABCAccount == null) {
+            callback.invoke(makeErrorNotLoggedIn(),null);
+            return;
+        }
+        try {
+            mABCAccount.otpResetCancel();
+            callback.invoke(null, null);
+        } catch (AirbitzException e) {
+            callback.invoke(makeError(e.code(), e.description()),null);
+            return;
+        }
+    }
+
+    @ReactMethod
+    public void signBitIDRequest(String uri,
+                                 String message,
+                                 Callback callback) {
+        if (mABC == null) {
+            callback.invoke(makeErrorABCNotInitialized(),null);
+            return;
+        }
+
+        if (mABCAccount == null) {
+            callback.invoke(makeErrorNotLoggedIn(),null);
+            return;
+        }
+        Account.BitidSignature bitidSignature =  mABCAccount.bitidSign(uri, message);
+
+        WritableMap bitidMap = Arguments.createMap();
+
+        bitidMap.putString("signature", bitidSignature.signature);
+        bitidMap.putString("address", bitidSignature.address);
+
+        callback.invoke(null, bitidMap);
+    }
 
     private void registerCallbacks(Account account) {
         account.callbacks(new Account.Callbacks() {
@@ -408,16 +558,103 @@ public class AirbitzCoreRCT extends ReactContextBaseJavaModule {
         account.startBackgroundTasks();
     }
 
+    /***********************************************
+     * ABCDataStore methods
+     ***********************************************/
+
+    @ReactMethod
+    public void writeData(String folder,
+                          String key,
+                          String value,
+                          Callback callback) {
+        if (mABC == null) {
+            callback.invoke(makeErrorABCNotInitialized(),null);
+            return;
+        }
+
+        if (mABCAccount == null) {
+            callback.invoke(makeErrorNotLoggedIn(),null);
+            return;
+        }
+        mABCAccount.data(folder).set(key, value);
+        callback.invoke(null, null);
+    }
+
+    @ReactMethod
+    public void readData(String folder,
+                         String key,
+                         Callback callback) {
+        if (mABC == null) {
+            callback.invoke(makeErrorABCNotInitialized(),null);
+            return;
+        }
+
+        if (mABCAccount == null) {
+            callback.invoke(makeErrorNotLoggedIn(),null);
+            return;
+        }
+        String value = mABCAccount.data(folder).get(key);
+        callback.invoke(null, value);
+    }
+
+    @ReactMethod
+    public void removeDataKey(String folder,
+                              String key,
+                              Callback callback) {
+        if (mABC == null) {
+            callback.invoke(makeErrorABCNotInitialized(),null);
+            return;
+        }
+
+        if (mABCAccount == null) {
+            callback.invoke(makeErrorNotLoggedIn(),null);
+            return;
+        }
+        mABCAccount.data(folder).remove(key);
+        callback.invoke(null, null);
+    }
+
+//    @ReactMethod
+//    public void listDataKeys(String folder,
+//                             Callback callback) {
+//        if (mABC == null) {
+//            callback.invoke(makeErrorABCNotInitialized(),null);
+//            return;
+//        }
+//
+//        if (mABCAccount == null) {
+//            callback.invoke(makeErrorNotLoggedIn(),null);
+//            return;
+//        }
+//        WritableArray keys = Arguments.createArray();
+//
+//        mABCAccount.data(folder).
+//        keys.pushString();
+//        bitidMap.putString("signature", bitidSignature.signature);
+//        bitidMap.putString("address", bitidSignature.address);
+//
+//        callback.invoke(null, bitidMap);
+//    }
+
+    @ReactMethod
+    public void removeDataFolder(String folder,
+                                 Callback callback) {
+        if (mABC == null) {
+            callback.invoke(makeErrorABCNotInitialized(),null);
+            return;
+        }
+
+        if (mABCAccount == null) {
+            callback.invoke(makeErrorNotLoggedIn(),null);
+            return;
+        }
+        mABCAccount.data(folder).removeAll();
+        callback.invoke(null, null);
+    }
+
     //
-    // To standardize between React Native on ObjC and Android, all methods use two callbacks of type Callback.
-    // One for success (complete) and one for failure (error). Callback takes a list of arguments but the first element
-    // is only for errors to match iOS. For ABC we always send 'null' for the first argument and return parameters in the 2nd argument.
-    // Convention shall be that if there is only one return parameter, it is simply the argument. If there is more than one,
-    // It shall be encoded as a Json string. Error parameters are returned the same way as success parameters but are simply
-    // differentiated by the callback used.
-    //
-    // Errors are always encoded as a string encoding of a Json array with the first parameter as the integer error cod
-    // and 2nd, 3rd, and 4th parameters as descriptions.
+    // To standardize between React Native on ObjC and Android, all methods use one method of type Callback.
+    // The first parameter is always an Error object which is null if method succeeds.
     //
 
 
