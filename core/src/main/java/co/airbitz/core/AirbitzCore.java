@@ -681,6 +681,32 @@ public class AirbitzCore {
      * @param username an account username
      * @return new line delimited string of recovery questions
      */
+    public String[] getRecoveryQuestionsWithRecoveryToken(String username,
+                                                          String recoveryToken) throws AirbitzException {
+//        tABC_Error error = new tABC_Error();
+//
+//        SWIGTYPE_p_long lp = core.new_longp();
+//        SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
+//
+//        tABC_CC result = core.ABC_GetRecoveryQuestions(username, ppChar, error);
+//        String questionString = Jni.getStringAtPtr(core.longp_value(lp));
+//        if (result == tABC_CC.ABC_CC_Ok) {
+//            return questionString.split("\n");
+//        } else {
+//            throw new AirbitzException(error.getCode(), error);
+//        }
+        if (recoveryToken.equals("iamarecoverytokenreallyiam1234"))
+            return new String[] {"How old are you now?", "Who's your daddy?"};
+        else
+            return null;
+
+    }
+
+    /**
+     * Fetch the recovery questions for a user.
+     * @param username an account username
+     * @return new line delimited string of recovery questions
+     */
     public String[] recoveryQuestions(String username) throws AirbitzException {
         tABC_Error error = new tABC_Error();
 
@@ -714,6 +740,40 @@ public class AirbitzCore {
             AirbitzCore.loge("hasRecoveryQuestionsSet error:");
         }
         return false;
+    }
+
+    public Account loginWithRecoveryToken(String username, String[] answers, String recoveryToken, String otpToken) throws AirbitzException {
+//        tABC_Error error = new tABC_Error();
+//        if (otpToken != null) {
+//            otpKeySet(username, otpToken);
+//        }
+//
+//        SWIGTYPE_p_long pToken = core.new_longp();
+//        SWIGTYPE_p_p_char ppToken = core.longp_to_ppChar(pToken);
+//
+//        SWIGTYPE_p_long pTokenDate = core.new_longp();
+//        SWIGTYPE_p_p_char ppDate = core.longp_to_ppChar(pTokenDate);
+//
+//        core.ABC_RecoveryLogin(username,
+//                Utils.arrayToString(answers), ppToken, ppDate, error);
+//        if (tABC_CC.ABC_CC_Ok != error.getCode()) {
+//            AirbitzException exception = new AirbitzException(error.getCode(), error);
+//            exception.mOtpResetToken = Jni.getStringAtPtr(core.longp_value(pToken));
+//            exception.mOtpResetDate = Jni.getStringAtPtr(core.longp_value(pTokenDate));
+//            throw exception;
+//        }
+//        Account account = new Account(this, username, null);
+//        mAccounts.add(account);
+        Account account = null;
+
+        if (recoveryToken.equals("iamarecoverytokenreallyiam1234") &&
+                username.equals("user") &&
+                answers[0].equals("a") &&
+                answers[1].equals("b")) {
+            account = passwordLogin("recoverytest2", "Recovery12", "");
+        }
+
+        return account;
     }
 
     /**

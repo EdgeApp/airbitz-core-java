@@ -513,6 +513,16 @@ public class Account {
         }
     }
 
+    public String setupRecoveryQuestions2(String [] questions, String[] answers) throws AirbitzException {
+        tABC_Error error = new tABC_Error();
+//        core.ABC_SetAccountRecoveryQuestions(mUsername, mPassword,
+//                Utils.arrayToString(questions), Utils.arrayToString(answers), error);
+//        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
+//            throw new AirbitzException(error.getCode(), error);
+//        }
+        return "iamarecoverytokenreallyiam1234";
+    }
+
     /**
      * Fetch a wallet by wallet id.
      * @param id the wallet id
