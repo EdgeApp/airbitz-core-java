@@ -513,14 +513,22 @@ public class Account {
         }
     }
 
-    public String setupRecoveryQuestions2(String [] questions, String[] answers) throws AirbitzException {
+    public String setupRecovery2Questions(String [] questions, String[] answers) throws AirbitzException {
         tABC_Error error = new tABC_Error();
-//        core.ABC_SetAccountRecoveryQuestions(mUsername, mPassword,
-//                Utils.arrayToString(questions), Utils.arrayToString(answers), error);
-//        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
-//            throw new AirbitzException(error.getCode(), error);
-//        }
-        return "iamarecoverytokenreallyiam1234";
+        SWIGTYPE_p_long pToken = core.new_longp();
+        SWIGTYPE_p_p_char ppToken = core.longp_to_ppChar(pToken);
+        String token = null;
+
+        core.ABC_Recovery2Setup(mUsername, mPassword,
+                questions[0], answers[0],
+                questions[1], answers[1], ppToken, error);
+
+        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
+            throw new AirbitzException(error.getCode(), error);
+        } else {
+            token = Jni.getStringAtPtr(core.longp_value(pToken));
+        }
+        return token;
     }
 
     /**
