@@ -45,6 +45,7 @@ import co.airbitz.internal.SWIGTYPE_p_double;
 import co.airbitz.internal.SWIGTYPE_p_int;
 import co.airbitz.internal.SWIGTYPE_p_long;
 import co.airbitz.internal.SWIGTYPE_p_p_char;
+import co.airbitz.internal.SWIGTYPE_p_p_p_char;
 import co.airbitz.internal.SWIGTYPE_p_p_p_sABC_PasswordRule;
 import co.airbitz.internal.SWIGTYPE_p_p_sABC_QuestionChoices;
 import co.airbitz.internal.SWIGTYPE_p_p_unsigned_char;
@@ -681,6 +682,55 @@ public class AirbitzCore {
      * @param username an account username
      * @return new line delimited string of recovery questions
      */
+    public String[] getRecovery2Questions(String username,
+                                          String recoveryToken) throws AirbitzException {
+
+        List<String> questions = new ArrayList<String>();
+
+        tABC_Error Error = new tABC_Error();
+
+        SWIGTYPE_p_long lp = core.new_longp();
+        SWIGTYPE_p_p_p_char aszQuestions = core.longp_to_pppChar(lp);
+
+        SWIGTYPE_p_int pCount = core.new_intp();
+        SWIGTYPE_p_unsigned_int pUCount = core.int_to_uint(pCount);
+
+        tABC_CC result = core.ABC_Recovery2Questions(username, recoveryToken, aszQuestions, pUCount, Error);
+
+        int count = core.intp_value(pCount);
+        long base = core.longp_value(lp);
+        for (int i = 0; i < count; i++) {
+            Jni.pLong temp = new Jni.pLong(base + i * 4);
+            long start = core.longp_value(temp);
+            questions.add(Jni.getStringAtPtr(start));
+        }
+        String[] arrayQuestions = questions.toArray(new String[0]);
+
+        return arrayQuestions;
+    }
+
+    public String getRecovery2Token(String username) throws AirbitzException {
+
+        tABC_Error error = new tABC_Error();
+        SWIGTYPE_p_long pToken = core.new_longp();
+        SWIGTYPE_p_p_char ppToken = core.longp_to_ppChar(pToken);
+        String token = null;
+
+        core.ABC_Recovery2Key(username, ppToken, error);
+
+        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
+            token = Jni.getStringAtPtr(core.longp_value(pToken));
+        } else {
+            throw new AirbitzException(error.getCode(), error);
+        }
+        return token;
+    }
+
+    /**
+     * Fetch the recovery questions for a user.
+     * @param username an account username
+     * @return new line delimited string of recovery questions
+     */
     public String[] recoveryQuestions(String username) throws AirbitzException {
         tABC_Error error = new tABC_Error();
 
@@ -714,6 +764,34 @@ public class AirbitzCore {
             AirbitzCore.loge("hasRecoveryQuestionsSet error:");
         }
         return false;
+    }
+
+    public Account loginWithRecovery2(String username, String[] answers, String recoveryToken, String otpToken) throws AirbitzException {
+        tABC_Error error = new tABC_Error();
+        if (otpToken != null) {
+            otpKeySet(username, otpToken);
+        }
+
+        SWIGTYPE_p_long pToken = core.new_longp();
+        SWIGTYPE_p_p_char ppToken = core.longp_to_ppChar(pToken);
+
+        SWIGTYPE_p_long pTokenDate = core.new_longp();
+        SWIGTYPE_p_p_char ppDate = core.longp_to_ppChar(pTokenDate);
+
+        core.ABC_Recovery2Login(username,
+                recoveryToken,
+                answers[0],
+                answers[1],
+                ppToken, ppDate, error);
+        if (tABC_CC.ABC_CC_Ok != error.getCode()) {
+            AirbitzException exception = new AirbitzException(error.getCode(), error);
+            exception.mOtpResetToken = Jni.getStringAtPtr(core.longp_value(pToken));
+            exception.mOtpResetDate = Jni.getStringAtPtr(core.longp_value(pTokenDate));
+            throw exception;
+        }
+        Account account = new Account(this, username, null);
+        mAccounts.add(account);
+        return account;
     }
 
     /**
