@@ -70,6 +70,7 @@ public class AirbitzCoreRCT extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void init(String abcAPIKey,
+                     String type,
                      String hbitsKey,
                      Callback callback) {
         if (mContext == null)
@@ -79,7 +80,7 @@ public class AirbitzCoreRCT extends ReactContextBaseJavaModule {
             callback.invoke(makeError(23, "ABC Already Initialized"));
             return;
         } else {
-            mABC = AndroidUtils.init(mContext, abcAPIKey, hbitsKey);
+            mABC = AndroidUtils.init(mContext, abcAPIKey, type, hbitsKey);
         }
 
         if (mABC != null)
