@@ -513,6 +513,34 @@ public class Account {
         }
     }
 
+    public String setupRecovery2Questions(String [] questions, String[] answers) throws AirbitzException {
+        tABC_Error error = new tABC_Error();
+        SWIGTYPE_p_long pToken = core.new_longp();
+        SWIGTYPE_p_p_char ppToken = core.longp_to_ppChar(pToken);
+        String token = null;
+
+        core.ABC_Recovery2Setup(mUsername, mPassword,
+                questions[0], answers[0],
+                questions[1], answers[1], ppToken, error);
+
+        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
+            throw new AirbitzException(error.getCode(), error);
+        } else {
+            token = Jni.getStringAtPtr(core.longp_value(pToken));
+        }
+        return token;
+    }
+
+    public void disableRecovery2() throws AirbitzException {
+        tABC_Error error = new tABC_Error();
+
+        core.ABC_Recovery2Delete(mUsername, mPassword, error);
+
+        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
+            throw new AirbitzException(error.getCode(), error);
+        }
+    }
+
     /**
      * Fetch a wallet by wallet id.
      * @param id the wallet id
@@ -606,9 +634,12 @@ public class Account {
         String urlDomain = null;
 
         SWIGTYPE_p_long lp = core.new_longp();
-        SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
+        SWIGTYPE_p_p_char ppDomain = core.longp_to_ppChar(lp);
 
-        core.ABC_BitidParseUri(mUsername, null, uri, ppChar, error);
+        SWIGTYPE_p_long lp2 = core.new_longp();
+        SWIGTYPE_p_p_char ppBitIDCallbackURI = core.longp_to_ppChar(lp2);
+
+        core.ABC_BitidParseUri(mUsername, null, uri, ppDomain, ppBitIDCallbackURI, error);
         if (error.getCode() == tABC_CC.ABC_CC_Ok) {
             urlDomain = Jni.getStringAtPtr(core.longp_value(lp));
         }
@@ -689,8 +720,11 @@ public class Account {
      * Enable OTP for this account.
      */
     public void otpEnable() throws AirbitzException {
+        otpEnable(OTP_RESET_DELAY_SECS);
+    }
+    public void otpEnable(int timeout) throws AirbitzException {
         tABC_Error error = new tABC_Error();
-        core.ABC_OtpAuthSet(mUsername, mPassword, OTP_RESET_DELAY_SECS, error);
+        core.ABC_OtpAuthSet(mUsername, mPassword, timeout, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
             throw new AirbitzException(error.getCode(), error);
         }

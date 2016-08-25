@@ -20,9 +20,9 @@ ext {
     compileSdkVersion = 23
     buildToolsVersion = "23.0.2"
 
-    coreVersion = '0.9.6'
+    coreVersion = '0.9.7'
     androidVersionCode = 1 
-    androidVersionName = '0.9.6'
+    androidVersionName = '0.9.7'
 }
 
 task cleanJni(type: Delete) {

@@ -41,6 +41,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -89,6 +91,7 @@ class Engine {
     private ScheduledFuture mMainDataFuture;
     private Map<String, ScheduledFuture> mBalanceUpdateFuture = new ConcurrentHashMap<String, ScheduledFuture>();
     private boolean mDataFetched = false;
+    private Timer mAutologoutTimer;
 
     Engine(AirbitzCore api, Account account) {
         mApi = api;
@@ -384,19 +387,25 @@ class Engine {
     }
 
     void resume() {
+        if (mAutologoutTimer != null)
+            mAutologoutTimer.cancel();
+
         if (mAccount.isExpired()) {
             mAccount.logout();
-        } else {
-            connectWatchers();
-            startExchangeRateUpdates();
-            startFileSyncUpdates();
         }
     }
 
     void pause() {
-        stopExchangeRateUpdates();
-        stopFileSyncUpdates();
-        disconnectWatchers();
+        mAutologoutTimer = new Timer();
+        mAutologoutTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                if (mAccount.isExpired() && mAccount.isLoggedIn()) {
+                    mAutologoutTimer.cancel();
+                    mAccount.logout();
+                }
+            }
+        }, 1000, 1000);
     }
 
     void restoreConnectivity() {

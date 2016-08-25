@@ -24,6 +24,9 @@ public class AirbitzException extends Exception {
         mCode = code;
         mError = error;
     }
+    public int code () { return mCode.swigValue(); }
+
+    public String description () { return mCode.toString(); }
 
     public boolean isBadPassword() {
         return mCode == tABC_CC.ABC_CC_BadPassword;
@@ -96,4 +99,5 @@ public class AirbitzException extends Exception {
     public int waitSeconds() {
         return mWaitSeconds;
     }
+
 }

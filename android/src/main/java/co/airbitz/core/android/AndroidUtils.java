@@ -53,11 +53,11 @@ import co.airbitz.internal.tABC_Error;
 public class AndroidUtils {
     private static final String CERT_FILENAME = "ca-certificates.crt";
 
-    public static AirbitzCore init(Context context, String airbitzApiKey, String hiddenbitzKey) {
+    public static AirbitzCore init(Context context, String airbitzApiKey, String type, String hiddenbitzKey) {
         AirbitzCore api = AirbitzCore.getApi();
         File filesDir = context.getFilesDir();
         File certPath = setupCertificates(context, filesDir);
-        api.init(filesDir, certPath, airbitzApiKey, hiddenbitzKey);
+        api.init(filesDir, certPath, airbitzApiKey, type, hiddenbitzKey);
         return api;
     }
 
