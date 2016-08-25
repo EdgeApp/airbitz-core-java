@@ -113,8 +113,8 @@ public class AirbitzCore {
      * Initialize the AirbitzCore object. Required for functionality of ABC SDK.
      * @param airbitzApiKey API key obtained from Airbitz Inc.
      */
-    public void init(File filesDir, File certpath, String airbitzApiKey) {
-        init(filesDir, certpath, airbitzApiKey, "");
+    public void init(File filesDir, File certpath, String airbitzApiKey, String type) {
+        init(filesDir, certpath, airbitzApiKey, type, "");
     }
 
     /**
@@ -123,17 +123,17 @@ public class AirbitzCore {
      * @param hiddenbitzKey (Optional) unique key used to encrypt private keys for use as implementation
      * specific "gift cards" that are only redeemable by applications using this implementation.
      */
-    public void init(File filesDir, File certpath, String airbitzApiKey, String hiddenbitzKey) {
+    public void init(File filesDir, File certpath, String airbitzApiKey, String type, String hiddenbitzKey) {
         String seed = seedData();
-        init(filesDir, certpath, airbitzApiKey, hiddenbitzKey, seed);
+        init(filesDir, certpath, airbitzApiKey, type, hiddenbitzKey, seed);
     }
 
-    public void init(File filesDir, File certpath, String airbitzApiKey, String hiddenbitzKey, String seed) {
+    public void init(File filesDir, File certpath, String airbitzApiKey, String type, String hiddenbitzKey, String seed) {
         if (mInitialized) {
             return;
         }
         tABC_Error error = new tABC_Error();
-        core.ABC_Initialize(filesDir.getPath(), certpath.getPath(), airbitzApiKey, hiddenbitzKey, seed, seed.length(), error);
+        core.ABC_Initialize(filesDir.getPath(), certpath.getPath(), airbitzApiKey, type, hiddenbitzKey, seed, seed.length(), error);
         mInitialized = true;
 
         // Fetch General Info
