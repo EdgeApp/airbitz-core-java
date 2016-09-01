@@ -28,12 +28,12 @@ ANDROID_PATH="$BASE/android/src/main"
 rm -rf $JNI_BUILD_DIR
 # Copy the core build output into the jni folder:
 mkdir -p $JNI_BUILD_DIR/includes
-mkdir -p $JNI_BUILD_DIR/armeabi
+mkdir -p $JNI_BUILD_DIR/armeabi-v7a
 mkdir -p $JNI_BUILD_DIR/x86
 cp $CORE_PATH/src/ABC.h $JNI_BUILD_DIR/includes
 sed  -e 's/const char *\*/const char *const /' $JNI_BUILD_DIR/includes/ABC.h \
     > $JNI_BUILD_DIR/includes/ABC-const.h
-cp $BUILD_PATH/abc/android-arm/libabc.so $JNI_BUILD_DIR/armeabi/libabc.so
+cp $BUILD_PATH/abc/android-arm/libabc.so $JNI_BUILD_DIR/armeabi-v7a/libabc.so
 cp $BUILD_PATH/abc/android-x86/libabc.so $JNI_BUILD_DIR/x86/libabc.so
 
 # Generate the wrapper code:
