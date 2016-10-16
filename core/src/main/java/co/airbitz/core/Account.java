@@ -331,6 +331,16 @@ public class Account {
      * Checks whether the account has a pin.
      * @return true if the account has a pin
      */
+    public boolean hasPin()
+    {
+        String pin = settings().settings().getSzPIN();
+        return (pin != null && pin.length() == 4);
+    }
+
+    /**
+     * Checks whether the account has pin login enabled
+     * @return true if the account has a pin login enabled
+     */
     public boolean hasPinLogin() {
         return mApi.accountHasPinLogin(username());
     }
