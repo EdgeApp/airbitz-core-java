@@ -20,10 +20,15 @@ public class AirbitzException extends Exception {
     int mWaitSeconds;
 
     protected AirbitzException(tABC_CC code, tABC_Error error) {
-        super(error.getSzDescription());
+        this(code, error, error.getSzDescription());
+    }
+
+    protected AirbitzException(tABC_CC code, tABC_Error error, String description) {
+        super(description);
         mCode = code;
         mError = error;
     }
+
     public int code () { return mCode.swigValue(); }
 
     public String description () { return mCode.toString(); }
