@@ -32,12 +32,13 @@ package co.airbitz.core;
 
 import co.airbitz.internal.Jni;
 import co.airbitz.internal.SWIGTYPE_p_long;
+import co.airbitz.internal.SWIGTYPE_p_p_char;
 import co.airbitz.internal.SWIGTYPE_p_p_sABC_ParsedUri;
+import co.airbitz.internal.SWIGTYPE_p_p_sABC_PaymentRequest;
 import co.airbitz.internal.core;
 import co.airbitz.internal.tABC_CC;
 import co.airbitz.internal.tABC_Error;
 import co.airbitz.internal.tABC_ParsedUri;
-import co.airbitz.internal.SWIGTYPE_p_p_sABC_PaymentRequest;
 
 /**
  * ParsedUri encapsulates the data of a bitcoin URI. It understands bitcoin
@@ -66,6 +67,8 @@ public class ParsedUri {
     private String mWif;
     private String mPaymentProto;
     private String mBitidUri;
+    private String mBitidDomain;
+    private String mBitidCallbackURI;
 
     ParsedUri(String text) throws AirbitzException {
         tABC_Error error = new tABC_Error();
@@ -81,6 +84,9 @@ public class ParsedUri {
         mWif = mParsedUri.getSzWif();
         mPaymentProto = mParsedUri.getSzPaymentProto();
         mBitidUri = mParsedUri.getSzBitidUri();
+        if (null != mBitidUri) {
+            parseBitidUri();
+        }
         if (mPaymentProto != null) {
             mType = UriType.PAYMENT_PROTO;
         } else if (mBitidUri != null) {
@@ -89,6 +95,21 @@ public class ParsedUri {
             mType = UriType.PRIVATE_KEY;
         } else if (mAddress != null) {
             mType = UriType.ADDRESS;
+        }
+    }
+
+    private void parseBitidUri() {
+        tABC_Error error = new tABC_Error();
+        SWIGTYPE_p_long pBitidDomain = core.new_longp();
+        SWIGTYPE_p_p_char ppBitidDomain = core.longp_to_ppChar(pBitidDomain);
+
+        SWIGTYPE_p_long pBitidCallbackUri = core.new_longp();
+        SWIGTYPE_p_p_char ppBitidCallbackUri = core.longp_to_ppChar(pBitidCallbackUri);
+
+        core.ABC_BitidParseUri(null, null, mParsedUri.getSzBitidUri(), ppBitidDomain, ppBitidCallbackUri, error);
+        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
+            mBitidDomain = Jni.getStringAtPtr(core.longp_value(pBitidDomain));
+            mBitidCallbackURI = Jni.getStringAtPtr(core.longp_value(pBitidCallbackUri));
         }
     }
 
@@ -142,6 +163,24 @@ public class ParsedUri {
      */
     public String bitid() {
         return mBitidUri;
+    }
+
+    /**
+     * Returns the Bitid domain parsed from the bitid URI. If the uri is
+     * null, this returns null.
+     * @return the Bitid domain
+     */
+    public String bitidDomain() {
+        return mBitidDomain;
+    }
+
+    /**
+     * Returns the Bitid callback parsed from the bitid uri. If the uri is
+     * null, this returns null.
+     * @return the Bitid domain
+     */
+    public String bitidCalbackUri() {
+        return mBitidCallbackURI;
     }
 
     /**
@@ -199,5 +238,17 @@ public class ParsedUri {
      */
     public String returnUri() {
         return mParsedUri.getSzRet();
+    }
+
+    public boolean bitidKYCRequest() {
+        return mParsedUri.getBitidKYCRequest();
+    }
+
+    public boolean bitidKYCProvider() {
+        return mParsedUri.getBitidKYCProvider();
+    }
+
+    public boolean bitidPaymentAddress() {
+        return mParsedUri.getBitidPaymentAddress();
     }
 }

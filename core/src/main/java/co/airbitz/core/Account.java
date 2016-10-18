@@ -691,6 +691,16 @@ public class Account {
         return error.getCode() == tABC_CC.ABC_CC_Ok;
     }
 
+    public void bitidLoginMeta(String uri, String kycUri) throws AirbitzException {
+        tABC_Error error = new tABC_Error();
+
+        Wallet wallet = wallets().get(0);
+        core.ABC_BitidLoginMeta(username(), null, uri, wallet.id(), kycUri, error);
+        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
+            throw new AirbitzException(error.getCode(), error);
+        }
+    }
+
     void restoreConnectivity() {
         mEngine.restoreConnectivity();
     }
@@ -817,5 +827,107 @@ public class Account {
             }
         }
         return false;
+    }
+
+    public static class EdgeLoginInfo {
+        public String token;
+        public String requestor;
+        public String requestorImageUrl;
+        public List<String> repoTypes;
+        public List<String> repoNames;
+        public int lobby;
+    }
+
+    private static String mapRepoType(String repoType) {
+        if ("account:repo:com.augur".equals(repoType)) {
+            return "Augur Account";
+        } else if ("account:repo:city.arcade".equals(repoType)) {
+            return "Arcade City Account";
+        } else if ("account:repo:com.mydomain.myapp".equals(repoType)) {
+            return "Cloud Chain Account";
+        } else if ("wallet:repo:ethereum".equals(repoType)) {
+            return "Ethereum Wallet";
+        } else if ("wallet:repo:bitcoin".equals(repoType)) {
+            return "Bitcoin Wallet";
+        } else {
+            return repoType;
+        }
+    }
+
+    public EdgeLoginInfo getEdgeLoginRequest(String requestToken) throws AirbitzException {
+        EdgeLoginInfo info = null;
+        tABC_Error error = new tABC_Error();
+
+        SWIGTYPE_p_int pLobby = core.new_intp();
+        core.ABC_FetchLobby(requestToken, pLobby, error);
+
+        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
+            int lobby = core.intp_value(pLobby);
+            SWIGTYPE_p_long pRequestType = core.new_longp();
+            SWIGTYPE_p_p_char ppRequestType = core.longp_to_ppChar(pRequestType);
+            SWIGTYPE_p_long pDisplayName = core.new_longp();
+            SWIGTYPE_p_p_char ppDisplayName = core.longp_to_ppChar(pDisplayName);
+            SWIGTYPE_p_long pDisplayImageUrl = core.new_longp();
+            SWIGTYPE_p_p_char ppDisplayImageUrl = core.longp_to_ppChar(pDisplayImageUrl);
+
+            error = new tABC_Error();
+            core.ABC_GetLobbyAccountRequest(lobby, ppRequestType, ppDisplayName, ppDisplayImageUrl, error);
+            if (error.getCode() == tABC_CC.ABC_CC_Ok) {
+                info = new EdgeLoginInfo();
+                info.token = requestToken;
+                info.lobby = lobby;
+                info.requestor = Jni.getStringAtPtr(core.longp_value(pDisplayName));
+
+                String displayImageUrl = Jni.getStringAtPtr(core.longp_value(pDisplayImageUrl));
+                if (null != displayImageUrl && displayImageUrl.length() > 6) {
+                    info.requestorImageUrl = displayImageUrl;
+                }
+
+                List<String> repoTypes = new ArrayList<String>();
+                repoTypes.add(Jni.getStringAtPtr(core.longp_value(pRequestType)));
+                info.repoTypes = repoTypes;
+
+                List<String> names = new ArrayList<String>();
+                for (String s: info.repoTypes) {
+                    names.add(mapRepoType(s));
+                }
+                info.repoNames = names;
+            }
+        }
+        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
+            throw new AirbitzException(error.getCode(), error);
+        }
+        return info;
+    }
+
+    static final String DUMMY_EDGE_LOGIN_TOKEN_AUGUR = "EDGYAUGUR1";
+    static final String DUMMY_EDGE_LOGIN_TOKEN_ARCADECITY = "ARCADECITY";
+
+    public void approveEdgeLoginRequest(EdgeLoginInfo edgeLoginInfo) throws AirbitzException {
+        tABC_Error error = new tABC_Error();
+        core.ABC_ApproveLobbyAccountRequest(username(), password(), edgeLoginInfo.lobby, error);
+        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
+            throw new AirbitzException(error.getCode(), error);
+        }
+    }
+
+    public void deleteEdgeLoginRequest(String requestToken) throws AirbitzException {
+        if (!DUMMY_EDGE_LOGIN_TOKEN_ARCADECITY.equals(requestToken) &&
+            !DUMMY_EDGE_LOGIN_TOKEN_AUGUR.equals(requestToken)) {
+            tABC_Error error = new tABC_Error();
+            error.setCode(tABC_CC.ABC_CC_Error);
+            throw new AirbitzException(error.getCode(), error, "Invalid Edge Login Request");
+        }
+    }
+
+    private static final String BTC_REPO_TYPE = "wallet:repo:bitcoin";
+    public List<Wallet> getEdgeLoginRepos(String repoType) {
+        List<Wallet> wallets = new ArrayList<Wallet>();
+        if (BTC_REPO_TYPE.equals(repoType)) {
+            for (Wallet w : wallets()) {
+                wallets.add(w);
+            }
+        }
+        return wallets;
     }
 }
