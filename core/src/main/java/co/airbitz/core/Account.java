@@ -311,6 +311,20 @@ public class Account {
         }
     }
 
+
+    /**
+     * Retrieve the login key.
+     * @return String Key that can be used to login to this account
+     */
+    public String getLoginKey() {
+        tABC_Error error = new tABC_Error();
+        SWIGTYPE_p_long lp = core.new_longp();
+        SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
+        tABC_CC cc = core.ABC_GetLoginKey(mUsername, mPassword, ppChar, error);
+        String loginKey = cc == tABC_CC.ABC_CC_Ok ? Jni.getStringAtPtr(core.longp_value(lp)) : null;
+        return loginKey;
+    }
+
     /**
      * Check the input against the account's PIN.
      * @param pin the PIN to check
