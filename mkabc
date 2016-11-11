@@ -8,12 +8,12 @@ touch recipes/abc/abc.recipe
 
 if [[ -z ENABLE_TESTNET ]]; then
     export BUILD_DIR=${BASE}/../airbitz-core/deps/build-testnet
-    make abc.build-android-arm abc.build-android-x86 ENABLE_TESTNET=1
+    make abc.build-android-arm abc.build-android-x86 $@ ENABLE_TESTNET=1
 else
     export BUILD_DIR=${BASE}/../airbitz-core/deps/build
-    make abc.build-android-arm abc.build-android-x86
+    make abc.build-android-arm abc.build-android-x86 $@
 fi
 
 # Now build the JNI wrapper:
 cd $BASE
-./cpabc "$@"
+./cpabc 

@@ -31,6 +31,7 @@
 
 package co.airbitz.core.android;
 
+import android.app.Application;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -52,6 +53,16 @@ import co.airbitz.internal.tABC_Error;
 
 public class AndroidUtils {
     private static final String CERT_FILENAME = "ca-certificates.crt";
+    private AirbitzCore mAbcContext;
+    private Application mApplication;
+    public ABCKeychain mAbcKeychain;
+
+    public AirbitzCore makeAbcContext(Application application, Context context, String airbitzApiKey, String type, String hiddenbitzKey) {
+        AirbitzCore mAbcContext = AndroidUtils.init(context, airbitzApiKey, type, hiddenbitzKey);
+        mApplication = application;
+        mAbcKeychain = new ABCKeychain();
+        return mAbcContext;
+    }
 
     public static AirbitzCore init(Context context, String airbitzApiKey, String type, String hiddenbitzKey) {
         AirbitzCore api = AirbitzCore.getApi();
@@ -97,6 +108,8 @@ public class AndroidUtils {
             e.printStackTrace();
         }
     }
+
+
 
     /**
      * Encodes a QR code byte array into Bitmap.

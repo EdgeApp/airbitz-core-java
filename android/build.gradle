@@ -12,6 +12,7 @@ android {
     defaultConfig {
         versionCode rootProject.ext.androidVersionCode
         versionName rootProject.ext.androidVersionName
+
     }
 
     productFlavors {
@@ -25,7 +26,9 @@ android {
 }
 
 dependencies {
-    compile 'com.android.support:support-v4:21.+'
+    compile 'com.android.support:support-v4:25.0.0'
+    compile 'com.squareup.whorlwind:whorlwind:1.0.1'
+    compile 'com.afollestad.material-dialogs:core:0.9.1.0'
     mainnetCompile project(':core')
     nettestCompile project(':core')
     developCompile project(':core')
