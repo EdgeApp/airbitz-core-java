@@ -659,6 +659,31 @@ public class AirbitzCore {
     }
 
     /**
+     * Login into an account with a login key.
+     * @param username an account username
+     * @param loginKey loginKey retrieved using getLoginKey
+     * @return Account object of signed in user
+     */
+    public Account loginWithKey(String username, String loginKey) throws AirbitzException {
+        tABC_Error error = new tABC_Error();
+        SWIGTYPE_p_long pToken = core.new_longp();
+        SWIGTYPE_p_p_char ppToken = core.longp_to_ppChar(pToken);
+
+        SWIGTYPE_p_long pTokenDate = core.new_longp();
+        SWIGTYPE_p_p_char ppDate = core.longp_to_ppChar(pTokenDate);
+
+        core.ABC_KeyLogin(username, loginKey, error);
+        if (error.getCode() != tABC_CC.ABC_CC_Ok) {
+            AirbitzException exception = new AirbitzException(error.getCode(), error);
+            throw exception;
+        }
+        Account account = new Account(this, username, null);
+        mAccounts.add(account);
+        return account;
+    }
+
+
+    /**
      * Fetch the possible choices for recovery questions.
      * @return an array of QuestionChoice
      */

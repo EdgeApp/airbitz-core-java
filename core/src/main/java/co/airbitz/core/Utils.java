@@ -247,7 +247,9 @@ public class Utils {
             }
             // Convert to BD so we don't lose precision
             BigDecimal bd = BigDecimal.valueOf(cleanAmount.doubleValue());
-            DecimalFormat df = new DecimalFormat("###0.############", new DecimalFormatSymbols(Locale.getDefault()));
+
+            // Use US locale since ParseAmount only works with US formatted numbers.
+            DecimalFormat df = new DecimalFormat("###0.############", new DecimalFormatSymbols(Locale.US));
             String bdstr = df.format(bd.doubleValue());
             long parseamt = Jni.ParseAmount(bdstr, decimalPlaces);
             long max = Math.max(parseamt, 0);
