@@ -6,10 +6,6 @@ if [[ ! -n $(which swig) ]]; then
     exit 1
 fi
 
-if [[ $# -ge 1 ]]; then
-    BUILD_DIR=$1
-fi
-
 if [[ -z ENABLE_TESTNET ]]; then
     DEPS_BUILD='deps/build-testnet'
 else

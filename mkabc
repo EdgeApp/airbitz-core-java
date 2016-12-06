@@ -1,19 +1,21 @@
 #!/bin/bash
 
+# Pick up the current directory:
 BASE=$(pwd)
+export BUILD_DIR=${BUILD_DIR:-$BASE/../airbitz-core/deps/build}
+
+# Testnet options:
+if [ "${1-}" = "testnet" ]; then
+    shift
+    export BUILD_DIR=${BUILD_DIR}-testnet
+    export ENABLE_TESTNET=1
+fi
 
 # Build the core:
 cd $BASE/../airbitz-core/deps
 touch recipes/abc/abc.recipe
-
-if [[ -z ENABLE_TESTNET ]]; then
-    export BUILD_DIR=${BASE}/../airbitz-core/deps/build-testnet
-    make abc.build-android-arm abc.build-android-x86 ENABLE_TESTNET=1
-else
-    export BUILD_DIR=${BASE}/../airbitz-core/deps/build
-    make abc.build-android-arm abc.build-android-x86
-fi
+make abc.build-android-arm abc.build-android-x86 $@
 
 # Now build the JNI wrapper:
 cd $BASE
-./cpabc "$@"
+./cpabc
