@@ -46,6 +46,7 @@ import co.airbitz.internal.tABC_TxDetails;
 
 public class Jni  {
     static {
+        System.loadLibrary("c++_shared");
         System.loadLibrary("abc");
         System.loadLibrary("airbitz");
     }

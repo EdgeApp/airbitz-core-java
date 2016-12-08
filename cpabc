@@ -22,6 +22,7 @@ ANDROID_PATH="$BASE/android/src/main"
 
 # Clean old android build library
 rm -rf $JNI_BUILD_DIR
+
 # Copy the core build output into the jni folder:
 mkdir -p $JNI_BUILD_DIR/includes
 mkdir -p $JNI_BUILD_DIR/armeabi-v7a
@@ -32,12 +33,16 @@ sed  -e 's/const char *\*/const char *const /' $JNI_BUILD_DIR/includes/ABC.h \
 cp $BUILD_PATH/abc/android-arm/libabc.so $JNI_BUILD_DIR/armeabi-v7a/libabc.so
 cp $BUILD_PATH/abc/android-x86/libabc.so $JNI_BUILD_DIR/x86/libabc.so
 
+# Copy the libc++ STL library:
+cp $BUILD_PATH/ndk/arm/arm-linux-androideabi/lib/libc++_shared.so $JNI_BUILD_DIR/armeabi-v7a/libc++_shared.so
+cp $BUILD_PATH/ndk/x86/i686-linux-android/lib/libc++_shared.so $JNI_BUILD_DIR/x86/libc++_shared.so
+
 # Generate the wrapper code:
 cd $JNI_DIR
 swig -java -package co.airbitz.internal \
     -outdir ../core/src/main/java/co/airbitz/internal -o $JNI_BUILD_DIR/ABC_wrap.c ABC.i
 # Build the wrapper core:
-$BUILD_PATH/ndk/android-ndk-r10d/ndk-build
+$BUILD_PATH/ndk/android-ndk-r13b/ndk-build
 mv ../libs $JNI_BUILD_DIR
 
 # Gradle is looking in the wrong place for libraries:

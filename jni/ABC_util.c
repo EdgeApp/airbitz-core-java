@@ -256,7 +256,7 @@ Java_co_airbitz_internal_Jni_ParseAmount(
             return 0;
     }
 
-    int64_t arg2 = 0; //*(int64_t **)&outp;
+    uint64_t arg2 = 0; //*(int64_t **)&outp;
     unsigned int arg3 = (unsigned int)decimalplaces;
     result = (tABC_CC)ABC_ParseAmount(instring,&arg2,arg3);
     return arg2;
