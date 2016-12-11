@@ -19,7 +19,7 @@ void bitcoinCallback(const tABC_AsyncBitCoinInfo *pInfo) {
         {
 		}
 	}
-    (*g_env)->CallVoidMethod(g_env, g_obj, g_async_callback, (void *) pInfo);
+    (*g_env)->CallVoidMethod(g_env, g_obj, g_async_callback, (jlong)pInfo);
 }
 
 void ABC_BitCoin_Event_Callback(const tABC_AsyncBitCoinInfo *pInfo)
