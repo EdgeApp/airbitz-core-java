@@ -90,6 +90,7 @@ public class AirbitzCore {
     List<Account> mAccounts;
 
     static {
+        System.loadLibrary("c++_shared");
         System.loadLibrary("abc");
         System.loadLibrary("airbitz");
     }

@@ -19,7 +19,7 @@ void bitcoinCallback(const tABC_AsyncBitCoinInfo *pInfo) {
         {
 		}
 	}
-    (*g_env)->CallVoidMethod(g_env, g_obj, g_async_callback, (void *) pInfo);
+    (*g_env)->CallVoidMethod(g_env, g_obj, g_async_callback, (jlong)pInfo);
 }
 
 void ABC_BitCoin_Event_Callback(const tABC_AsyncBitCoinInfo *pInfo)
@@ -256,7 +256,7 @@ Java_co_airbitz_internal_Jni_ParseAmount(
             return 0;
     }
 
-    int64_t arg2 = 0; //*(int64_t **)&outp;
+    uint64_t arg2 = 0; //*(int64_t **)&outp;
     unsigned int arg3 = (unsigned int)decimalplaces;
     result = (tABC_CC)ABC_ParseAmount(instring,&arg2,arg3);
     return arg2;
