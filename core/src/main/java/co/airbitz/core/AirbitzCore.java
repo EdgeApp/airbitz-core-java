@@ -442,6 +442,25 @@ public class AirbitzCore {
     }
 
     /**
+     * Returns an Array of login messages for all the local users on the
+     * current device. This may include messages for pending OTP reset or
+     * corrupt password recovery data
+     * @return Array username with text lowercased, leading and trailing white
+     * space removed, and all whitespace condensed to one space.
+     */
+    public String getLoginMessages() throws AirbitzException {
+        tABC_Error error = new tABC_Error();
+        SWIGTYPE_p_long lp = core.new_longp();
+        SWIGTYPE_p_p_char ppChar = core.longp_to_ppChar(lp);
+        core.ABC_GetLoginMessages(ppChar, error);
+        if (error.getCode() == tABC_CC.ABC_CC_Ok) {
+            return Jni.getStringAtPtr(core.longp_value(lp));
+        } else {
+            throw new AirbitzException(error.getCode(), error);
+        }
+    }
+
+    /**
      * Deletes named account from local device. Account is recoverable if it
      * contains a password.
      * @param username username of account to delete
