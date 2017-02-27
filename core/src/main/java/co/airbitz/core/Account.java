@@ -138,7 +138,7 @@ public class Account {
         /**
          * Called when OTP reset has been triggered.
          */
-        public void otpResetPending();
+        public void loginMessages(String messages);
 
         /**
          * Called when an exchange rate changes.
