@@ -557,22 +557,22 @@ class Engine {
 
         mDataExecutor.submit(new Runnable() {
             public void run() {
-                boolean pending = false;
+                String loginMessages = null;
                 try {
-                    pending = mApi.isOtpResetPending(mAccount.username());
+                    loginMessages = mApi.getLoginMessages();
                 } catch (AirbitzException e) {
-                    AirbitzCore.loge("mDataExecutor.post error:");
+                    AirbitzCore.loge("mDataExecutor.post error: getLoginMessages");
                 }
-                final boolean isPending = pending;
+
+                final String finalLoginMessages = loginMessages;
                 mMainHandler.submit(new Runnable() {
                     public void run() {
                         if (!mDataFetched) {
                             mDataFetched = true;
                             connectWatchers();
                         }
-                        if (isPending && mAccount.mCallbacks != null) {
-                            mAccount.mCallbacks.otpResetPending();
-                        }
+                        if (mAccount.mCallbacks != null && finalLoginMessages != null)
+                            mAccount.mCallbacks.loginMessages(finalLoginMessages);
                     }
                 });
             }
