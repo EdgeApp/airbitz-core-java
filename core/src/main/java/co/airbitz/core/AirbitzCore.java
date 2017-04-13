@@ -100,6 +100,13 @@ public class AirbitzCore {
         mExchangeCache = new ExchangeCache();
     }
 
+    private int InvalidLoginWait(tABC_Error error) {
+        if (error.getCode() == tABC_CC.ABC_CC_InvalidPinWait) {
+            return Integer.parseInt(error.getSzDescription());
+        }
+        return 0;
+    }
+
     public static AirbitzCore getApi() {
         synchronized (LOCK) {
             if (mInstance == null) {
@@ -671,6 +678,9 @@ public class AirbitzCore {
             AirbitzException exception = new AirbitzException(error.getCode(), error);
             exception.mOtpResetToken = Jni.getStringAtPtr(core.longp_value(pToken));
             exception.mOtpResetDate = Jni.getStringAtPtr(core.longp_value(pTokenDate));
+
+            int waitSeconds = InvalidLoginWait(error);
+            exception.mWaitSeconds = waitSeconds;
             throw exception;
         }
         Account account = new Account(this, username, password);
@@ -832,6 +842,9 @@ public class AirbitzCore {
             AirbitzException exception = new AirbitzException(error.getCode(), error);
             exception.mOtpResetToken = Jni.getStringAtPtr(core.longp_value(pToken));
             exception.mOtpResetDate = Jni.getStringAtPtr(core.longp_value(pTokenDate));
+            int waitSeconds = InvalidLoginWait(error);
+            exception.mWaitSeconds = waitSeconds;
+
             throw exception;
         }
         Account account = new Account(this, username, null);
@@ -864,6 +877,9 @@ public class AirbitzCore {
             AirbitzException exception = new AirbitzException(error.getCode(), error);
             exception.mOtpResetToken = Jni.getStringAtPtr(core.longp_value(pToken));
             exception.mOtpResetDate = Jni.getStringAtPtr(core.longp_value(pTokenDate));
+            int waitSeconds = InvalidLoginWait(error);
+            exception.mWaitSeconds = waitSeconds;
+
             throw exception;
         }
         Account account = new Account(this, username, null);
@@ -915,7 +931,8 @@ public class AirbitzCore {
         core.ABC_PinLogin(username, pin, pWaitSeconds, error);
         if (error.getCode() != tABC_CC.ABC_CC_Ok) {
             AirbitzException exception = new AirbitzException(error.getCode(), error);
-            exception.mWaitSeconds = core.intp_value(pWaitSeconds);
+            int waitSeconds = InvalidLoginWait(error);
+            exception.mWaitSeconds = waitSeconds;
             throw exception;
         }
         Account account = new Account(this, username, null);
