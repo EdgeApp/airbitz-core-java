@@ -315,6 +315,22 @@ public class Settings {
         return settings().getSzFullName();
     }
 
+    public void overrideBitcoinServers(boolean value) {
+        settings().setBOverrideBitcoinServers(value);
+    }
+
+    public boolean overrideBitcoinServers() {
+        return settings().getBOverrideBitcoinServers();
+    }
+
+    public void overrideServerList(String value) {
+        settings().setSzOverrideBitcoinServerList(value);
+    }
+
+    public String overrideServerList() {
+        return settings().getSzOverrideBitcoinServerList();
+    }
+
     /**
      * Set if the user prefers to enforce a spend limit.
      * @param value true if the user wants a spend limit, false otherwise
