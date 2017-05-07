@@ -91,9 +91,16 @@ class Currencies {
     }
 
     CoreCurrency defaultCurrency(Locale locale) {
-        Currency currency = Currency.getInstance(locale);
-        if (mCodeIndex.containsValue(currency.getCurrencyCode())) {
-            return mCodeIndex.get(currency.getCurrencyCode());
+        Currency currency;
+        String code;
+        try {
+            currency = Currency.getInstance(locale);
+            code = currency.getCurrencyCode();
+        } catch (Exception e) {
+            code = "USD";
+        }
+        if (mCodeIndex.containsValue(code)) {
+            return mCodeIndex.get(code);
         } else {
             return mCodeIndex.get("USD");
         }
