@@ -152,7 +152,7 @@ public class Transaction {
      * transaction was mined in.
      */
     public int height() {
-        if (mHeight > 0) {
+        if (mHeight != 0) {
             return mHeight;
         }
 

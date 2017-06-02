@@ -65,6 +65,7 @@ public class Wallet {
     boolean mArchived = false;
     boolean mSynced = false;
     List<Transaction> mTransactions;
+    public boolean bAddressesChecked = false;
 
     Wallet(Account account, String uuid) {
         this.mAccount = account;

@@ -681,6 +681,7 @@ class Engine {
                     public void run() {
                         if (mAccount.mCallbacks != null) {
                             final Wallet wallet = mAccount.wallet(walletId);
+                            wallet.bAddressesChecked = true;
                             mAccount.mCallbacks.walletChanged(wallet);
                         }
                     }
