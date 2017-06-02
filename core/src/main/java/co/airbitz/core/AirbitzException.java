@@ -33,6 +33,10 @@ public class AirbitzException extends Exception {
 
     public String description () { return mCode.toString(); }
 
+    public boolean isCCError() {
+        return mCode == tABC_CC.ABC_CC_Error;
+    }
+
     public boolean isBadPassword() {
         return mCode == tABC_CC.ABC_CC_BadPassword;
     }
@@ -59,6 +63,10 @@ public class AirbitzException extends Exception {
 
     public boolean isUrlError() {
         return mCode == tABC_CC.ABC_CC_URLError;
+    }
+
+    public boolean isSysError() {
+        return mCode == tABC_CC.ABC_CC_SysError;
     }
 
     public boolean isServerError() {
