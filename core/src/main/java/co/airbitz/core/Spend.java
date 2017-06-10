@@ -72,7 +72,6 @@ public class Spend {
     private MetadataSet mMeta;
     private boolean mIsTransfer;
     private FeeLevel mFeeLevel;
-    private long mCustomFee;
 
     Spend(Account account, Wallet wallet) throws AirbitzException {
         mAccount = account;
@@ -246,9 +245,9 @@ public class Spend {
      * Change the fee level. Higher fees will result in faster confirmation times.
      * @param level the fee level, high, standard or low
      */
-    public void feeLevel(FeeLevel level) {
+    public void feeLevel(FeeLevel level, long customFee) {
         SWIGTYPE_p_uint64_t ua = core.new_uint64_tp();
-        Jni.set64BitLongAtPtr(Jni.getCPtr(ua), mCustomFee);
+        Jni.set64BitLongAtPtr(Jni.getCPtr(ua), customFee);
 
         tABC_Error error = new tABC_Error();
         mFeeLevel = level;
